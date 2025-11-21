@@ -1,0 +1,26 @@
+{
+  "midi_device_name": "Launchkey Mini MK3 MIDI Port",
+  "chord_channel": 1,
+  "strum_channel": 2,
+  "strum_cooldown_secs": 0.3,
+  "strum_gate_time_secs": 0.5,
+  "chord_midi_map_style": {
+    "type": "NotePerChordMode",
+    "note_mapping": {
+      "24": "MAJOR",
+      "25": "MINOR",
+      "26": "DOM_7"
+    }
+  },
+  "strum_plate_cc": 1,
+  "hold_toggle_button": {
+    "type": "MidiCCButton",
+    "cc": 102,
+    "is_toggle": true
+  },
+  "stop_button": {
+    "type": "MidiCCButton",
+    "cc": 103,
+    "is_toggle": false
+  }
+}

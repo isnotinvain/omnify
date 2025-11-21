@@ -22,7 +22,7 @@ _arps_data = _load_arps_data()
 
 @dataclass(frozen=True)
 class ChordData:
-    name: str
+    nice_name: str
     offsets: list[int]
     arp: dict[int, list[int]]
 
@@ -31,3 +31,6 @@ class Chord(Enum):
     MAJOR = ChordData("Major", [0, 4, 7], _arps_data["MAJOR"])
     MINOR = ChordData("Minor", [0, 3, 7], _arps_data["MINOR"])
     DOM_7 = ChordData("Dominant 7th", [0, 4, 7, 10], _arps_data["DOMINANT_7"])
+
+    def __repr__(self):
+        return self.name
