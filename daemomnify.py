@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# TODO: Investigate PyInstaller
+
 import heapq
 import sys
 import time
