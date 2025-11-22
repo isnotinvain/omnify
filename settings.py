@@ -72,13 +72,39 @@ class DaemomnifySettings(BaseModel):
     strum_gate_time_secs: float
     chord_midi_map_style: ChordModeMidiMapStyle
     strum_plate_cc: int
-    hold_toggle_button: MidiButton
+    latch_toggle_button: MidiButton
     stop_button: MidiButton
 
+    # TODO: just make a set of these in the constructor
+    def is_note_control_note(self, note: int) -> bool:
+        match self.chord_midi_map_style:
+            case NotePerChordMode() as m:
+                if note in m.note_mapping:
+                    return True
+            case _:
+                pass
+        match self.latch_toggle_button:
+            case MidiNoteButton() as b:
+                if b.note == note:
+                    return True
+            case _:
+                pass
+        match self.stop_button:
+            case MidiNoteButton() as b:
+                if b.note == note:
+                    return True
+            case _:
+                pass
+        return False
 
-def load_settings(path: Path = Path("daemomnify_settings.json")) -> DaemomnifySettings:
-    json_str = path.read_text()
-    return DaemomnifySettings.model_validate_json(json_str)
+
+def load_settings(path: Path = Path("daemomnify_settings.json")) -> DaemomnifySettings | None:
+    try:
+        json_str = path.read_text()
+        return DaemomnifySettings.model_validate_json(json_str)
+    except FileNotFoundError:
+        print(f"I don't see a settings file at: {path}...")
+        return None
 
 
 def save_settings(settings: DaemomnifySettings, path: Path = Path("daemomnify_settings.json")) -> None:
@@ -89,11 +115,11 @@ DEFAULT_SETTINGS: DaemomnifySettings = DaemomnifySettings(
     midi_device_name="Launchkey Mini MK3 MIDI Port",
     chord_channel=1,
     strum_channel=2,
-    strum_cooldown_secs=0.3,
-    strum_gate_time_secs=0.5,
+    strum_cooldown_secs=0.3,  # TODO: use cc
+    strum_gate_time_secs=0.5,  # TODO: use cc
     chord_midi_map_style=NotePerChordMode(note_mapping={24: Chord.MAJOR, 25: Chord.MINOR, 26: Chord.DOM_7}),
     strum_plate_cc=1,
-    hold_toggle_button=MidiCCButton(cc=102, is_toggle=True),
+    latch_toggle_button=MidiCCButton(cc=102, is_toggle=True),
     stop_button=MidiCCButton(cc=103, is_toggle=False),
 )
 

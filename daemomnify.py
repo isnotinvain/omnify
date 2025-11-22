@@ -10,6 +10,8 @@ from typing import Any
 import mido
 
 from omnify import Omnify
+from settings import load_settings
+from wizard import run_wizard
 
 
 @dataclass(order=True)
@@ -38,35 +40,6 @@ class MessageScheduler:
                 traceback.print_exc()
 
 
-def list_midi_devices():
-    devices = mido.get_input_names()
-    if not devices:
-        return []
-
-    return devices
-
-
-def select_device(devices):
-    """Prompt user to select a MIDI device from the list."""
-    if not devices:
-        return None
-
-    while True:
-        try:
-            choice = input(f"Select device (1-{len(devices)}): ")
-            idx = int(choice) - 1
-
-            if 0 <= idx < len(devices):
-                return devices[idx]
-            else:
-                print(f"Please enter a number between 1 and {len(devices)}")
-        except ValueError:
-            print("Please enter a valid number")
-        except KeyboardInterrupt:
-            print("Cancelled.")
-            return None
-
-
 def create_virtual_output(port_name="Daemomnify"):
     try:
         return mido.open_output(port_name, virtual=True)
@@ -79,21 +52,10 @@ def create_virtual_output(port_name="Daemomnify"):
 def main():
     print("=== Welcome to Daemomnify. Let's Omnify some instruments! ===")
 
-    # List and select input device
-    devices = list_midi_devices()
-    if not devices:
-        print("No MIDI input devices found! Plug in / setup some midi controllers and try again.")
-        sys.exit(1)
-
-    print("Available MIDI input devices:")
-    for idx, name in enumerate(devices, 1):
-        print(f"  {idx}. {name}")
-
-    selected_device = select_device(devices)
-    if not selected_device:
+    settings = load_settings()
+    if not settings:
+        settings = run_wizard()
         sys.exit(0)
-
-    print(f"Selected: {selected_device}")
 
     # Create virtual output
     print("Creating virtual MIDI output...")
@@ -106,14 +68,14 @@ def main():
 
     # Create message scheduler
     scheduler = MessageScheduler()
-    omnify = Omnify(scheduler)
-
-    # Open input device and start listening
-    print(f"Listening to {selected_device}...")
-    print("Press Ctrl+C to stop")
+    omnify = Omnify(scheduler, settings)
 
     try:
-        with mido.open_input(selected_device) as inport:
+        with mido.open_input(settings.midi_device_name) as inport:
+            # Open input device and start listening
+            print(f"Listening to {settings.midi_device_name}...")
+            print("Press Ctrl+C to stop")
+
             while True:
                 # Check for any pending incoming messages (non-blocking)
                 for msg in inport.iter_pending():
