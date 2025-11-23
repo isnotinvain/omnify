@@ -12,6 +12,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "jq>=1.10.0",
     "ruff>=0.14.5",
 ]
 

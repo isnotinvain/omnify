@@ -4,10 +4,8 @@ from enum import Enum
 from pathlib import Path
 
 
-# Load arps data from JSON
-def _load_arps_data():
-    arps_path = Path(__file__).parent / "arps.json"
-    with open(arps_path) as f:
+def _load_arps_data(path):
+    with open(path) as f:
         data = json.load(f)
         result = {}
         for name, arp_map in data.items():
@@ -17,7 +15,19 @@ def _load_arps_data():
         return result
 
 
-_arps_data = _load_arps_data()
+def _load_chord_data(path):
+    with open(path) as f:
+        data = json.load(f)
+        result = {}
+        for name, chord_map in data.items():
+            result[name] = {}
+            for note_str, offsets in chord_map.items():
+                result[name][int(note_str)] = offsets
+        return result
+
+
+_arps_data = _load_arps_data(path=Path(__file__).parent / "arps.json")
+_chord_data = _load_chord_data(path=Path(__file__).parent / "chord_offsets.json")
 
 
 @dataclass(frozen=True)
@@ -28,9 +38,9 @@ class ChordData:
 
 
 class Chord(Enum):
-    MAJOR = ChordData("Major", [0, 4, 7], _arps_data["MAJOR"])
-    MINOR = ChordData("Minor", [0, 3, 7], _arps_data["MINOR"])
-    DOM_7 = ChordData("Dominant 7th", [0, 4, 7, 10], _arps_data["DOMINANT_7"])
+    MAJOR = ChordData("Major", _chord_data["MAJOR"], _arps_data["MAJOR"])
+    MINOR = ChordData("Minor", _chord_data["MINOR"], _arps_data["MINOR"])
+    DOM_7 = ChordData("Dominant 7th", _chord_data["DOMINANT_7"], _arps_data["DOMINANT_7"])
 
     def __repr__(self):
         return self.name

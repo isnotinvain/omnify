@@ -14,10 +14,8 @@
 # TODO: Janky as it is, I think there is value in adding a VST UI for this, that speaks over some protocol to
 # TODO: the daemon, so that all the settings can be done in-DAW, and parameters can be midi-mapped
 #
-# TODO: Turns out the omnichord chord buttons do more than what I'm currently doing. They send out a normal triad / 7th
-# TODO: BUT they also add the root or the fifth in upper and lower octaves, and the bass may even be a 3rd sound and
-# TODO: might deserve its own channel or option to seperate the base out into its own channel.
-# TODO: Need to grab these proprietary chords from somewhere.
+# TODO: Verify if the chord_notes.json (and offsets derived from it) are accurate. They were
+# TODO: extracted from sample .wav files and who knows how well that worked.
 #
 # TODO: Pitch bend mode for spring loaded pitch wheels. Roll up from center = strum up,
 # TODO: ignore descent back to center. Swipe down from center = strum down, ignore on it's way back up to center
