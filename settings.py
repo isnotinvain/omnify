@@ -2,7 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, Field, PrivateAttr, field_serializer, field_validator
 
 import chords
 
@@ -103,17 +103,29 @@ MidiButton = Annotated[MidiNoteButton | MidiCCButton, Field(discriminator="type"
 # Chord voicing style configs (for sustained chord output)
 class RootPositionChordStyleConfig(BaseModel):
     type: Literal["RootPositionChordStyle"] = "RootPositionChordStyle"
+    _cached: chords.ChordVoicingStyle | None = PrivateAttr(default=None)
 
     def build(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
         return chords.RootPositionStyle(settings)
+
+    def get(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
+        if self._cached is None:
+            self._cached = self.build(settings)
+        return self._cached
 
 
 class FileChordStyleConfig(BaseModel):
     type: Literal["FileChordStyle"] = "FileChordStyle"
     path: str
+    _cached: chords.ChordVoicingStyle | None = PrivateAttr(default=None)
 
     def build(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
         return chords.FileStyle(settings, self.path)
+
+    def get(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
+        if self._cached is None:
+            self._cached = self.build(settings)
+        return self._cached
 
 
 ChordStyleConfig = Annotated[RootPositionChordStyleConfig | FileChordStyleConfig, Field(discriminator="type")]
@@ -122,16 +134,28 @@ ChordStyleConfig = Annotated[RootPositionChordStyleConfig | FileChordStyleConfig
 # Strum voicing style configs (for strum plate output)
 class PlainAscendingStrumStyleConfig(BaseModel):
     type: Literal["PlainAscendingStrumStyle"] = "PlainAscendingStrumStyle"
+    _cached: chords.ChordVoicingStyle | None = PrivateAttr(default=None)
 
     def build(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
         return chords.PlainAscendingStrumStyle(settings)
 
+    def get(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
+        if self._cached is None:
+            self._cached = self.build(settings)
+        return self._cached
+
 
 class OmnichordStrumStyleConfig(BaseModel):
     type: Literal["OmnichordStrumStyle"] = "OmnichordStrumStyle"
+    _cached: chords.ChordVoicingStyle | None = PrivateAttr(default=None)
 
     def build(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
         return chords.OmnichordStrumStyle(settings)
+
+    def get(self, settings: DaemomnifySettings) -> chords.ChordVoicingStyle:
+        if self._cached is None:
+            self._cached = self.build(settings)
+        return self._cached
 
 
 StrumStyleConfig = Annotated[PlainAscendingStrumStyleConfig | OmnichordStrumStyleConfig, Field(discriminator="type")]

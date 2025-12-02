@@ -7,7 +7,7 @@ from textwrap import dedent
 
 import mido
 
-from chords import Chord
+from chords import ChordQuality
 from settings import (
     DEFAULT_SETTINGS,
     CCPerChordQuality,
@@ -159,7 +159,7 @@ def run_wizard():
         match choice:
             case 1:
                 note_mapping = {}
-                for chord in Chord:
+                for chord in ChordQuality:
                     while True:
                         print(f"Please press the note to switch into {chord.value.nice_name} mode:")
                         note = get_next_note_on(inport)
@@ -171,7 +171,7 @@ def run_wizard():
                 new_settings.chord_quality_selection_style = NotePerChordQuality(note_mapping=note_mapping)
             case 2:
                 cc_mapping = {}
-                for chord in Chord:
+                for chord in ChordQuality:
                     while True:
                         print(f"Please press / slide / wiggle the controller to use for {chord.value.nice_name} mode:")
                         cc = get_next_cc(inport)

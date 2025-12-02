@@ -13,9 +13,9 @@
   "chord_quality_selection_style": {
     "type": "NotePerChordQuality",
     "note_mapping": {
-      "24": "MAJOR",
-      "25": "MINOR",
-      "26": "DOM_7"
+      "0": "MAJOR",
+      "1": "MINOR",
+      "2": "DOM_7"
     }
   },
   "strum_plate_cc": 1,

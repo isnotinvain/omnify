@@ -78,7 +78,9 @@ class Omnify:
             # we'll allow it, we've crossed into the next strumming area or it's been long enough
 
             # find the note within the arp sequence for this given root
-            note_to_play = self.strum_voicing_style.construct_chord(self.current_chord_quality, self.current_root)[strum_plate_zone]
+            note_to_play = self.settings.strum_voicing_style.get(self.settings).construct_chord(self.current_chord_quality, self.current_root)[
+                strum_plate_zone
+            ]
 
             # create the note on event
             events.append(mido.Message("note_on", note=note_to_play, velocity=velocity, channel=self.settings.strum_channel - 1))
@@ -110,7 +112,7 @@ class Omnify:
         # and it might have the wrong channel anyway)
         self.current_root = msg.note
         clamped_notes = set()
-        for note in self.chord_voicing_style.construct_chord(self.current_chord_quality, self.current_root):
+        for note in self.settings.chord_voicing_style.get(self.settings).construct_chord(self.current_chord_quality, self.current_root):
             clamped = clamp_note(note)
             if clamped in clamped_notes:
                 continue
