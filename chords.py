@@ -4,17 +4,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-def _load_chord_offsets(path):
-    with open(path) as f:
-        data = json.load(f)
-        result = {}
-        for name, chord_map in data.items():
-            result[name] = {}
-            for note_str, offsets in chord_map.items():
-                result[name][int(note_str)] = offsets
-        return result
-
-
 @dataclass(frozen=True)
 class ChordQualityData:
     nice_name: str
@@ -76,7 +65,18 @@ class FileStyle(ChordVoicingStyle):
 
     def __init__(self, path):
         # dict[json_file_key, dict[note_class, list[offsets]]]
-        self.data = _load_chord_offsets(path)
+        self.data = self._load_chord_offsets(path)
+
+    @staticmethod
+    def _load_chord_offsets(path):
+        with open(path) as f:
+            data = json.load(f)
+            result = {}
+            for name, chord_map in data.items():
+                result[name] = {}
+                for note_str, offsets in chord_map.items():
+                    result[name][int(note_str)] = offsets
+            return result
 
     def construct_chord(self, quality: ChordQuality, root: int) -> list[int]:
         lookup = self.data[quality.value.json_file_key]
