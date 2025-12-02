@@ -127,21 +127,21 @@ class PlainAscendingStrumStyle(VoicingStyle):
     """
 
     @staticmethod
-    def make_strum_from_triad(pattern):
+    def make_strum_from_triad(offsets):
         res = []
         for shift in (-12, 0, 12, 24):
-            for o in pattern:
+            for o in offsets:
                 res.append(shift + o)
 
         # 13th element is one more octave up
         res.append(36)
 
     @staticmethod
-    def make_strum_from_tetrad(pattern):
+    def make_strum_from_tetrad(offsets):
         """
         just drops the 5th
         """
-        root, third, fifth, seventh = pattern
+        root, third, fifth, seventh = offsets
         return PlainAscendingStrumStyle.make_strum_from_triad([root, third, seventh])
 
     @staticmethod
