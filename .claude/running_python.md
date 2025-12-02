@@ -1,1 +1,0 @@
-Whenever you want to run python script remember to use `uv run` not just `python` -- you can of course do `uv run python3` if you need a repl.

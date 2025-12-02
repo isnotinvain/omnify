@@ -2,30 +2,24 @@ import time
 
 import mido
 
-from chords import Chord
-from event_dispatcher import EventDispatcher
-from message_scheduler import MessageScheduler
-from settings import ButtonAction, DaemomnifySettings
-
-
-def clamp_note(note):
-    if note > 127:
-        return (note % 12) + 108  # Clamp to highest octave
-    if note < 0:
-        return abs(note) % 12
-    return note
+from daemomnify.chords import ChordQuality
+from daemomnify.event_dispatcher import EventDispatcher
+from daemomnify.message_scheduler import MessageScheduler
+from daemomnify.settings import ButtonAction, DaemomnifySettings
+from daemomnify.util import clamp_note
 
 
 class Omnify:
     def __init__(self, scheduler: MessageScheduler, event_dispatcher: EventDispatcher, settings: DaemomnifySettings):
         self.scheduler = scheduler
         self.settings = settings
-        self.current_chord_quality = Chord.MAJOR
 
         # we need this for when the user queues up a new chord quality, but hasn't started a new chord yet.
         # we need the strum to not change until the next chord
-        self.current_chord_playing = None
-        self.current_chord_playing_root = None
+        self.enqueued_chord_quality = ChordQuality.MAJOR
+        self.current_chord_quality = None
+
+        self.current_root = None
         self.note_on_events_of_current_chord = []
         self.last_strum_time = 0
         self.last_strum_zone = -1
@@ -42,7 +36,7 @@ class Omnify:
         event_dispatcher.register_handler(self.is_strum, self.on_strum)
 
     def on_chord_quality_change(self, chord):
-        self.current_chord_quality = chord
+        self.enqueued_chord_quality = chord
 
     def on_stop_button(self, _):
         return self.stop_notes_of_current_chord()
@@ -65,7 +59,7 @@ class Omnify:
         return False
 
     def on_strum(self, control_value):
-        if not self.current_chord_playing:
+        if not self.current_chord_quality:
             # Theres no current chord, so we don't do anything
             return
 
@@ -78,14 +72,15 @@ class Omnify:
         # each zone is 13/128ths in size (plus some floor-ing from integer division)
         strum_plate_zone = int((control_value * 13) / 128)
 
-        root = self.current_chord_playing_root % 12
         velocity = self.note_on_events_of_current_chord[0].velocity
 
         if strum_plate_zone != self.last_strum_zone or cool_down_ready:
             # we'll allow it, we've crossed into the next strumming area or it's been long enough
 
             # find the note within the arp sequence for this given root
-            note_to_play = self.current_chord_playing.value.arp[root][strum_plate_zone]
+            note_to_play = self.settings.strum_voicing_style.get(self.settings).construct_chord(self.current_chord_quality, self.current_root)[
+                strum_plate_zone
+            ]
 
             # create the note on event
             events.append(mido.Message("note_on", note=note_to_play, velocity=velocity, channel=self.settings.strum_channel - 1))
@@ -111,17 +106,14 @@ class Omnify:
         # stop currently plaing chord
         events = self.stop_notes_of_current_chord() or []
 
-        self.current_chord_playing = self.current_chord_quality
+        self.current_chord_quality = self.enqueued_chord_quality
         # now we generate the chord note_on evnets
         # (chord offsets includes 0, so no need to add msg itself,
         # and it might have the wrong channel anyway)
-        self.current_chord_playing_root = msg.note
+        self.current_root = msg.note
         clamped_notes = set()
-        for offset in self.current_chord_playing.value.offsets[msg.note % 12]:
-            # TODO: Make configurable?
-            # This makes middle C (60) play the octave that omnichord's chords play in.
-            ocatve_shift = -12
-            clamped = clamp_note(self.current_chord_playing_root + offset + ocatve_shift)
+        for note in self.settings.chord_voicing_style.get(self.settings).construct_chord(self.current_chord_quality, self.current_root):
+            clamped = clamp_note(note)
             if clamped in clamped_notes:
                 continue
             clamped_notes.add(clamped)
@@ -141,7 +133,7 @@ class Omnify:
 
     def on_chord_note_off(self, note):
         # check if we are currently playing a chord
-        if self.current_chord_playing_root and self.current_chord_playing_root == note:
+        if self.current_root and self.current_root == note:
             # we have released the root of the currently playing chord
             # (we want to ignore note off for other notes, they might be held from before)
             # either stop the chord now or do nothing depending on latch mode
@@ -149,8 +141,8 @@ class Omnify:
                 return self.stop_notes_of_current_chord()
 
     def stop_notes_of_current_chord(self):
-        self.current_chord_playing = None
-        self.current_chord_playing_root = None
+        self.current_chord_quality = None
+        self.current_root = None
         if not self.note_on_events_of_current_chord:
             return
 

@@ -7,8 +7,8 @@ from textwrap import dedent
 
 import mido
 
-from chords import Chord
-from settings import (
+from daemomnify.chords import ChordQuality
+from daemomnify.settings import (
     DEFAULT_SETTINGS,
     CCPerChordQuality,
     CCRangePerChordQuality,
@@ -19,7 +19,7 @@ from settings import (
     NotePerChordQuality,
     save_settings,
 )
-from util import irange
+from daemomnify.util import irange
 
 
 def select_int(r: range[int], default: int | None = None) -> int:
@@ -159,7 +159,7 @@ def run_wizard():
         match choice:
             case 1:
                 note_mapping = {}
-                for chord in Chord:
+                for chord in ChordQuality:
                     while True:
                         print(f"Please press the note to switch into {chord.value.nice_name} mode:")
                         note = get_next_note_on(inport)
@@ -171,7 +171,7 @@ def run_wizard():
                 new_settings.chord_quality_selection_style = NotePerChordQuality(note_mapping=note_mapping)
             case 2:
                 cc_mapping = {}
-                for chord in Chord:
+                for chord in ChordQuality:
                     while True:
                         print(f"Please press / slide / wiggle the controller to use for {chord.value.nice_name} mode:")
                         cc = get_next_cc(inport)

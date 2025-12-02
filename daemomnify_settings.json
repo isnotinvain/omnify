@@ -1,7 +1,13 @@
 {
   "midi_device_name": "Launchkey Mini MK3 MIDI Port",
+  "chord_voicing_style": {
+    "type": "RootPositionChordStyle"
+  },
   "chord_channel": 1,
   "strum_channel": 2,
+  "strum_voicing_style": {
+    "type": "OmnichordStrumStyle"
+  },
   "strum_cooldown_secs": 0.3,
   "strum_gate_time_secs": 0.5,
   "chord_quality_selection_style": {

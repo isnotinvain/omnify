@@ -6,11 +6,11 @@ import traceback
 
 import mido
 
-from event_dispatcher import EventDispatcher
-from message_scheduler import MessageScheduler
-from omnify import Omnify
-from settings import load_settings
-from wizard import run_wizard
+from daemomnify.event_dispatcher import EventDispatcher
+from daemomnify.message_scheduler import MessageScheduler
+from daemomnify.omnify import Omnify
+from daemomnify.settings import load_settings
+from daemomnify.wizard import run_wizard
 
 
 def create_virtual_output(port_name="Daemomnify"):
