@@ -13,3 +13,6 @@ def reify_chord_voicing_style(style):
             res[quality][note] = style.construct_chord(quality, note)
 
     return res
+
+
+# print(reify_chord_voicing_style(chords.RootPositionStyle(None)))
