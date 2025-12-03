@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Tidy and Format All C++ Files",
+            "type": "shell",
+            "command": "find vst -type f \\( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \\) ! -path './vst/JUCE/*' ! -path './vst/build/*' -exec ${workspaceFolder}/.claude/hooks/format-cpp.sh {} \\;",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Tidy and Format Current File",
+            "type": "shell",
+            "command": "${workspaceFolder}/.claude/hooks/format-cpp.sh ${file}",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

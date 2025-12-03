@@ -1,0 +1,40 @@
+---
+# Clang-Tidy configuration for this project
+# This file is used by both VSCode and command-line clang-tidy
+
+Checks: >
+  modernize-*,
+  readability-*,
+  performance-*,
+  bugprone-*,
+  -bugprone-pointer-arithmetic-on-polymorphic-object,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-naming
+
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: file
+CheckOptions:
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '5'
+  - key: modernize-use-auto.RemoveStars
+    value: 'true'
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
