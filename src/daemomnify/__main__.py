@@ -1,86 +1,39 @@
 #!/usr/bin/env python3
 
-import sys
 import time
-import traceback
+from multiprocessing import Process
 
-import mido
-
-from daemomnify.event_dispatcher import EventDispatcher
-from daemomnify.message_scheduler import MessageScheduler
-from daemomnify.omnify import Omnify
-from daemomnify.settings import load_settings
-from daemomnify.wizard import run_wizard
+from daemomnify.daemomnify import main
 
 
-def create_virtual_output(port_name="Daemomnify"):
-    try:
-        return mido.open_output(port_name, virtual=True)
-    except OSError as e:
-        print(f"Error creating virtual output: {e}")
-        traceback.print_exc()
-        return None
+def run_forever():
+    crash_times = []
+    max_crashes = 5
+    window_seconds = 60
 
+    while True:
+        p = Process(target=main)
+        p.start()
+        try:
+            p.join()
+        except KeyboardInterrupt:
+            p.terminate()
+            p.join()
+            print("\nShutting down.")
+            break
 
-def main():
-    print("=== Welcome to Daemomnify. Let's Omnify some instruments! ===")
+        # Track crash time
+        now = time.time()
+        crash_times.append(now)
+        # Only keep crashes within the window
+        crash_times = [t for t in crash_times if now - t < window_seconds]
 
-    settings = load_settings()
-    if not settings:
-        settings = run_wizard()
-        sys.exit(0)
+        if len(crash_times) >= max_crashes:
+            print(f"Crashed {max_crashes} times in {window_seconds}s, giving up.")
+            break
 
-    # Create virtual output
-    print("Creating virtual MIDI output...")
-    virtual_output = create_virtual_output()
-    if not virtual_output:
-        print("Failed to create virtual output! Dang! See ya!")
-        sys.exit(1)
-
-    print(f"Virtual output created: {virtual_output.name}")
-
-    # Create message scheduler
-    scheduler = MessageScheduler()
-    event_dispatcher = EventDispatcher()
-
-    # omnify will register itself as handlers for things
-    Omnify(scheduler, event_dispatcher, settings)
-
-    try:
-        with mido.open_input(settings.midi_device_name) as inport:
-            # Open input device and start listening
-            print(f"Listening to {settings.midi_device_name}...")
-            print("Press Ctrl+C to stop")
-
-            while True:
-                # Check for any pending incoming messages (non-blocking)
-                for msg in inport.iter_pending():
-                    to_send_now = event_dispatcher.handle(msg)
-                    # Send immediate message to virtual output
-                    try:
-                        if to_send_now:
-                            for m in to_send_now:
-                                virtual_output.send(m)
-                    except OSError as e:
-                        print(f"Error sending message {m}: {e}")
-                        traceback.print_exc()
-
-                # Send any scheduled messages whose time has arrived
-                scheduler.send_overdue_messages(virtual_output)
-
-                # Sleep briefly to avoid spinning CPU (1ms = ~1000Hz poll rate)
-                time.sleep(0.001)
-
-    except KeyboardInterrupt:
-        print("Stopping...")
-    except Exception as e:
-        print(f"Error: {e}")
-        traceback.print_exc()
-    finally:
-        if virtual_output:
-            virtual_output.close()
-        print("Daemomnify banished.")
+        print("Process exited, restarting...")
 
 
 if __name__ == "__main__":
-    main()
+    run_forever()
