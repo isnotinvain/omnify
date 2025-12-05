@@ -3,4 +3,5 @@
 	url = https://github.com/juce-framework/JUCE.git
 [submodule "vst/foleys_gui_magic"]
 	path = vst/foleys_gui_magic
-	url = https://github.com/ffAudio/foleys_gui_magic.git
+	url = https://github.com/isnotinvain/foleys_gui_magic.git
+	branch = autosave-single-file
