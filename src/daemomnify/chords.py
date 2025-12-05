@@ -10,14 +10,13 @@ from pydantic_core import core_schema
 @dataclass(frozen=True)
 class ChordQualityData:
     nice_name: str
-    json_file_key: str
     offsets: tuple[int, ...]
 
 
 class ChordQuality(Enum):
-    MAJOR = ChordQualityData("Major", "MAJOR", (0, 4, 7))
-    MINOR = ChordQualityData("Minor", "MINOR", (0, 3, 7))
-    DOM_7 = ChordQualityData("Dominant 7th", "DOMINANT_7", (0, 4, 7, 10))
+    MAJOR = ChordQualityData("Major", (0, 4, 7))
+    MINOR = ChordQualityData("Minor", (0, 3, 7))
+    DOM_7 = ChordQualityData("Dominant 7th", (0, 4, 7, 10))
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type, handler):
@@ -106,7 +105,7 @@ class FileStyle(ChordVoicingStyle):
         return self._data
 
     def construct_chord(self, quality: ChordQuality, root: int) -> list[int]:
-        lookup = self._get_data()[quality.value.json_file_key]
+        lookup = self._get_data()[quality.name]
         note_class = root % 12
         return lookup[note_class]
 
