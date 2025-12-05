@@ -19,18 +19,16 @@ class OmnifyAudioProcessorEditor : public juce::AudioProcessorEditor {
     OmnifyAudioProcessor& processorRef;
 
     // UI Components
-    juce::Slider gainSlider;
-    juce::Slider mixSlider;
-    juce::ToggleButton bypassButton;
+    juce::ComboBox chordVoicingCombo;
+    juce::ComboBox strumVoicingCombo;
 
-    juce::Label gainLabel;
-    juce::Label mixLabel;
     juce::Label titleLabel;
+    juce::Label chordVoicingLabel;
+    juce::Label strumVoicingLabel;
 
     // Parameter attachments
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> chordVoicingAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> strumVoicingAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OmnifyAudioProcessorEditor)
 };

@@ -4,9 +4,16 @@
 
 //==============================================================================
 namespace ParamIDs {
-constexpr const char* GAIN = "gain";
-constexpr const char* MIX = "mix";
-constexpr const char* BYPASS = "bypass";
+constexpr const char* CHORD_VOICING_STYLE = "chordVoicingStyle";
+constexpr const char* STRUM_VOICING_STYLE = "strumVoicingStyle";
+}
+
+namespace ChordVoicingStyles {
+const juce::StringArray choices = {"RootPositionStyle", "Omni84Style", "FileStyle"};
+}
+
+namespace StrumVoicingStyles {
+const juce::StringArray choices = {"OmnichordStrumStyle", "PlainAscendingStrumStyle"};
 }
 
 //==============================================================================

@@ -9,38 +9,32 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
 
-    // Gain slider
-    gainSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    addAndMakeVisible(gainSlider);
+    // Chord Voicing Style combo box
+    chordVoicingLabel.setText("Chord Voicing Style", juce::dontSendNotification);
+    chordVoicingLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(chordVoicingLabel);
 
-    gainLabel.setText("Gain", juce::dontSendNotification);
-    gainLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(gainLabel);
+    for (int i = 0; i < ChordVoicingStyles::choices.size(); ++i)
+        chordVoicingCombo.addItem(ChordVoicingStyles::choices[i], i + 1);
+    addAndMakeVisible(chordVoicingCombo);
 
-    // Mix slider
-    mixSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    mixSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    addAndMakeVisible(mixSlider);
+    // Strum Voicing Style combo box
+    strumVoicingLabel.setText("Strum Voicing Style", juce::dontSendNotification);
+    strumVoicingLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(strumVoicingLabel);
 
-    mixLabel.setText("Mix", juce::dontSendNotification);
-    mixLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(mixLabel);
-
-    // Bypass button
-    bypassButton.setButtonText("Bypass");
-    addAndMakeVisible(bypassButton);
+    for (int i = 0; i < StrumVoicingStyles::choices.size(); ++i)
+        strumVoicingCombo.addItem(StrumVoicingStyles::choices[i], i + 1);
+    addAndMakeVisible(strumVoicingCombo);
 
     // Attach parameters
     auto& params = processorRef.getParameters();
-    gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-        params, ParamIDs::GAIN, gainSlider);
-    mixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-        params, ParamIDs::MIX, mixSlider);
-    bypassAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
-        params, ParamIDs::BYPASS, bypassButton);
+    chordVoicingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+        params, ParamIDs::CHORD_VOICING_STYLE, chordVoicingCombo);
+    strumVoicingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+        params, ParamIDs::STRUM_VOICING_STYLE, strumVoicingCombo);
 
-    setSize(300, 200);
+    setSize(300, 120);
 }
 
 OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() = default;
@@ -56,19 +50,16 @@ void OmnifyAudioProcessorEditor::resized() {
     // Title at top
     titleLabel.setBounds(bounds.removeFromTop(40));
 
-    // Knobs area
-    auto knobArea = bounds.removeFromTop(120);
-    auto knobWidth = knobArea.getWidth() / 2;
+    // Combo boxes
+    auto comboArea = bounds.reduced(10, 5);
 
-    // Gain knob (left)
-    auto gainArea = knobArea.removeFromLeft(knobWidth);
-    gainLabel.setBounds(gainArea.removeFromTop(20));
-    gainSlider.setBounds(gainArea);
+    auto chordComboArea = comboArea.removeFromTop(25);
+    chordVoicingLabel.setBounds(chordComboArea.removeFromLeft(120));
+    chordVoicingCombo.setBounds(chordComboArea);
 
-    // Mix knob (right)
-    mixLabel.setBounds(knobArea.removeFromTop(20));
-    mixSlider.setBounds(knobArea);
+    comboArea.removeFromTop(5);
 
-    // Bypass button at bottom
-    bypassButton.setBounds(bounds.reduced(80, 5));
+    auto strumComboArea = comboArea.removeFromTop(25);
+    strumVoicingLabel.setBounds(strumComboArea.removeFromLeft(120));
+    strumVoicingCombo.setBounds(strumComboArea);
 }

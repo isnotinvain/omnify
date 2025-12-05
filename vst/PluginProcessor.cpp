@@ -6,25 +6,19 @@
 juce::AudioProcessorValueTreeState::ParameterLayout OmnifyAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    // Gain parameter (0.0 to 2.0, default 1.0) - for UI demo, does nothing
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        ParamIDs::GAIN,
-        "Gain",
-        juce::NormalisableRange<float>(0.0f, 2.0f, 0.01f),
-        1.0f));
+    // Chord Voicing Style parameter
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        ParamIDs::CHORD_VOICING_STYLE,
+        "Chord Voicing Style",
+        ChordVoicingStyles::choices,
+        0));
 
-    // Mix parameter (0.0 to 1.0, default 1.0) - for UI demo, does nothing
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
-        ParamIDs::MIX,
-        "Mix",
-        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
-        1.0f));
-
-    // Bypass parameter (on/off, default off) - for UI demo, does nothing
-    layout.add(std::make_unique<juce::AudioParameterBool>(
-        ParamIDs::BYPASS,
-        "Bypass",
-        false));
+    // Strum Voicing Style parameter
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        ParamIDs::STRUM_VOICING_STYLE,
+        "Strum Voicing Style",
+        StrumVoicingStyles::choices,
+        0));
 
     return layout;
 }
