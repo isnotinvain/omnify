@@ -2,7 +2,8 @@
   "files.exclude": {
     "**/__pycache__": true,
     "**/.venv": true,
-    "**/.ruff_cache": true
+    "**/.ruff_cache": true,
+    "vst/build": true
   },
   "files.associations": {
     "__bit_reference": "cpp",
