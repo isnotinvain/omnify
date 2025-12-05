@@ -16,10 +16,11 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     // Load the GUI layout - from file in debug mode for hot reload, from binary data in release
 #if JUCE_DEBUG
     auto xmlFile = juce::File(__FILE__).getParentDirectory().getChildFile("Resources/magic.xml");
-    if (xmlFile.existsAsFile())
+    if (xmlFile.existsAsFile()) {
         magicState.setGuiValueTree(xmlFile);
-    else
+    } else {
         magicState.setGuiValueTree(BinaryData::magic_xml, BinaryData::magic_xmlSize);
+    }
 #else
     magicState.setGuiValueTree(BinaryData::magic_xml, BinaryData::magic_xmlSize);
 #endif

@@ -15,19 +15,9 @@ from typing import Annotated, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
+from daemomnify import vst_params
 from daemomnify.chord_quality import ChordQuality
 from daemomnify.settings import DaemomnifySettings
-from daemomnify.vst_params import (
-    VSTBool,
-    VSTChordQualityMap,
-    VSTChoice,
-    VSTFloat,
-    VSTInt,
-    VSTIntChoice,
-    VSTParam,
-    VSTSkip,
-    VSTString,
-)
 
 
 def snake_to_camel(name: str) -> str:
@@ -46,13 +36,13 @@ def snake_to_screaming(name: str) -> str:
     return name.upper()
 
 
-def get_vst_annotation(annotation) -> VSTParam | None:
+def get_vst_annotation(annotation) -> vst_params.VSTParam | None:
     """Extract VSTParam from an Annotated type's metadata."""
     if get_origin(annotation) is not Annotated:
         return None
 
     for arg in get_args(annotation):
-        if isinstance(arg, VSTParam):
+        if isinstance(arg, vst_params.VSTParam):
             return arg
     return None
 
@@ -130,7 +120,7 @@ def collect_params(
             full_name = field_name
 
         # Skip if marked with VSTSkip
-        if isinstance(vst_param, VSTSkip):
+        if isinstance(vst_param, vst_params.VSTSkip):
             continue
 
         # Check if this is a discriminated union (choice with nested types)
@@ -139,16 +129,18 @@ def collect_params(
             type_values, labels, variant_types = union_info
 
             # Add the type selector parameter
-            label = vst_param.label if isinstance(vst_param, VSTChoice) and vst_param.label else field_name.replace("_", " ").title()
-            params.append({
-                "name": full_name,
-                "param_id": snake_to_camel(full_name),
-                "label": label,
-                "type": "choice",
-                "choices": labels,  # Use labels for display
-                "values": type_values,  # Programmatic values for serialization
-                "namespace": snake_to_pascal(full_name) + "Choices",
-            })
+            label = vst_param.label if isinstance(vst_param, vst_params.VSTChoice) and vst_param.label else field_name.replace("_", " ").title()
+            params.append(
+                {
+                    "name": full_name,
+                    "param_id": snake_to_camel(full_name),
+                    "label": label,
+                    "type": "choice",
+                    "choices": labels,  # Use labels for display
+                    "values": type_values,  # Programmatic values for serialization
+                    "namespace": snake_to_pascal(full_name) + "Choices",
+                }
+            )
 
             # Recursively collect params from each variant
             for variant_type, type_value in zip(variant_types, type_values):
@@ -162,70 +154,80 @@ def collect_params(
             continue
 
         # Handle simple annotated types
-        if isinstance(vst_param, VSTInt):
-            params.append({
-                "name": full_name,
-                "param_id": snake_to_camel(full_name),
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "int",
-                "min": vst_param.min,
-                "max": vst_param.max,
-                "default": vst_param.default,
-                "parent_variant": parent_variant,
-            })
-        elif isinstance(vst_param, VSTFloat):
-            params.append({
-                "name": full_name,
-                "param_id": snake_to_camel(full_name),
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "float",
-                "min": vst_param.min,
-                "max": vst_param.max,
-                "default": vst_param.default,
-                "parent_variant": parent_variant,
-            })
-        elif isinstance(vst_param, VSTBool):
-            params.append({
-                "name": full_name,
-                "param_id": snake_to_camel(full_name),
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "bool",
-                "default": vst_param.default,
-                "parent_variant": parent_variant,
-            })
-        elif isinstance(vst_param, VSTIntChoice):
+        if isinstance(vst_param, vst_params.VSTInt):
+            params.append(
+                {
+                    "name": full_name,
+                    "param_id": snake_to_camel(full_name),
+                    "label": vst_param.label or field_name.replace("_", " ").title(),
+                    "type": "int",
+                    "min": vst_param.min,
+                    "max": vst_param.max,
+                    "default": vst_param.default,
+                    "parent_variant": parent_variant,
+                }
+            )
+        elif isinstance(vst_param, vst_params.VSTFloat):
+            params.append(
+                {
+                    "name": full_name,
+                    "param_id": snake_to_camel(full_name),
+                    "label": vst_param.label or field_name.replace("_", " ").title(),
+                    "type": "float",
+                    "min": vst_param.min,
+                    "max": vst_param.max,
+                    "default": vst_param.default,
+                    "parent_variant": parent_variant,
+                }
+            )
+        elif isinstance(vst_param, vst_params.VSTBool):
+            params.append(
+                {
+                    "name": full_name,
+                    "param_id": snake_to_camel(full_name),
+                    "label": vst_param.label or field_name.replace("_", " ").title(),
+                    "type": "bool",
+                    "default": vst_param.default,
+                    "parent_variant": parent_variant,
+                }
+            )
+        elif isinstance(vst_param, vst_params.VSTIntChoice):
             # Generate choices as strings from min to max
             choices = [str(i) for i in range(vst_param.min, vst_param.max + 1)]
-            params.append({
-                "name": full_name,
-                "param_id": snake_to_camel(full_name),
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "int_choice",
-                "choices": choices,
-                "namespace": snake_to_pascal(full_name) + "Choices",
-                "default": vst_param.default - vst_param.min,  # Convert to index
-                "parent_variant": parent_variant,
-            })
-        elif isinstance(vst_param, VSTString):
+            params.append(
+                {
+                    "name": full_name,
+                    "param_id": snake_to_camel(full_name),
+                    "label": vst_param.label or field_name.replace("_", " ").title(),
+                    "type": "int_choice",
+                    "choices": choices,
+                    "namespace": snake_to_pascal(full_name) + "Choices",
+                    "default": vst_param.default - vst_param.min,  # Convert to index
+                    "parent_variant": parent_variant,
+                }
+            )
+        elif isinstance(vst_param, vst_params.VSTString):
             # For now, skip strings as JUCE doesn't have a native string parameter
             # Could implement as a special case later
             print(f"  Warning: Skipping string field {full_name} (not supported yet)")
-        elif isinstance(vst_param, VSTChordQualityMap):
+        elif isinstance(vst_param, vst_params.VSTChordQualityMap):
             # Expand to one int parameter per chord quality
             for quality in ChordQuality:
                 quality_name = quality.name.lower()
                 param_name = f"{full_name}_{quality_name}"
                 label_prefix = vst_param.label_prefix or field_name.replace("_", " ").title()
-                params.append({
-                    "name": param_name,
-                    "param_id": snake_to_camel(param_name),
-                    "label": f"{label_prefix} {quality.name.replace('_', ' ').title()}",
-                    "type": "int",
-                    "min": vst_param.min,
-                    "max": vst_param.max,
-                    "default": 0,
-                    "parent_variant": parent_variant,
-                })
+                params.append(
+                    {
+                        "name": param_name,
+                        "param_id": snake_to_camel(param_name),
+                        "label": f"{label_prefix} {quality.name.replace('_', ' ').title()}",
+                        "type": "int",
+                        "min": vst_param.min,
+                        "max": vst_param.max,
+                        "default": 0,
+                        "parent_variant": parent_variant,
+                    }
+                )
 
     return params
 
@@ -301,7 +303,7 @@ def generate_cpp(params: list[dict]) -> str:
         if p["type"] == "choice":
             lines.append(f"    // {p['label']}")
             lines.append("    layout.add(std::make_unique<juce::AudioParameterChoice>(")
-            lines.append(f'        juce::ParameterID(ParamIDs::{snake_to_screaming(p["name"])}, 1),')
+            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
             lines.append(f'        "{p["label"]}",')
             lines.append(f"        {p['namespace']}::labels,")
             lines.append("        0));")
@@ -309,7 +311,7 @@ def generate_cpp(params: list[dict]) -> str:
         elif p["type"] == "int_choice":
             lines.append(f"    // {p['label']}{variant_comment}")
             lines.append("    layout.add(std::make_unique<juce::AudioParameterChoice>(")
-            lines.append(f'        juce::ParameterID(ParamIDs::{snake_to_screaming(p["name"])}, 1),')
+            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
             lines.append(f'        "{p["label"]}",')
             lines.append(f"        {p['namespace']}::choices,")
             lines.append(f"        {p['default']}));")
@@ -317,22 +319,22 @@ def generate_cpp(params: list[dict]) -> str:
         elif p["type"] == "int":
             lines.append(f"    // {p['label']}{variant_comment}")
             lines.append("    layout.add(std::make_unique<juce::AudioParameterInt>(")
-            lines.append(f'        juce::ParameterID(ParamIDs::{snake_to_screaming(p["name"])}, 1),')
+            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
             lines.append(f'        "{p["label"]}",')
             lines.append(f"        {p['min']}, {p['max']}, {p.get('default', p['min'])}));")
             lines.append("")
         elif p["type"] == "float":
             lines.append(f"    // {p['label']}{variant_comment}")
             lines.append("    layout.add(std::make_unique<juce::AudioParameterFloat>(")
-            lines.append(f'        juce::ParameterID(ParamIDs::{snake_to_screaming(p["name"])}, 1),')
+            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
             lines.append(f'        "{p["label"]}",')
-            default = p.get('default', p['min'])
+            default = p.get("default", p["min"])
             lines.append(f"        {p['min']}f, {p['max']}f, {default}f));")
             lines.append("")
         elif p["type"] == "bool":
             lines.append(f"    // {p['label']}{variant_comment}")
             lines.append("    layout.add(std::make_unique<juce::AudioParameterBool>(")
-            lines.append(f'        juce::ParameterID(ParamIDs::{snake_to_screaming(p["name"])}, 1),')
+            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
             lines.append(f'        "{p["label"]}",')
             default = "true" if p.get("default") else "false"
             lines.append(f"        {default}));")
@@ -359,7 +361,7 @@ def main():
 
     print(f"\nFound {len(params)} parameters:")
     for p in params:
-        variant_info = f" (variant: {p['parent_variant']})" if p.get('parent_variant') else ""
+        variant_info = f" (variant: {p['parent_variant']})" if p.get("parent_variant") else ""
         print(f"  {p['name']}: {p['type']}{variant_info}")
 
     # Generate files

@@ -8,17 +8,7 @@ from textwrap import dedent
 import mido
 
 from daemomnify.chord_quality import ChordQuality
-from daemomnify.settings import (
-    DEFAULT_SETTINGS,
-    CCPerChordQuality,
-    CCRangePerChordQuality,
-    DaemomnifySettings,
-    MidiButton,
-    MidiCCButton,
-    MidiNoteButton,
-    NotePerChordQuality,
-    save_settings,
-)
+from daemomnify import settings
 from daemomnify.util import irange
 
 
@@ -83,7 +73,7 @@ def get_next_cc(inport) -> int:
 
 
 # TODO the latch stuff here makes no sense for the silence button
-def select_midi_button(inport) -> MidiButton:
+def select_midi_button(inport) -> settings.MidiButton:
     print(
         dedent("""
         There are 2 ways you can set this up:
@@ -103,18 +93,18 @@ def select_midi_button(inport) -> MidiButton:
             print("Please press the note you want to use:")
             note = get_next_note_on(inport)
             # TODO ensure note isn't used elsewhere in settings
-            return MidiNoteButton(note=note)
+            return settings.MidiNoteButton(note=note)
         case 2:
             print("Do you want to use 1. momentary or 2. toggle mode for this cc button?")
             momentary_or_toggle = select_int(irange(1, 2))
             is_toggle = momentary_or_toggle == 2
             print("Please press the cc button you want to use:")
             cc = get_next_cc(inport)
-            return MidiCCButton(cc=cc, is_toggle=is_toggle)
+            return settings.MidiCCButton(cc=cc, is_toggle=is_toggle)
 
 
 def run_wizard():
-    new_settings = DaemomnifySettings.model_construct(**DEFAULT_SETTINGS.model_dump())
+    new_settings = settings.DaemomnifySettings.model_construct(**settings.DEFAULT_SETTINGS.model_dump())
     print("Let's get you setup. Make sure you've plugged in your midi controller before we contiue. Ready? [y/n]")
     response = input()
 
@@ -168,7 +158,7 @@ def run_wizard():
                         else:
                             note_mapping[note] = chord
                             break
-                new_settings.chord_quality_selection_style = NotePerChordQuality(note_mapping=note_mapping)
+                new_settings.chord_quality_selection_style = settings.NotePerChordQuality(note_mapping=note_mapping)
             case 2:
                 cc_mapping = {}
                 for chord in ChordQuality:
@@ -180,17 +170,17 @@ def run_wizard():
                         else:
                             cc_mapping[cc] = chord
                             break
-                new_settings.chord_quality_selection_style = CCPerChordQuality(cc_mapping=cc_mapping)
+                new_settings.chord_quality_selection_style = settings.CCPerChordQuality(cc_mapping=cc_mapping)
             case 3:
                 print("Please press / slide / wiggle the controller to use for all chords:")
                 cc = get_next_cc(inport)
-                new_settings.chord_quality_selection_style = CCRangePerChordQuality(cc=cc)
+                new_settings.chord_quality_selection_style = settings.CCRangePerChordQuality(cc=cc)
 
         print("Now we need to configure how you will switch between latch / unlatched chord mode.")
         new_settings.latch_toggle_button = select_midi_button(inport)
         print("Now we need to configure how you will silence any ongoing chords.")
         new_settings.stop_button = select_midi_button(inport)
 
-        validated = DaemomnifySettings(**new_settings.model_dump())
-        save_settings(validated)
+        validated = settings.DaemomnifySettings(**new_settings.model_dump())
+        settings.save_settings(validated)
         print("Alright, you're ready to go! Please relaunch Daemomnify.")

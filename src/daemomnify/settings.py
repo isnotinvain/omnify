@@ -12,22 +12,14 @@ from daemomnify.chord_voicings.plain_ascending_strum_style import PlainAscending
 from daemomnify.chord_voicings.root_position_style import (
     RootPositionStyle,
 )
-from daemomnify.vst_params import (
-    VSTBool,
-    VSTChoice,
-    VSTChordQualityMap,
-    VSTFloat,
-    VSTInt,
-    VSTIntChoice,
-    VSTSkip,
-)
+from daemomnify import vst_params
 
 
 class NotePerChordQuality(BaseModel):
     type: Literal["NotePerChordQuality"] = "NotePerChordQuality"
     note_mapping: Annotated[
         dict[int, chord_quality.ChordQuality],
-        VSTChordQualityMap(min=0, max=127, label_prefix="Note for"),
+        vst_params.VSTChordQualityMap(min=0, max=127, label_prefix="Note for"),
     ]
 
     @classmethod
@@ -44,7 +36,7 @@ class CCPerChordQuality(BaseModel):
     type: Literal["CCPerChordQuality"] = "CCPerChordQuality"
     cc_mapping: Annotated[
         dict[int, chord_quality.ChordQuality],
-        VSTChordQualityMap(min=0, max=127, label_prefix="CC for"),
+        vst_params.VSTChordQualityMap(min=0, max=127, label_prefix="CC for"),
     ]
 
     @classmethod
@@ -59,7 +51,7 @@ class CCPerChordQuality(BaseModel):
 
 class CCRangePerChordQuality(BaseModel):
     type: Literal["CCRangePerChordQuality"] = "CCRangePerChordQuality"
-    cc: Annotated[int, VSTInt(min=0, max=127, label="CC Number")]
+    cc: Annotated[int, vst_params.VSTInt(min=0, max=127, label="CC Number")]
 
     @classmethod
     def vst_label(cls) -> str:
@@ -75,7 +67,7 @@ class CCRangePerChordQuality(BaseModel):
 ChordQualitySelectionStyle = Annotated[
     NotePerChordQuality | CCPerChordQuality | CCRangePerChordQuality,
     Field(discriminator="type"),
-    VSTChoice(label="Chord Quality Selection"),
+    vst_params.VSTChoice(label="Chord Quality Selection"),
 ]
 
 
@@ -87,7 +79,7 @@ class ButtonAction(Enum):
 
 class MidiNoteButton(BaseModel):
     type: Literal["MidiNoteButton"] = "MidiNoteButton"
-    note: Annotated[int, VSTInt(min=0, max=127, label="Note")]
+    note: Annotated[int, vst_params.VSTInt(min=0, max=127, label="Note")]
 
     @classmethod
     def vst_label(cls) -> str:
@@ -101,8 +93,8 @@ class MidiNoteButton(BaseModel):
 
 class MidiCCButton(BaseModel):
     type: Literal["MidiCCButton"] = "MidiCCButton"
-    cc: Annotated[int, VSTInt(min=0, max=127, label="CC Number")]
-    is_toggle: Annotated[bool, VSTBool(label="Is Toggle")]
+    cc: Annotated[int, vst_params.VSTInt(min=0, max=127, label="CC Number")]
+    is_toggle: Annotated[bool, vst_params.VSTBool(label="Is Toggle")]
 
     @classmethod
     def vst_label(cls) -> str:
@@ -120,32 +112,32 @@ class MidiCCButton(BaseModel):
 MidiButton = Annotated[
     MidiNoteButton | MidiCCButton,
     Field(discriminator="type"),
-    VSTChoice(label="Button Type"),
+    vst_params.VSTChoice(label="Button Type"),
 ]
 
 
 ChordStyleConfig = Annotated[
     RootPositionStyle | FileStyle | Omni84Style,
     Field(discriminator="type"),
-    VSTChoice(label="Chord Voicing Style"),
+    vst_params.VSTChoice(label="Chord Voicing Style"),
 ]
 StrumStyleConfig = Annotated[
     PlainAscendingStrumStyle | OmnichordStrumStyle,
     Field(discriminator="type"),
-    VSTChoice(label="Strum Voicing Style"),
+    vst_params.VSTChoice(label="Strum Voicing Style"),
 ]
 
 
 class DaemomnifySettings(BaseModel):
-    midi_device_name: Annotated[str, VSTSkip()]
+    midi_device_name: Annotated[str, vst_params.VSTSkip()]
     chord_voicing_style: ChordStyleConfig
-    chord_channel: Annotated[int, VSTIntChoice(min=1, max=16, default=1, label="Chord Channel")]
-    strum_channel: Annotated[int, VSTIntChoice(min=1, max=16, default=2, label="Strum Channel")]
+    chord_channel: Annotated[int, vst_params.VSTIntChoice(min=1, max=16, default=1, label="Chord Channel")]
+    strum_channel: Annotated[int, vst_params.VSTIntChoice(min=1, max=16, default=2, label="Strum Channel")]
     strum_voicing_style: StrumStyleConfig
-    strum_cooldown_secs: Annotated[float, VSTFloat(min=0.0, max=5.0, label="Strum Cooldown (sec)")]
-    strum_gate_time_secs: Annotated[float, VSTFloat(min=0.0, max=5.0, label="Strum Gate Time (sec)")]
+    strum_cooldown_secs: Annotated[float, vst_params.VSTFloat(min=0.0, max=5.0, label="Strum Cooldown (sec)")]
+    strum_gate_time_secs: Annotated[float, vst_params.VSTFloat(min=0.0, max=5.0, label="Strum Gate Time (sec)")]
     chord_quality_selection_style: ChordQualitySelectionStyle
-    strum_plate_cc: Annotated[int, VSTInt(min=0, max=127, label="Strum Plate CC")]
+    strum_plate_cc: Annotated[int, vst_params.VSTInt(min=0, max=127, label="Strum Plate CC")]
     latch_toggle_button: MidiButton
     stop_button: MidiButton
 

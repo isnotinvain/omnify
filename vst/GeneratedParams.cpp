@@ -9,222 +9,193 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
 
     // Chord Voicing Style
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_VOICING_STYLE, 1),
-        "Chord Voicing Style",
-        ChordVoicingStyleChoices::labels,
-        0));
+        juce::ParameterID(ParamIDs::CHORD_VOICING_STYLE, 1), "Chord Voicing Style",
+        ChordVoicingStyleChoices::labels, 0));
 
     // Chord Channel
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_CHANNEL, 1),
-        "Chord Channel",
-        ChordChannelChoices::choices,
-        0));
+        juce::ParameterID(ParamIDs::CHORD_CHANNEL, 1), "Chord Channel",
+        ChordChannelChoices::choices, 0));
 
     // Strum Channel
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STRUM_CHANNEL, 1),
-        "Strum Channel",
-        StrumChannelChoices::choices,
-        1));
+        juce::ParameterID(ParamIDs::STRUM_CHANNEL, 1), "Strum Channel",
+        StrumChannelChoices::choices, 1));
 
     // Strum Voicing Style
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STRUM_VOICING_STYLE, 1),
-        "Strum Voicing Style",
-        StrumVoicingStyleChoices::labels,
-        0));
+        juce::ParameterID(ParamIDs::STRUM_VOICING_STYLE, 1), "Strum Voicing Style",
+        StrumVoicingStyleChoices::labels, 0));
 
     // Strum Cooldown (sec)
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID(ParamIDs::STRUM_COOLDOWN_SECS, 1),
-        "Strum Cooldown (sec)",
-        0.0f, 5.0f, 0.0f));
+        juce::ParameterID(ParamIDs::STRUM_COOLDOWN_SECS, 1), "Strum Cooldown (sec)", 0.0F, 5.0F,
+        0.0F));
 
     // Strum Gate Time (sec)
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID(ParamIDs::STRUM_GATE_TIME_SECS, 1),
-        "Strum Gate Time (sec)",
-        0.0f, 5.0f, 0.0f));
+        juce::ParameterID(ParamIDs::STRUM_GATE_TIME_SECS, 1), "Strum Gate Time (sec)", 0.0F, 5.0F,
+        0.0F));
 
     // Chord Quality Selection
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE, 1),
-        "Chord Quality Selection",
-        ChordQualitySelectionStyleChoices::labels,
-        0));
+        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE, 1), "Chord Quality Selection",
+        ChordQualitySelectionStyleChoices::labels, 0));
 
     // Note for Major (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR, 1),
-        "Note for Major",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR, 1),
+        "Note for Major", 0, 127, 0));
 
     // Note for Minor (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR, 1),
-        "Note for Minor",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR, 1),
+        "Note for Minor", 0, 127, 0));
 
     // Note for Dom 7 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DOM_7, 1),
-        "Note for Dom 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DOM_7, 1),
+        "Note for Dom 7", 0, 127, 0));
 
     // Note for Major 7 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR_7, 1),
-        "Note for Major 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR_7, 1),
+        "Note for Major 7", 0, 127, 0));
 
     // Note for Minor 7 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR_7, 1),
-        "Note for Minor 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR_7, 1),
+        "Note for Minor 7", 0, 127, 0));
 
     // Note for Dim 7 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DIM_7, 1),
-        "Note for Dim 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DIM_7, 1),
+        "Note for Dim 7", 0, 127, 0));
 
     // Note for Augmented (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_AUGMENTED, 1),
-        "Note for Augmented",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_AUGMENTED, 1),
+        "Note for Augmented", 0, 127, 0));
 
     // Note for Sus 4 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_SUS_4, 1),
-        "Note for Sus 4",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_SUS_4, 1),
+        "Note for Sus 4", 0, 127, 0));
 
     // Note for Add 9 (when NotePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_ADD_9, 1),
-        "Note for Add 9",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_ADD_9, 1),
+        "Note for Add 9", 0, 127, 0));
 
     // CC for Major (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR, 1),
-        "CC for Major",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR, 1),
+        "CC for Major", 0, 127, 0));
 
     // CC for Minor (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR, 1),
-        "CC for Minor",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR, 1),
+        "CC for Minor", 0, 127, 0));
 
     // CC for Dom 7 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DOM_7, 1),
-        "CC for Dom 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DOM_7, 1),
+        "CC for Dom 7", 0, 127, 0));
 
     // CC for Major 7 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR_7, 1),
-        "CC for Major 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR_7, 1),
+        "CC for Major 7", 0, 127, 0));
 
     // CC for Minor 7 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR_7, 1),
-        "CC for Minor 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR_7, 1),
+        "CC for Minor 7", 0, 127, 0));
 
     // CC for Dim 7 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DIM_7, 1),
-        "CC for Dim 7",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DIM_7, 1),
+        "CC for Dim 7", 0, 127, 0));
 
     // CC for Augmented (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_AUGMENTED, 1),
-        "CC for Augmented",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_AUGMENTED, 1),
+        "CC for Augmented", 0, 127, 0));
 
     // CC for Sus 4 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_SUS_4, 1),
-        "CC for Sus 4",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_SUS_4, 1),
+        "CC for Sus 4", 0, 127, 0));
 
     // CC for Add 9 (when CCPerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_ADD_9, 1),
-        "CC for Add 9",
-        0, 127, 0));
+        juce::ParameterID(
+            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_ADD_9, 1),
+        "CC for Add 9", 0, 127, 0));
 
     // CC Number (when CCRangePerChordQuality)
     layout.add(std::make_unique<juce::AudioParameterInt>(
         juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCRANGEPERCHORDQUALITY_CC, 1),
-        "CC Number",
-        0, 127, 0));
+        "CC Number", 0, 127, 0));
 
     // Strum Plate CC
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STRUM_PLATE_CC, 1),
-        "Strum Plate CC",
-        0, 127, 0));
+        juce::ParameterID(ParamIDs::STRUM_PLATE_CC, 1), "Strum Plate CC", 0, 127, 0));
 
     // Button Type
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON, 1),
-        "Button Type",
-        LatchToggleButtonChoices::labels,
-        0));
+        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON, 1), "Button Type",
+        LatchToggleButtonChoices::labels, 0));
 
     // Note (when MidiNoteButton)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDINOTEBUTTON_NOTE, 1),
-        "Note",
-        0, 127, 0));
+        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDINOTEBUTTON_NOTE, 1), "Note", 0, 127,
+        0));
 
     // CC Number (when MidiCCButton)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_CC, 1),
-        "CC Number",
-        0, 127, 0));
+        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_CC, 1), "CC Number", 0, 127,
+        0));
 
     // Is Toggle (when MidiCCButton)
     layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1),
-        "Is Toggle",
+        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1), "Is Toggle",
         false));
 
     // Button Type
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON, 1),
-        "Button Type",
-        StopButtonChoices::labels,
-        0));
+        juce::ParameterID(ParamIDs::STOP_BUTTON, 1), "Button Type", StopButtonChoices::labels, 0));
 
     // Note (when MidiNoteButton)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDINOTEBUTTON_NOTE, 1),
-        "Note",
-        0, 127, 0));
+        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDINOTEBUTTON_NOTE, 1), "Note", 0, 127, 0));
 
     // CC Number (when MidiCCButton)
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_CC, 1),
-        "CC Number",
-        0, 127, 0));
+        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_CC, 1), "CC Number", 0, 127, 0));
 
     // Is Toggle (when MidiCCButton)
     layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1),
-        "Is Toggle",
-        false));
+        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1), "Is Toggle", false));
 
     return layout;
 }
 
-} // namespace GeneratedParams
+}  // namespace GeneratedParams
