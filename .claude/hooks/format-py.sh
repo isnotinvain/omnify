@@ -2,20 +2,31 @@
 
 # Shared script to lint, fix, and format Python files
 # Silent on success, prints red error on failure
+# By default, fails on errors. Use --no-fail to always exit 0 (for hooks).
 
-FILE_PATH="$1"
+FAIL_FAST=true
+FILE_PATH=""
+
+for arg in "$@"; do
+    case $arg in
+        --no-fail)
+            FAIL_FAST=false
+            ;;
+        *)
+            FILE_PATH="$arg"
+            ;;
+    esac
+done
+
+if [ "$FAIL_FAST" = true ]; then
+    set -euo pipefail
+fi
 
 # Check if the file is a Python file
 if [[ "$FILE_PATH" == *.py ]]; then
     # Step 1: Run ruff check with auto-fix (fixes linting issues like import sorting)
-    if ! uv run ruff check --fix "$FILE_PATH" 2>&1; then
-        echo -e "\033[31mruff check failed on $FILE_PATH\033[0m"
-        exit 0
-    fi
+    uv run ruff check --fix "$FILE_PATH"
 
     # Step 2: Run ruff format (formats the fixed code)
-    if ! uv run ruff format "$FILE_PATH" 2>&1; then
-        echo -e "\033[31mruff format failed on $FILE_PATH\033[0m"
-        exit 0
-    fi
+    uv run ruff format "$FILE_PATH"
 fi

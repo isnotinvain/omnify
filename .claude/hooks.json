@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "file_path=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path'); \"$(dirname \"$0\")/hooks/format-py.sh\" \"$file_path\"; \"$(dirname \"$0\")/hooks/format-cpp.sh\" \"$file_path\""
+            "command": "file_path=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path'); \"$(dirname \"$0\")/hooks/format-py.sh\" --no-fail \"$file_path\"; \"$(dirname \"$0\")/hooks/format-cpp.sh\" --no-fail \"$file_path\""
           }
         ]
       }
