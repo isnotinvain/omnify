@@ -2,9 +2,7 @@
 
 #include "../LcarsColors.h"
 
-MidiLearnComponent::MidiLearnComponent() {
-    setWantsKeyboardFocus(true);
-}
+MidiLearnComponent::MidiLearnComponent() { setWantsKeyboardFocus(true); }
 
 MidiLearnComponent::~MidiLearnComponent() {
     if (currentlyLearning.load() == this) {
@@ -29,16 +27,15 @@ MidiLearnedValue MidiLearnComponent::getLearnedValue() const {
     return {learnedType.load(), learnedValue.load()};
 }
 
-void MidiLearnComponent::setAcceptMode(MidiAcceptMode mode) {
-    acceptMode = mode;
-}
+void MidiLearnComponent::setAcceptMode(MidiAcceptMode mode) { acceptMode = mode; }
 
 void MidiLearnComponent::processNextMidiBuffer(const juce::MidiBuffer& buffer) {
     if (!isLearning.load()) {
         return;
     }
 
-    bool acceptNotes = acceptMode == MidiAcceptMode::NotesOnly || acceptMode == MidiAcceptMode::Both;
+    bool acceptNotes =
+        acceptMode == MidiAcceptMode::NotesOnly || acceptMode == MidiAcceptMode::Both;
     bool acceptCCs = acceptMode == MidiAcceptMode::CCsOnly || acceptMode == MidiAcceptMode::Both;
 
     for (const auto& metadata : buffer) {
@@ -96,13 +93,13 @@ void MidiLearnComponent::paint(juce::Graphics& g) {
     boxBounds = bounds.removeFromLeft(boxWidth);
 
     if (isLearning.load()) {
-        g.setColour(LcarsColors::yellow.withAlpha(0.3f));
+        g.setColour(juce::Colours::black);
     } else {
-        g.setColour(LcarsColors::grey.darker());
+        g.setColour(juce::Colours::black);
     }
     g.fillRect(boxBounds);
 
-    g.setColour(isLearning.load() ? LcarsColors::yellow : LcarsColors::purple);
+    g.setColour(isLearning.load() ? LcarsColors::purple : LcarsColors::yellow);
     g.drawRect(boxBounds, 2);
 
     g.setColour(LcarsColors::yellow);

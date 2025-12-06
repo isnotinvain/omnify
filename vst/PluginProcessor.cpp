@@ -2,6 +2,7 @@
 
 #include "BinaryData.h"
 #include "ui/GuiItems.h"
+#include "ui/LcarsLookAndFeel.h"
 
 //==============================================================================
 OmnifyAudioProcessor::OmnifyAudioProcessor()
@@ -44,6 +45,7 @@ void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
     builder.registerJUCEFactories();
     builder.registerJUCELookAndFeels();
+    builder.registerLookAndFeel("Lcars", std::make_unique<LcarsLookAndFeel>());
     builder.registerFactory("OmnifyMidiLearn", &MidiLearnItem::factory);
     builder.registerFactory("ChordQualitySelector", &ChordQualitySelectorItem::factory);
 }
