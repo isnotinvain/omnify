@@ -7,7 +7,7 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     : foleys::MagicProcessor(BusesProperties()
                                  .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                  .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      parameters(*this, nullptr, "PARAMETERS", GeneratedParams::createParameterLayout()) {
+      parameters(*this, nullptr, "PARAMETERS", GeneratedParams::createParameterLayout(params)) {
     FOLEYS_SET_SOURCE_PATH(__FILE__);
 
     // Update parameter map after APVTS is created so Foleys can see the parameters

@@ -16,6 +16,7 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor {
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
    private:
+    GeneratedParams::Params params;
     juce::AudioProcessorValueTreeState parameters;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OmnifyAudioProcessor)

@@ -44,81 +44,68 @@ inline const juce::StringArray values = {"MidiNoteButton", "MidiCCButton"};
 
 // Cached parameter pointers
 struct Params {
-    std::atomic<float>* chord_channel = nullptr;
-    std::atomic<float>* strum_channel = nullptr;
-    std::atomic<float>* strum_cooldown_secs = nullptr;
-    std::atomic<float>* strum_gate_time_secs = nullptr;
-    std::atomic<float>* strum_plate_cc = nullptr;
+    juce::AudioParameterChoice* chord_channel = nullptr;
+    juce::AudioParameterChoice* strum_channel = nullptr;
+    juce::AudioParameterFloat* strum_cooldown_secs = nullptr;
+    juce::AudioParameterFloat* strum_gate_time_secs = nullptr;
+    juce::AudioParameterInt* strum_plate_cc = nullptr;
     struct ChordVoicingStyleParams {
-        std::atomic<float>* chord_voicing_style = nullptr;
-        void init(juce::AudioProcessorValueTreeState& apvts);
+        juce::AudioParameterChoice* chord_voicing_style = nullptr;
     } chord_voicing_style;
     struct StrumVoicingStyleParams {
-        std::atomic<float>* strum_voicing_style = nullptr;
-        void init(juce::AudioProcessorValueTreeState& apvts);
+        juce::AudioParameterChoice* strum_voicing_style = nullptr;
     } strum_voicing_style;
     struct ChordQualitySelectionStyleParams {
-        std::atomic<float>* chord_quality_selection_style = nullptr;
+        juce::AudioParameterChoice* chord_quality_selection_style = nullptr;
         struct NoteperchordqualityParams {
-            std::atomic<float>* note_mapping_major = nullptr;
-            std::atomic<float>* note_mapping_minor = nullptr;
-            std::atomic<float>* note_mapping_dom_7 = nullptr;
-            std::atomic<float>* note_mapping_major_7 = nullptr;
-            std::atomic<float>* note_mapping_minor_7 = nullptr;
-            std::atomic<float>* note_mapping_dim_7 = nullptr;
-            std::atomic<float>* note_mapping_augmented = nullptr;
-            std::atomic<float>* note_mapping_sus_4 = nullptr;
-            std::atomic<float>* note_mapping_add_9 = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* note_mapping_major = nullptr;
+            juce::AudioParameterInt* note_mapping_minor = nullptr;
+            juce::AudioParameterInt* note_mapping_dom_7 = nullptr;
+            juce::AudioParameterInt* note_mapping_major_7 = nullptr;
+            juce::AudioParameterInt* note_mapping_minor_7 = nullptr;
+            juce::AudioParameterInt* note_mapping_dim_7 = nullptr;
+            juce::AudioParameterInt* note_mapping_augmented = nullptr;
+            juce::AudioParameterInt* note_mapping_sus_4 = nullptr;
+            juce::AudioParameterInt* note_mapping_add_9 = nullptr;
         } NotePerChordQuality;
         struct CcperchordqualityParams {
-            std::atomic<float>* cc_mapping_major = nullptr;
-            std::atomic<float>* cc_mapping_minor = nullptr;
-            std::atomic<float>* cc_mapping_dom_7 = nullptr;
-            std::atomic<float>* cc_mapping_major_7 = nullptr;
-            std::atomic<float>* cc_mapping_minor_7 = nullptr;
-            std::atomic<float>* cc_mapping_dim_7 = nullptr;
-            std::atomic<float>* cc_mapping_augmented = nullptr;
-            std::atomic<float>* cc_mapping_sus_4 = nullptr;
-            std::atomic<float>* cc_mapping_add_9 = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* cc_mapping_major = nullptr;
+            juce::AudioParameterInt* cc_mapping_minor = nullptr;
+            juce::AudioParameterInt* cc_mapping_dom_7 = nullptr;
+            juce::AudioParameterInt* cc_mapping_major_7 = nullptr;
+            juce::AudioParameterInt* cc_mapping_minor_7 = nullptr;
+            juce::AudioParameterInt* cc_mapping_dim_7 = nullptr;
+            juce::AudioParameterInt* cc_mapping_augmented = nullptr;
+            juce::AudioParameterInt* cc_mapping_sus_4 = nullptr;
+            juce::AudioParameterInt* cc_mapping_add_9 = nullptr;
         } CCPerChordQuality;
         struct CcrangeperchordqualityParams {
-            std::atomic<float>* cc = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* cc = nullptr;
         } CCRangePerChordQuality;
-        void init(juce::AudioProcessorValueTreeState& apvts);
     } chord_quality_selection_style;
     struct LatchToggleButtonParams {
-        std::atomic<float>* latch_toggle_button = nullptr;
+        juce::AudioParameterChoice* latch_toggle_button = nullptr;
         struct MidinotebuttonParams {
-            std::atomic<float>* note = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* note = nullptr;
         } MidiNoteButton;
         struct MidiccbuttonParams {
-            std::atomic<float>* cc = nullptr;
-            std::atomic<float>* is_toggle = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* cc = nullptr;
+            juce::AudioParameterBool* is_toggle = nullptr;
         } MidiCCButton;
-        void init(juce::AudioProcessorValueTreeState& apvts);
     } latch_toggle_button;
     struct StopButtonParams {
-        std::atomic<float>* stop_button = nullptr;
+        juce::AudioParameterChoice* stop_button = nullptr;
         struct MidinotebuttonParams {
-            std::atomic<float>* note = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* note = nullptr;
         } MidiNoteButton;
         struct MidiccbuttonParams {
-            std::atomic<float>* cc = nullptr;
-            std::atomic<float>* is_toggle = nullptr;
-            void init(juce::AudioProcessorValueTreeState& apvts);
+            juce::AudioParameterInt* cc = nullptr;
+            juce::AudioParameterBool* is_toggle = nullptr;
         } MidiCCButton;
-        void init(juce::AudioProcessorValueTreeState& apvts);
     } stop_button;
-    void init(juce::AudioProcessorValueTreeState& apvts);
 };
 
-// Create the parameter layout
-juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+// Create the parameter layout and populate the Params struct
+juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params& params);
 
 }  // namespace GeneratedParams

@@ -248,51 +248,29 @@ def generate_params_struct(tree: dict, indent: str = "") -> list[str]:
     """Generate a nested struct for cached parameter pointers."""
     lines = []
 
+    type_map = {
+        "choice": "juce::AudioParameterChoice",
+        "int_choice": "juce::AudioParameterChoice",
+        "int": "juce::AudioParameterInt",
+        "float": "juce::AudioParameterFloat",
+        "bool": "juce::AudioParameterBool",
+    }
+
     # Generate fields for direct params
     for p in tree["params"]:
-        lines.append(f"{indent}std::atomic<float>* {p['field_name']} = nullptr;")
+        cpp_type = type_map[p["type"]]
+        lines.append(f"{indent}{cpp_type}* {p['field_name']} = nullptr;")
 
     # Generate nested structs for children
     for child in tree["children"]:
         struct_name = snake_to_pascal(child["group_name"])
         lines.append(f"{indent}struct {struct_name}Params {{")
         lines.extend(generate_params_struct(child, indent + "    "))
-        lines.append(f"{indent}    void init(juce::AudioProcessorValueTreeState& apvts);")
         lines.append(f"{indent}}} {child['group_name']};")
 
     return lines
 
 
-def generate_params_init(tree: dict, parent_path: str = "") -> list[str]:
-    """Generate init() method implementations for all nested structs."""
-    lines = []
-
-    # Build the full struct path for this level
-    if parent_path:
-        struct_path = f"{parent_path}::{snake_to_pascal(tree['group_name'])}Params"
-        method_name = f"{struct_path}::init"
-    else:
-        struct_path = "Params"
-        method_name = "Params::init"
-
-    lines.append(f"void {method_name}(juce::AudioProcessorValueTreeState& apvts) {{")
-
-    # Initialize direct params
-    for p in tree["params"]:
-        lines.append(f'    {p["field_name"]} = apvts.getRawParameterValue("{p["param_id"]}");')
-
-    # Initialize children
-    for child in tree["children"]:
-        lines.append(f"    {child['group_name']}.init(apvts);")
-
-    lines.append("}")
-    lines.append("")
-
-    # Recursively generate init for children
-    for child in tree["children"]:
-        lines.extend(generate_params_init(child, struct_path))
-
-    return lines
 
 
 def generate_header(tree: dict, params: list[dict]) -> str:
@@ -330,14 +308,13 @@ def generate_header(tree: dict, params: list[dict]) -> str:
     lines.append("// Cached parameter pointers")
     lines.append("struct Params {")
     lines.extend(generate_params_struct(tree, "    "))
-    lines.append("    void init(juce::AudioProcessorValueTreeState& apvts);")
     lines.append("};")
     lines.append("")
 
     lines.extend(
         [
-            "// Create the parameter layout",
-            "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();",
+            "// Create the parameter layout and populate the Params struct",
+            "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params& params);",
             "",
             "}  // namespace GeneratedParams",
             "",
@@ -347,72 +324,81 @@ def generate_header(tree: dict, params: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def generate_param_code(p: dict, indent: str = "    ") -> str:
-    """Generate the code to create a single parameter (as a single string)."""
+def generate_param_creation(p: dict, var_name: str, indent: str = "    ") -> list[str]:
+    """Generate code to create a parameter, assign its pointer, and return lines."""
+    lines = []
     param_id = p["param_id"]
+
     if p["type"] == "choice":
-        return (
-            f"{indent}std::make_unique<juce::AudioParameterChoice>(\n"
+        lines.append(
+            f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterChoice>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
             f"{indent}    {p['namespace']}::labels,\n"
-            f"{indent}    0)"
+            f"{indent}    0);"
         )
     elif p["type"] == "int_choice":
-        return (
-            f"{indent}std::make_unique<juce::AudioParameterChoice>(\n"
+        lines.append(
+            f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterChoice>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
             f"{indent}    {p['namespace']}::choices,\n"
-            f"{indent}    {p['default']})"
+            f"{indent}    {p['default']});"
         )
     elif p["type"] == "int":
-        return (
-            f"{indent}std::make_unique<juce::AudioParameterInt>(\n"
+        lines.append(
+            f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterInt>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
-            f"{indent}    {p['min']}, {p['max']}, {p.get('default', p['min'])})"
+            f"{indent}    {p['min']}, {p['max']}, {p.get('default', p['min'])});"
         )
     elif p["type"] == "float":
         default = p.get("default", p["min"])
-        return (
-            f"{indent}std::make_unique<juce::AudioParameterFloat>(\n"
+        lines.append(
+            f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterFloat>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
-            f"{indent}    {p['min']}f, {p['max']}f, {default}f)"
+            f"{indent}    {p['min']}f, {p['max']}f, {default}f);"
         )
     elif p["type"] == "bool":
         default = "true" if p.get("default") else "false"
-        return (
-            f"{indent}std::make_unique<juce::AudioParameterBool>(\n"
+        lines.append(
+            f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterBool>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
-            f"{indent}    {default})"
+            f"{indent}    {default});"
         )
-    return ""
+
+    return lines
 
 
-def generate_group_code(tree: dict, var_name: str, indent: str = "    ") -> list[str]:
-    """Recursively generate code to build a parameter group."""
+def generate_group_code(
+    tree: dict, var_name: str, params_path: str, param_counter: list[int], indent: str = "    "
+) -> list[str]:
+    """Recursively generate code to build a parameter group and assign pointers."""
     lines = []
 
     group_id = tree["group_name"] if tree["group_name"] else "root"
     group_label = tree["group_label"] or "Parameters"
 
-    lines.append(f'{indent}auto {var_name} = std::make_unique<juce::AudioProcessorParameterGroup>("{group_id}", "{group_label}", "|");')
+    lines.append(
+        f'{indent}auto {var_name} = std::make_unique<juce::AudioProcessorParameterGroup>("{group_id}", "{group_label}", "|");'
+    )
 
     # Add direct parameters
     for p in tree["params"]:
-        param_code = generate_param_code(p, indent)
-        if param_code:
-            lines.append(f"{indent}{var_name}->addChild(")
-            lines.append(param_code + ");")
+        pvar = f"p{param_counter[0]}"
+        param_counter[0] += 1
+        lines.extend(generate_param_creation(p, pvar, indent))
+        lines.append(f"{indent}{params_path}.{p['field_name']} = {pvar}.get();")
+        lines.append(f"{indent}{var_name}->addChild(std::move({pvar}));")
 
     # Recursively add child groups
     for i, child in enumerate(tree["children"]):
         child_var = f"{var_name}_child{i}"
+        child_params_path = f"{params_path}.{child['group_name']}"
         lines.append("")
-        lines.extend(generate_group_code(child, child_var, indent))
+        lines.extend(generate_group_code(child, child_var, child_params_path, param_counter, indent))
         lines.append(f"{indent}{var_name}->addChild(std::move({child_var}));")
 
     return lines
@@ -427,35 +413,30 @@ def generate_cpp(tree: dict) -> str:
         "",
         "namespace GeneratedParams {",
         "",
+        "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params& params) {",
+        "    juce::AudioProcessorValueTreeState::ParameterLayout layout;",
+        "",
     ]
 
-    # Generate Params::init() implementations
-    lines.extend(generate_params_init(tree))
-
-    lines.append("juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {")
-
-    # For root level, we need to handle params and children differently
-    # Root params go directly to layout, root children become top-level groups
+    param_counter = [0]  # Use list to allow mutation in nested calls
 
     # Add root-level params directly
     for p in tree["params"]:
-        param_code = generate_param_code(p, "    ")
-        if param_code:
-            lines.append("    layout.add(")
-            lines.append(param_code + ");")
-            lines.append("")
+        pvar = f"p{param_counter[0]}"
+        param_counter[0] += 1
+        lines.extend(generate_param_creation(p, pvar, "    "))
+        lines.append(f"    params.{p['field_name']} = {pvar}.get();")
+        lines.append(f"    layout.add(std::move({pvar}));")
+        lines.append("")
 
     # Add child groups
     for i, child in enumerate(tree["children"]):
         var_name = f"group{i}"
+        params_path = f"params.{child['group_name']}"
         lines.append("")
-        lines.extend(generate_group_code(child, var_name, "    "))
+        lines.extend(generate_group_code(child, var_name, params_path, param_counter, "    "))
         lines.append(f"    layout.add(std::move({var_name}));")
-
-    # Need to declare layout at the start - find the createParameterLayout line
-    layout_line_idx = next(i for i, line in enumerate(lines) if "createParameterLayout()" in line)
-    lines.insert(layout_line_idx + 1, "    juce::AudioProcessorValueTreeState::ParameterLayout layout;")
-    lines.insert(layout_line_idx + 2, "")
+        lines.append("")
 
     lines.extend(
         [
