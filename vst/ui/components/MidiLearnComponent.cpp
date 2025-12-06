@@ -1,6 +1,21 @@
 #include "MidiLearnComponent.h"
 
-MidiLearnComponent::MidiLearnComponent() {}
+MidiLearnComponent::MidiLearnComponent() {
+    setWantsKeyboardFocus(true);
+}
+
+MidiLearnComponent::~MidiLearnComponent() {
+    if (currentlyLearning.load() == this) {
+        currentlyLearning.store(nullptr);
+    }
+}
+
+void MidiLearnComponent::broadcastMidi(const juce::MidiBuffer& buffer) {
+    auto* active = currentlyLearning.load();
+    if (active != nullptr) {
+        active->processNextMidiBuffer(buffer);
+    }
+}
 
 void MidiLearnComponent::setCaption(const juce::String& newCaption) {
     caption = newCaption;
@@ -18,26 +33,35 @@ MidiLearnedValue MidiLearnComponent::getLearnedValue() const {
 }
 
 void MidiLearnComponent::processNextMidiBuffer(const juce::MidiBuffer& buffer) {
-    if (!isLearning.load())
+    if (!isLearning.load()) {
         return;
+    }
 
     for (const auto& metadata : buffer) {
         auto msg = metadata.getMessage();
-        if (msg.isNoteOn()) {
+        if (msg.isNoteOn() and msg.getVelocity() > 0) {
             learnedType.store(MidiLearnedType::Note);
             learnedValue.store(msg.getNoteNumber());
             isLearning.store(false);
+            if (currentlyLearning.load() == this) {
+                currentlyLearning.store(nullptr);
+            }
             triggerAsyncUpdate();
-            if (onValueChanged)
+            if (onValueChanged) {
                 onValueChanged({MidiLearnedType::Note, msg.getNoteNumber()});
+            }
             return;
         } else if (msg.isController()) {
             learnedType.store(MidiLearnedType::CC);
             learnedValue.store(msg.getControllerNumber());
             isLearning.store(false);
+            if (currentlyLearning.load() == this) {
+                currentlyLearning.store(nullptr);
+            }
             triggerAsyncUpdate();
-            if (onValueChanged)
+            if (onValueChanged) {
                 onValueChanged({MidiLearnedType::CC, msg.getControllerNumber()});
+            }
             return;
         }
     }
@@ -67,12 +91,16 @@ void MidiLearnComponent::paint(juce::Graphics& g) {
 
     g.setColour(juce::Colours::white);
     auto font = g.getCurrentFont();
-    auto captionWidth = font.getStringWidth(caption + ": ");
+    juce::GlyphArrangement glyphs;
+    glyphs.addLineOfText(font, caption + ": ", 0, 0);
+    auto captionWidth = static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth());
 
     auto captionBounds = bounds.removeFromLeft(captionWidth + 5);
     g.drawText(caption + ":", captionBounds, juce::Justification::centredRight);
 
-    boxBounds = bounds.reduced(2);
+    auto reducedBounds = bounds.reduced(2);
+    int size = reducedBounds.getHeight();
+    boxBounds = reducedBounds.removeFromLeft(size);
 
     if (isLearning.load()) {
         g.setColour(juce::Colours::yellow.withAlpha(0.3f));
@@ -92,20 +120,46 @@ void MidiLearnComponent::resized() {}
 
 void MidiLearnComponent::mouseDown(const juce::MouseEvent& event) {
     if (boxBounds.contains(event.getPosition())) {
-        isLearning.store(true);
-        repaint();
+        startLearning();
     }
 }
 
-void MidiLearnComponent::handleAsyncUpdate() {
+void MidiLearnComponent::handleAsyncUpdate() { repaint(); }
+
+void MidiLearnComponent::startLearning() {
+    auto* prev = currentlyLearning.load();
+    if (prev != nullptr && prev != this) {
+        prev->stopLearning();
+    }
+    currentlyLearning.store(this);
+    isLearning.store(true);
+    grabKeyboardFocus();
+    repaint();
+}
+
+bool MidiLearnComponent::keyPressed(const juce::KeyPress& key) {
+    if (key == juce::KeyPress::escapeKey && isLearning.load()) {
+        stopLearning();
+        return true;
+    }
+    return false;
+}
+
+void MidiLearnComponent::stopLearning() {
+    if (currentlyLearning.load() == this) {
+        currentlyLearning.store(nullptr);
+    }
+    isLearning.store(false);
     repaint();
 }
 
 juce::String MidiLearnComponent::noteNumberToName(int noteNumber) {
-    if (noteNumber < 0 || noteNumber > 127)
+    if (noteNumber < 0 || noteNumber > 127) {
         return {};
+    }
 
-    static const char* noteNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+    static const char* noteNames[] = {"C",  "C#", "D",  "D#", "E",  "F",
+                                      "F#", "G",  "G#", "A",  "A#", "B"};
     int octave = (noteNumber / 12) - 1;
     int noteIndex = noteNumber % 12;
 

@@ -6,22 +6,16 @@
 #include <array>
 #include <memory>
 
+#include "../../GeneratedParams.h"
 #include "MidiLearnComponent.h"
 
 class ChordQualitySelectorComponent : public juce::Component {
    public:
-    // Must match Python ChordQuality enum order
-    static constexpr int NUM_QUALITIES = 9;
-    static inline const char* QUALITY_NAMES[NUM_QUALITIES] = {
-        "Major", "Minor", "Dominant 7th", "Major 7th", "Minor 7th",
-        "Diminished 7th", "Augmented", "Suspended 4th", "Add 9"
-    };
+    static constexpr int NUM_QUALITIES = GeneratedParams::ChordQualities::NUM_QUALITIES;
 
     ChordQualitySelectorComponent();
 
-    void processNextMidiBuffer(const juce::MidiBuffer& buffer);
-
-    MidiLearnedValue getLearnerValue(int qualityIndex) const;
+    MidiLearnedValue getLearnerValue(size_t qualityIndex) const;
 
     void paint(juce::Graphics& g) override;
     void resized() override;

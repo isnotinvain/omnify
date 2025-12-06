@@ -18,13 +18,11 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor {
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void initialiseBuilder(foleys::MagicGUIBuilder& builder) override;
 
-    MidiLearnComponent* getMidiLearnComponent() { return &midiLearn; }
     ChordQualitySelectorComponent* getChordQualitySelector() { return &chordQualitySelector; }
 
    private:
     GeneratedParams::Params params;
     juce::AudioProcessorValueTreeState parameters;
-    MidiLearnComponent midiLearn;
     ChordQualitySelectorComponent chordQualitySelector;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OmnifyAudioProcessor)

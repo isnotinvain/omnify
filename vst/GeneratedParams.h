@@ -6,6 +6,16 @@
 
 namespace GeneratedParams {
 
+// Chord quality definitions from Python ChordQuality enum
+namespace ChordQualities {
+inline constexpr int NUM_QUALITIES = 9;
+inline const char* NAMES[NUM_QUALITIES] = {"Major",     "Minor",         "Dominant 7th",
+                                           "Major 7th", "Minor 7th",     "Diminished 7th",
+                                           "Augmented", "Suspended 4th", "Add 9"};
+inline const char* ENUM_NAMES[NUM_QUALITIES] = {"MAJOR", "MINOR",     "DOM_7", "MAJOR_7", "MINOR_7",
+                                                "DIM_7", "AUGMENTED", "SUS_4", "ADD_9"};
+}  // namespace ChordQualities
+
 namespace ChordChannelChoices {
 inline const juce::StringArray choices = {"1", "2",  "3",  "4",  "5",  "6",  "7",  "8",
                                           "9", "10", "11", "12", "13", "14", "15", "16"};

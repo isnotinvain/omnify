@@ -37,15 +37,14 @@ void OmnifyAudioProcessor::releaseResources() {}
 void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                         juce::MidiBuffer& midiMessages) {
     juce::ignoreUnused(buffer);
-    midiLearn.processNextMidiBuffer(midiMessages);
-    chordQualitySelector.processNextMidiBuffer(midiMessages);
+    MidiLearnComponent::broadcastMidi(midiMessages);
 }
 
 //==============================================================================
 void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
     builder.registerJUCEFactories();
     builder.registerJUCELookAndFeels();
-    builder.registerFactory("MidiLearn", &MidiLearnItem::factory);
+    builder.registerFactory("OmnifyMidiLearn", &MidiLearnItem::factory);
     builder.registerFactory("ChordQualitySelector", &ChordQualitySelectorItem::factory);
 }
 

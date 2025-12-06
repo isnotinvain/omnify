@@ -273,6 +273,30 @@ def generate_params_struct(tree: dict, indent: str = "") -> list[str]:
 
 
 
+def generate_chord_qualities_namespace() -> list[str]:
+    """Generate the ChordQualities namespace with count and names from ChordQuality enum."""
+    lines = [
+        "// Chord quality definitions from Python ChordQuality enum",
+        "namespace ChordQualities {",
+        f"inline constexpr int NUM_QUALITIES = {len(ChordQuality)};",
+    ]
+
+    # Generate nice names array
+    names = [q.value.nice_name for q in ChordQuality]
+    names_str = ", ".join(f'"{name}"' for name in names)
+    lines.append(f"inline const char* NAMES[NUM_QUALITIES] = {{{names_str}}};")
+
+    # Generate enum names array (for param IDs etc)
+    enum_names = [q.name for q in ChordQuality]
+    enum_names_str = ", ".join(f'"{name}"' for name in enum_names)
+    lines.append(f"inline const char* ENUM_NAMES[NUM_QUALITIES] = {{{enum_names_str}}};")
+
+    lines.append("}  // namespace ChordQualities")
+    lines.append("")
+
+    return lines
+
+
 def generate_header(tree: dict, params: list[dict]) -> str:
     """Generate the .h file content."""
     lines = [
@@ -285,6 +309,9 @@ def generate_header(tree: dict, params: list[dict]) -> str:
         "namespace GeneratedParams {",
         "",
     ]
+
+    # Add chord qualities namespace
+    lines.extend(generate_chord_qualities_namespace())
 
     # Generate choice arrays
     for p in params:
@@ -358,7 +385,7 @@ def generate_param_creation(p: dict, var_name: str, indent: str = "    ") -> lis
             f"{indent}auto {var_name} = std::make_unique<juce::AudioParameterFloat>(\n"
             f'{indent}    juce::ParameterID("{param_id}", 1),\n'
             f'{indent}    "{p["label"]}",\n'
-            f"{indent}    {p['min']}f, {p['max']}f, {default}f);"
+            f"{indent}    {p['min']}F, {p['max']}F, {default}F);"
         )
     elif p["type"] == "bool":
         default = "true" if p.get("default") else "false"

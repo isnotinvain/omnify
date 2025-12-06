@@ -20,7 +20,7 @@ class MidiLearnItem : public foleys::GuiItem {
     std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
    private:
-    MidiLearnComponent* midiLearnComponent = nullptr;
+    MidiLearnComponent midiLearnComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiLearnItem)
 };

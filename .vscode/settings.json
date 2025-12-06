@@ -61,14 +61,12 @@
     "streambuf": "cpp"
   },
   "cmake.sourceDirectory": "/Users/alexlevenson/Documents/code/daemomnify/vst",
-  "[cpp]": {
-    "editor.formatOnSave": true
-  },
+  "editor.formatOnSave": true,
   "files.watcherExclude": {
     "**/foleys_gui_magic/**": true,
     "**/JUCE/**": true
   },
-  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "editor.formatOnSaveMode": "file",
   "clang-format.excludeDirectories": [
     "**/foleys_gui_magic/**",
     "**/JUCE/**"

@@ -4,6 +4,7 @@
 #include <juce_events/juce_events.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <atomic>
 #include <functional>
 
 enum class MidiLearnedType { None, Note, CC };
@@ -16,6 +17,9 @@ struct MidiLearnedValue {
 class MidiLearnComponent : public juce::Component, private juce::AsyncUpdater {
    public:
     MidiLearnComponent();
+    ~MidiLearnComponent() override;
+
+    static void broadcastMidi(const juce::MidiBuffer& buffer);
 
     void setCaption(const juce::String& caption);
     void setLearnedValue(MidiLearnedValue val);
@@ -28,11 +32,16 @@ class MidiLearnComponent : public juce::Component, private juce::AsyncUpdater {
     void paint(juce::Graphics& g) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;
+    bool keyPressed(const juce::KeyPress& key) override;
 
    private:
     void handleAsyncUpdate() override;
     static juce::String noteNumberToName(int noteNumber);
     juce::String getDisplayText() const;
+    void startLearning();
+    void stopLearning();
+
+    static inline std::atomic<MidiLearnComponent*> currentlyLearning{nullptr};
 
     juce::String caption{"Learn"};
     std::atomic<MidiLearnedType> learnedType{MidiLearnedType::None};
