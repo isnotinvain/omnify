@@ -1,3 +1,8 @@
 - Python: use `uv run`
 - Install python packages: `/install`
 - Compile VST: `./vst/compile.sh -d` (drop `-d` for release)
+- For long commands or commands that output a lot of tokens (e.g. compiling):
+  - Use: `.claude/hooks/run-with-log.sh <command>`
+  - Example: `.claude/hooks/run-with-log.sh ./vst/compile.sh -d`
+  - This logs to a temp file, opens it in VSCode, and waits for completion
+  - After it exits, inspect the tmp file as needed (be efficient with tokens)
