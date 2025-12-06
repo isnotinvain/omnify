@@ -18,6 +18,11 @@ for arg in "$@"; do
     esac
 done
 
+# Skip files in submodules
+if [[ "$FILE_PATH" == *"/foleys_gui_magic/"* ]] || [[ "$FILE_PATH" == *"/JUCE/"* ]]; then
+    exit 0
+fi
+
 if [ "$FAIL_FAST" = true ]; then
     set -euo pipefail
 fi

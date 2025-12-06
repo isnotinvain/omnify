@@ -5,7 +5,7 @@
 tmpfile=$(mktemp /tmp/claude-cmd-XXXXXX)
 mv "$tmpfile" "$tmpfile.log"
 tmpfile="$tmpfile.log"
-echo "$tmpfile" >&2  # stderr is unbuffered
+#echo "$tmpfile" >&2  # stderr is unbuffered
 echo "$tmpfile"      # also to stdout for capture
 echo "Running: $@" > "$tmpfile"
 echo "Started: $(date)" >> "$tmpfile"
@@ -21,3 +21,9 @@ echo "---" >> "$tmpfile"
 ) &
 
 open -a "Visual Studio Code" "$tmpfile"
+
+# Wait for command to finish
+wait
+
+# Show tail of output
+tail -20 "$tmpfile"

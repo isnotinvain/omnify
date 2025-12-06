@@ -59,5 +59,18 @@
     "ratio": "cpp",
     "stack": "cpp",
     "streambuf": "cpp"
-  }
+  },
+  "cmake.sourceDirectory": "/Users/alexlevenson/Documents/code/daemomnify/vst",
+  "[cpp]": {
+    "editor.formatOnSave": true
+  },
+  "files.watcherExclude": {
+    "**/foleys_gui_magic/**": true,
+    "**/JUCE/**": true
+  },
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "clang-format.excludeDirectories": [
+    "**/foleys_gui_magic/**",
+    "**/JUCE/**"
+  ]
 }
