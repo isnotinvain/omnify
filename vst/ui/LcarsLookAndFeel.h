@@ -17,7 +17,7 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         const auto activeArea = button.getActiveArea();
 
         if (button.getToggleState()) {
-            g.setColour(LcarsColors::yellow);
+            g.setColour(LcarsColors::orange);
         } else {
             g.setColour(LcarsColors::red);
         }

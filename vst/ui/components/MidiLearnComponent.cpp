@@ -99,10 +99,10 @@ void MidiLearnComponent::paint(juce::Graphics& g) {
     }
     g.fillRect(boxBounds);
 
-    g.setColour(isLearning.load() ? LcarsColors::purple : LcarsColors::yellow);
+    g.setColour(isLearning.load() ? LcarsColors::africanViolet : LcarsColors::orange);
     g.drawRect(boxBounds, 2);
 
-    g.setColour(LcarsColors::yellow);
+    g.setColour(LcarsColors::orange);
     g.drawText(getDisplayText(), boxBounds, juce::Justification::centred);
 }
 

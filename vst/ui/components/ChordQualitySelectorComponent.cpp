@@ -28,7 +28,7 @@ void ChordQualitySelectorComponent::paint(juce::Graphics& g) {
         auto labelBounds = rowBounds.removeFromLeft(labelWidth);
 
         // Alternate colors for LCARS feel
-        g.setColour(LcarsColors::yellow);
+        g.setColour(LcarsColors::orange);
         g.drawText(GeneratedParams::ChordQualities::NAMES[i], labelBounds.reduced(5),
                    juce::Justification::centredLeft);
     }
