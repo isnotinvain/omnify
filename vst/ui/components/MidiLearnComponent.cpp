@@ -99,8 +99,8 @@ void MidiLearnComponent::paint(juce::Graphics& g) {
     g.drawText(caption + ":", captionBounds, juce::Justification::centredRight);
 
     auto reducedBounds = bounds.reduced(2);
-    int size = reducedBounds.getHeight();
-    boxBounds = reducedBounds.removeFromLeft(size);
+    int boxWidth = static_cast<int>(reducedBounds.getHeight() * 2.5f);
+    boxBounds = reducedBounds.removeFromLeft(boxWidth);
 
     if (isLearning.load()) {
         g.setColour(juce::Colours::yellow.withAlpha(0.3f));

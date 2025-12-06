@@ -35,7 +35,7 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     juce::Component* getWrappedComponent() override;
 
    private:
-    ChordQualitySelectorComponent* chordQualitySelector = nullptr;
+    ChordQualitySelectorComponent chordQualitySelector;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordQualitySelectorItem)
 };

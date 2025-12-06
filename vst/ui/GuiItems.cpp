@@ -27,13 +27,9 @@ std::vector<foleys::SettableProperty> MidiLearnItem::getSettableProperties() con
 ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder,
                                                    const juce::ValueTree& node)
     : foleys::GuiItem(builder, node) {
-    if (auto* processor =
-            dynamic_cast<OmnifyAudioProcessor*>(builder.getMagicState().getProcessor())) {
-        chordQualitySelector = processor->getChordQualitySelector();
-        addAndMakeVisible(chordQualitySelector);
-    }
+    addAndMakeVisible(chordQualitySelector);
 }
 
 void ChordQualitySelectorItem::update() {}
 
-juce::Component* ChordQualitySelectorItem::getWrappedComponent() { return chordQualitySelector; }
+juce::Component* ChordQualitySelectorItem::getWrappedComponent() { return &chordQualitySelector; }
