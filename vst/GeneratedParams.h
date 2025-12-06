@@ -6,72 +6,6 @@
 
 namespace GeneratedParams {
 
-// Parameter IDs
-namespace ParamIDs {
-constexpr const char* CHORD_VOICING_STYLE = "chordVoicingStyle";
-constexpr const char* CHORD_CHANNEL = "chordChannel";
-constexpr const char* STRUM_CHANNEL = "strumChannel";
-constexpr const char* STRUM_VOICING_STYLE = "strumVoicingStyle";
-constexpr const char* STRUM_COOLDOWN_SECS = "strumCooldownSecs";
-constexpr const char* STRUM_GATE_TIME_SECS = "strumGateTimeSecs";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE = "chordQualitySelectionStyle";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingMajor";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingMinor";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DOM_7 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingDom7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR_7 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingMajor7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR_7 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingMinor7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DIM_7 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingDim7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_AUGMENTED =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingAugmented";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_SUS_4 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingSus4";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_ADD_9 =
-    "chordQualitySelectionStyleNoteperchordqualityNoteMappingAdd9";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingMajor";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingMinor";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DOM_7 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingDom7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR_7 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingMajor7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR_7 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingMinor7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DIM_7 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingDim7";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_AUGMENTED =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingAugmented";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_SUS_4 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingSus4";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_ADD_9 =
-    "chordQualitySelectionStyleCcperchordqualityCcMappingAdd9";
-constexpr const char* CHORD_QUALITY_SELECTION_STYLE_CCRANGEPERCHORDQUALITY_CC =
-    "chordQualitySelectionStyleCcrangeperchordqualityCc";
-constexpr const char* STRUM_PLATE_CC = "strumPlateCc";
-constexpr const char* LATCH_TOGGLE_BUTTON = "latchToggleButton";
-constexpr const char* LATCH_TOGGLE_BUTTON_MIDINOTEBUTTON_NOTE =
-    "latchToggleButtonMidinotebuttonNote";
-constexpr const char* LATCH_TOGGLE_BUTTON_MIDICCBUTTON_CC = "latchToggleButtonMidiccbuttonCc";
-constexpr const char* LATCH_TOGGLE_BUTTON_MIDICCBUTTON_IS_TOGGLE =
-    "latchToggleButtonMidiccbuttonIsToggle";
-constexpr const char* STOP_BUTTON = "stopButton";
-constexpr const char* STOP_BUTTON_MIDINOTEBUTTON_NOTE = "stopButtonMidinotebuttonNote";
-constexpr const char* STOP_BUTTON_MIDICCBUTTON_CC = "stopButtonMidiccbuttonCc";
-constexpr const char* STOP_BUTTON_MIDICCBUTTON_IS_TOGGLE = "stopButtonMidiccbuttonIsToggle";
-
-}  // namespace ParamIDs
-
-namespace ChordVoicingStyleChoices {
-inline const juce::StringArray labels = {"Root Position", "File", "Omni-84"};
-inline const juce::StringArray values = {"RootPositionChordStyle", "FileStyle", "Omni84Style"};
-}  // namespace ChordVoicingStyleChoices
-
 namespace ChordChannelChoices {
 inline const juce::StringArray choices = {"1", "2",  "3",  "4",  "5",  "6",  "7",  "8",
                                           "9", "10", "11", "12", "13", "14", "15", "16"};
@@ -81,6 +15,11 @@ namespace StrumChannelChoices {
 inline const juce::StringArray choices = {"1", "2",  "3",  "4",  "5",  "6",  "7",  "8",
                                           "9", "10", "11", "12", "13", "14", "15", "16"};
 }  // namespace StrumChannelChoices
+
+namespace ChordVoicingStyleChoices {
+inline const juce::StringArray labels = {"Root Position", "File", "Omni-84"};
+inline const juce::StringArray values = {"RootPositionChordStyle", "FileStyle", "Omni84Style"};
+}  // namespace ChordVoicingStyleChoices
 
 namespace StrumVoicingStyleChoices {
 inline const juce::StringArray labels = {"Plain Ascending", "Omnichord"};
@@ -102,6 +41,82 @@ namespace StopButtonChoices {
 inline const juce::StringArray labels = {"Note", "CC"};
 inline const juce::StringArray values = {"MidiNoteButton", "MidiCCButton"};
 }  // namespace StopButtonChoices
+
+// Cached parameter pointers
+struct Params {
+    std::atomic<float>* chord_channel = nullptr;
+    std::atomic<float>* strum_channel = nullptr;
+    std::atomic<float>* strum_cooldown_secs = nullptr;
+    std::atomic<float>* strum_gate_time_secs = nullptr;
+    std::atomic<float>* strum_plate_cc = nullptr;
+    struct ChordVoicingStyleParams {
+        std::atomic<float>* chord_voicing_style = nullptr;
+        void init(juce::AudioProcessorValueTreeState& apvts);
+    } chord_voicing_style;
+    struct StrumVoicingStyleParams {
+        std::atomic<float>* strum_voicing_style = nullptr;
+        void init(juce::AudioProcessorValueTreeState& apvts);
+    } strum_voicing_style;
+    struct ChordQualitySelectionStyleParams {
+        std::atomic<float>* chord_quality_selection_style = nullptr;
+        struct NoteperchordqualityParams {
+            std::atomic<float>* note_mapping_major = nullptr;
+            std::atomic<float>* note_mapping_minor = nullptr;
+            std::atomic<float>* note_mapping_dom_7 = nullptr;
+            std::atomic<float>* note_mapping_major_7 = nullptr;
+            std::atomic<float>* note_mapping_minor_7 = nullptr;
+            std::atomic<float>* note_mapping_dim_7 = nullptr;
+            std::atomic<float>* note_mapping_augmented = nullptr;
+            std::atomic<float>* note_mapping_sus_4 = nullptr;
+            std::atomic<float>* note_mapping_add_9 = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } NotePerChordQuality;
+        struct CcperchordqualityParams {
+            std::atomic<float>* cc_mapping_major = nullptr;
+            std::atomic<float>* cc_mapping_minor = nullptr;
+            std::atomic<float>* cc_mapping_dom_7 = nullptr;
+            std::atomic<float>* cc_mapping_major_7 = nullptr;
+            std::atomic<float>* cc_mapping_minor_7 = nullptr;
+            std::atomic<float>* cc_mapping_dim_7 = nullptr;
+            std::atomic<float>* cc_mapping_augmented = nullptr;
+            std::atomic<float>* cc_mapping_sus_4 = nullptr;
+            std::atomic<float>* cc_mapping_add_9 = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } CCPerChordQuality;
+        struct CcrangeperchordqualityParams {
+            std::atomic<float>* cc = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } CCRangePerChordQuality;
+        void init(juce::AudioProcessorValueTreeState& apvts);
+    } chord_quality_selection_style;
+    struct LatchToggleButtonParams {
+        std::atomic<float>* latch_toggle_button = nullptr;
+        struct MidinotebuttonParams {
+            std::atomic<float>* note = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } MidiNoteButton;
+        struct MidiccbuttonParams {
+            std::atomic<float>* cc = nullptr;
+            std::atomic<float>* is_toggle = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } MidiCCButton;
+        void init(juce::AudioProcessorValueTreeState& apvts);
+    } latch_toggle_button;
+    struct StopButtonParams {
+        std::atomic<float>* stop_button = nullptr;
+        struct MidinotebuttonParams {
+            std::atomic<float>* note = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } MidiNoteButton;
+        struct MidiccbuttonParams {
+            std::atomic<float>* cc = nullptr;
+            std::atomic<float>* is_toggle = nullptr;
+            void init(juce::AudioProcessorValueTreeState& apvts);
+        } MidiCCButton;
+        void init(juce::AudioProcessorValueTreeState& apvts);
+    } stop_button;
+    void init(juce::AudioProcessorValueTreeState& apvts);
+};
 
 // Create the parameter layout
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

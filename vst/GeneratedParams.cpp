@@ -4,196 +4,271 @@
 
 namespace GeneratedParams {
 
+void Params::init(juce::AudioProcessorValueTreeState& apvts) {
+    chord_channel = apvts.getRawParameterValue("chord_channel");
+    strum_channel = apvts.getRawParameterValue("strum_channel");
+    strum_cooldown_secs = apvts.getRawParameterValue("strum_cooldown_secs");
+    strum_gate_time_secs = apvts.getRawParameterValue("strum_gate_time_secs");
+    strum_plate_cc = apvts.getRawParameterValue("strum_plate_cc");
+    chord_voicing_style.init(apvts);
+    strum_voicing_style.init(apvts);
+    chord_quality_selection_style.init(apvts);
+    latch_toggle_button.init(apvts);
+    stop_button.init(apvts);
+}
+
+void Params::ChordVoicingStyleParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    chord_voicing_style = apvts.getRawParameterValue("chord_voicing_style");
+}
+
+void Params::StrumVoicingStyleParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    strum_voicing_style = apvts.getRawParameterValue("strum_voicing_style");
+}
+
+void Params::ChordQualitySelectionStyleParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    chord_quality_selection_style = apvts.getRawParameterValue("chord_quality_selection_style");
+    NotePerChordQuality.init(apvts);
+    CCPerChordQuality.init(apvts);
+    CCRangePerChordQuality.init(apvts);
+}
+
+void Params::ChordQualitySelectionStyleParams::NoteperchordqualityParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    note_mapping_major = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.major");
+    note_mapping_minor = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.minor");
+    note_mapping_dom_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.dom_7");
+    note_mapping_major_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.major_7");
+    note_mapping_minor_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.minor_7");
+    note_mapping_dim_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.dim_7");
+    note_mapping_augmented = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.augmented");
+    note_mapping_sus_4 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.sus_4");
+    note_mapping_add_9 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.NotePerChordQuality.note_mapping.add_9");
+}
+
+void Params::ChordQualitySelectionStyleParams::CcperchordqualityParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    cc_mapping_major = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.major");
+    cc_mapping_minor = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.minor");
+    cc_mapping_dom_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.dom_7");
+    cc_mapping_major_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.major_7");
+    cc_mapping_minor_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.minor_7");
+    cc_mapping_dim_7 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.dim_7");
+    cc_mapping_augmented = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.augmented");
+    cc_mapping_sus_4 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.sus_4");
+    cc_mapping_add_9 = apvts.getRawParameterValue(
+        "chord_quality_selection_style.CCPerChordQuality.cc_mapping.add_9");
+}
+
+void Params::ChordQualitySelectionStyleParams::CcrangeperchordqualityParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    cc = apvts.getRawParameterValue("chord_quality_selection_style.CCRangePerChordQuality.cc");
+}
+
+void Params::LatchToggleButtonParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    latch_toggle_button = apvts.getRawParameterValue("latch_toggle_button");
+    MidiNoteButton.init(apvts);
+    MidiCCButton.init(apvts);
+}
+
+void Params::LatchToggleButtonParams::MidinotebuttonParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    note = apvts.getRawParameterValue("latch_toggle_button.MidiNoteButton.note");
+}
+
+void Params::LatchToggleButtonParams::MidiccbuttonParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    cc = apvts.getRawParameterValue("latch_toggle_button.MidiCCButton.cc");
+    is_toggle = apvts.getRawParameterValue("latch_toggle_button.MidiCCButton.is_toggle");
+}
+
+void Params::StopButtonParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    stop_button = apvts.getRawParameterValue("stop_button");
+    MidiNoteButton.init(apvts);
+    MidiCCButton.init(apvts);
+}
+
+void Params::StopButtonParams::MidinotebuttonParams::init(
+    juce::AudioProcessorValueTreeState& apvts) {
+    note = apvts.getRawParameterValue("stop_button.MidiNoteButton.note");
+}
+
+void Params::StopButtonParams::MidiccbuttonParams::init(juce::AudioProcessorValueTreeState& apvts) {
+    cc = apvts.getRawParameterValue("stop_button.MidiCCButton.cc");
+    is_toggle = apvts.getRawParameterValue("stop_button.MidiCCButton.is_toggle");
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    // Chord Voicing Style
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_VOICING_STYLE, 1), "Chord Voicing Style",
-        ChordVoicingStyleChoices::labels, 0));
+        juce::ParameterID("chord_channel", 1), "Chord Channel", ChordChannelChoices::choices, 0));
 
-    // Chord Channel
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_CHANNEL, 1), "Chord Channel",
-        ChordChannelChoices::choices, 0));
+        juce::ParameterID("strum_channel", 1), "Strum Channel", StrumChannelChoices::choices, 1));
 
-    // Strum Channel
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STRUM_CHANNEL, 1), "Strum Channel",
-        StrumChannelChoices::choices, 1));
-
-    // Strum Voicing Style
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STRUM_VOICING_STYLE, 1), "Strum Voicing Style",
-        StrumVoicingStyleChoices::labels, 0));
-
-    // Strum Cooldown (sec)
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID(ParamIDs::STRUM_COOLDOWN_SECS, 1), "Strum Cooldown (sec)", 0.0F, 5.0F,
-        0.0F));
+        juce::ParameterID("strum_cooldown_secs", 1), "Strum Cooldown (sec)", 0.0F, 5.0F, 0.0F));
 
-    // Strum Gate Time (sec)
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID(ParamIDs::STRUM_GATE_TIME_SECS, 1), "Strum Gate Time (sec)", 0.0F, 5.0F,
-        0.0F));
+        juce::ParameterID("strum_gate_time_secs", 1), "Strum Gate Time (sec)", 0.0F, 5.0F, 0.0F));
 
-    // Chord Quality Selection
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE, 1), "Chord Quality Selection",
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("strum_plate_cc", 1),
+                                                         "Strum Plate CC", 0, 127, 0));
+
+    auto group0 = std::make_unique<juce::AudioProcessorParameterGroup>("chord_voicing_style",
+                                                                       "Chord Voicing Style", "|");
+    group0->addChild(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("chord_voicing_style", 1), "Type", ChordVoicingStyleChoices::labels, 0));
+    layout.add(std::move(group0));
+
+    auto group1 = std::make_unique<juce::AudioProcessorParameterGroup>("strum_voicing_style",
+                                                                       "Strum Voicing Style", "|");
+    group1->addChild(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("strum_voicing_style", 1), "Type", StrumVoicingStyleChoices::labels, 0));
+    layout.add(std::move(group1));
+
+    auto group2 = std::make_unique<juce::AudioProcessorParameterGroup>(
+        "chord_quality_selection_style", "Chord Quality Selection", "|");
+    group2->addChild(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("chord_quality_selection_style", 1), "Type",
         ChordQualitySelectionStyleChoices::labels, 0));
 
-    // Note for Major (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR, 1),
+    auto group2_child0 = std::make_unique<juce::AudioProcessorParameterGroup>(
+        "NotePerChordQuality", "Note Per Quality", "|");
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.major",
+                          1),
         "Note for Major", 0, 127, 0));
-
-    // Note for Minor (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.minor",
+                          1),
         "Note for Minor", 0, 127, 0));
-
-    // Note for Dom 7 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DOM_7, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.dom_7",
+                          1),
         "Note for Dom 7", 0, 127, 0));
-
-    // Note for Major 7 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MAJOR_7, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.major_7",
+                          1),
         "Note for Major 7", 0, 127, 0));
-
-    // Note for Minor 7 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_MINOR_7, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.minor_7",
+                          1),
         "Note for Minor 7", 0, 127, 0));
-
-    // Note for Dim 7 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_DIM_7, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.dim_7",
+                          1),
         "Note for Dim 7", 0, 127, 0));
-
-    // Note for Augmented (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
         juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_AUGMENTED, 1),
+            "chord_quality_selection_style.NotePerChordQuality.note_mapping.augmented", 1),
         "Note for Augmented", 0, 127, 0));
-
-    // Note for Sus 4 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_SUS_4, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.sus_4",
+                          1),
         "Note for Sus 4", 0, 127, 0));
-
-    // Note for Add 9 (when NotePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_NOTEPERCHORDQUALITY_NOTE_MAPPING_ADD_9, 1),
+    group2_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.NotePerChordQuality.note_mapping.add_9",
+                          1),
         "Note for Add 9", 0, 127, 0));
+    group2->addChild(std::move(group2_child0));
 
-    // CC for Major (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR, 1),
+    auto group2_child1 = std::make_unique<juce::AudioProcessorParameterGroup>(
+        "CCPerChordQuality", "CC Per Quality", "|");
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.major", 1),
         "CC for Major", 0, 127, 0));
-
-    // CC for Minor (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.minor", 1),
         "CC for Minor", 0, 127, 0));
-
-    // CC for Dom 7 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DOM_7, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.dom_7", 1),
         "CC for Dom 7", 0, 127, 0));
-
-    // CC for Major 7 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MAJOR_7, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.major_7", 1),
         "CC for Major 7", 0, 127, 0));
-
-    // CC for Minor 7 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_MINOR_7, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.minor_7", 1),
         "CC for Minor 7", 0, 127, 0));
-
-    // CC for Dim 7 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_DIM_7, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.dim_7", 1),
         "CC for Dim 7", 0, 127, 0));
-
-    // CC for Augmented (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_AUGMENTED, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.augmented",
+                          1),
         "CC for Augmented", 0, 127, 0));
-
-    // CC for Sus 4 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_SUS_4, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.sus_4", 1),
         "CC for Sus 4", 0, 127, 0));
-
-    // CC for Add 9 (when CCPerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(
-            ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCPERCHORDQUALITY_CC_MAPPING_ADD_9, 1),
+    group2_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCPerChordQuality.cc_mapping.add_9", 1),
         "CC for Add 9", 0, 127, 0));
+    group2->addChild(std::move(group2_child1));
 
-    // CC Number (when CCRangePerChordQuality)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::CHORD_QUALITY_SELECTION_STYLE_CCRANGEPERCHORDQUALITY_CC, 1),
+    auto group2_child2 = std::make_unique<juce::AudioProcessorParameterGroup>(
+        "CCRangePerChordQuality", "CC Range", "|");
+    group2_child2->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("chord_quality_selection_style.CCRangePerChordQuality.cc", 1),
         "CC Number", 0, 127, 0));
+    group2->addChild(std::move(group2_child2));
+    layout.add(std::move(group2));
 
-    // Strum Plate CC
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STRUM_PLATE_CC, 1), "Strum Plate CC", 0, 127, 0));
+    auto group3 = std::make_unique<juce::AudioProcessorParameterGroup>("latch_toggle_button",
+                                                                       "Button Type", "|");
+    group3->addChild(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("latch_toggle_button", 1), "Type", LatchToggleButtonChoices::labels, 0));
 
-    // Button Type
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON, 1), "Button Type",
-        LatchToggleButtonChoices::labels, 0));
+    auto group3_child0 =
+        std::make_unique<juce::AudioProcessorParameterGroup>("MidiNoteButton", "Note", "|");
+    group3_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("latch_toggle_button.MidiNoteButton.note", 1), "Note", 0, 127, 0));
+    group3->addChild(std::move(group3_child0));
 
-    // Note (when MidiNoteButton)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDINOTEBUTTON_NOTE, 1), "Note", 0, 127,
-        0));
+    auto group3_child1 =
+        std::make_unique<juce::AudioProcessorParameterGroup>("MidiCCButton", "CC", "|");
+    group3_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("latch_toggle_button.MidiCCButton.cc", 1), "CC Number", 0, 127, 0));
+    group3_child1->addChild(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID("latch_toggle_button.MidiCCButton.is_toggle", 1), "Is Toggle", false));
+    group3->addChild(std::move(group3_child1));
+    layout.add(std::move(group3));
 
-    // CC Number (when MidiCCButton)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_CC, 1), "CC Number", 0, 127,
-        0));
+    auto group4 =
+        std::make_unique<juce::AudioProcessorParameterGroup>("stop_button", "Button Type", "|");
+    group4->addChild(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("stop_button", 1), "Type", StopButtonChoices::labels, 0));
 
-    // Is Toggle (when MidiCCButton)
-    layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID(ParamIDs::LATCH_TOGGLE_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1), "Is Toggle",
-        false));
+    auto group4_child0 =
+        std::make_unique<juce::AudioProcessorParameterGroup>("MidiNoteButton", "Note", "|");
+    group4_child0->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("stop_button.MidiNoteButton.note", 1), "Note", 0, 127, 0));
+    group4->addChild(std::move(group4_child0));
 
-    // Button Type
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON, 1), "Button Type", StopButtonChoices::labels, 0));
-
-    // Note (when MidiNoteButton)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDINOTEBUTTON_NOTE, 1), "Note", 0, 127, 0));
-
-    // CC Number (when MidiCCButton)
-    layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_CC, 1), "CC Number", 0, 127, 0));
-
-    // Is Toggle (when MidiCCButton)
-    layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID(ParamIDs::STOP_BUTTON_MIDICCBUTTON_IS_TOGGLE, 1), "Is Toggle", false));
+    auto group4_child1 =
+        std::make_unique<juce::AudioProcessorParameterGroup>("MidiCCButton", "CC", "|");
+    group4_child1->addChild(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("stop_button.MidiCCButton.cc", 1), "CC Number", 0, 127, 0));
+    group4_child1->addChild(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID("stop_button.MidiCCButton.is_toggle", 1), "Is Toggle", false));
+    group4->addChild(std::move(group4_child1));
+    layout.add(std::move(group4));
 
     return layout;
 }

@@ -20,20 +20,9 @@ from daemomnify.chord_quality import ChordQuality
 from daemomnify.settings import DaemomnifySettings
 
 
-def snake_to_camel(name: str) -> str:
-    """Convert snake_case to camelCase."""
-    components = name.split("_")
-    return components[0] + "".join(x.title() for x in components[1:])
-
-
 def snake_to_pascal(name: str) -> str:
     """Convert snake_case to PascalCase."""
     return "".join(x.title() for x in name.split("_"))
-
-
-def snake_to_screaming(name: str) -> str:
-    """Convert snake_case to SCREAMING_SNAKE_CASE."""
-    return name.upper()
 
 
 def get_vst_annotation(annotation) -> vst_params.VSTParam | None:
@@ -95,15 +84,30 @@ def get_discriminated_union_info(annotation) -> tuple[list[str], list[str], list
 
 def collect_params(
     model_class: type[BaseModel],
-    prefix: str = "",
-    parent_variant: str | None = None,
-) -> list[dict]:
+    path: list[str] | None = None,
+    group_name: str | None = None,
+    group_label: str | None = None,
+) -> dict:
     """
     Recursively collect all VST parameters from a pydantic model.
 
-    Returns a list of parameter definitions.
+    Returns a hierarchical structure:
+    {
+        "group_name": str | None,  # None for root
+        "group_label": str | None,
+        "params": [...],  # Direct parameters in this group
+        "children": [...]  # Child groups (for discriminated unions)
+    }
     """
-    params = []
+    if path is None:
+        path = []
+
+    result = {
+        "group_name": group_name,
+        "group_label": group_label,
+        "params": [],
+        "children": [],
+    }
 
     for field_name, field_info in model_class.model_fields.items():
         # Skip the 'type' discriminator field
@@ -113,11 +117,8 @@ def collect_params(
         annotation = model_class.__annotations__[field_name]
         vst_param = get_vst_annotation(annotation)
 
-        # Build the full parameter name
-        if prefix:
-            full_name = f"{prefix}_{field_name}"
-        else:
-            full_name = field_name
+        # Build the path for this parameter
+        current_path = path + [field_name]
 
         # Skip if marked with VSTSkip
         if isinstance(vst_param, vst_params.VSTSkip):
@@ -128,111 +129,173 @@ def collect_params(
         if union_info:
             type_values, labels, variant_types = union_info
 
-            # Add the type selector parameter
-            label = vst_param.label if isinstance(vst_param, vst_params.VSTChoice) and vst_param.label else field_name.replace("_", " ").title()
-            params.append(
+            # Create a group for this discriminated union
+            union_label = vst_param.label if isinstance(vst_param, vst_params.VSTChoice) and vst_param.label else field_name.replace("_", " ").title()
+            union_group = {
+                "group_name": field_name,
+                "group_label": union_label,
+                "params": [],
+                "children": [],
+            }
+
+            # Add the type selector parameter to this group
+            union_group["params"].append(
                 {
-                    "name": full_name,
-                    "param_id": snake_to_camel(full_name),
-                    "label": label,
+                    "field_name": field_name,
+                    "param_id": ".".join(current_path),
+                    "label": "Type",  # Shorter label since group provides context
                     "type": "choice",
-                    "choices": labels,  # Use labels for display
-                    "values": type_values,  # Programmatic values for serialization
-                    "namespace": snake_to_pascal(full_name) + "Choices",
+                    "choices": labels,
+                    "values": type_values,
+                    "namespace": snake_to_pascal(field_name) + "Choices",
                 }
             )
 
-            # Recursively collect params from each variant
-            for variant_type, type_value in zip(variant_types, type_values):
-                variant_params = collect_params(
+            # Recursively collect params from each variant as child groups
+            for variant_type, type_value, label in zip(variant_types, type_values, labels):
+                variant_group = collect_params(
                     variant_type,
-                    prefix=f"{full_name}_{type_value}",  # Use type_value for param names
-                    parent_variant=type_value,
+                    path=current_path + [type_value],
+                    group_name=type_value,
+                    group_label=label,
                 )
-                params.extend(variant_params)
+                # Only add if the variant has params
+                if variant_group["params"] or variant_group["children"]:
+                    union_group["children"].append(variant_group)
 
+            result["children"].append(union_group)
             continue
 
-        # Handle simple annotated types
+        # Handle simple annotated types - add directly to params
         if isinstance(vst_param, vst_params.VSTInt):
-            params.append(
+            result["params"].append(
                 {
-                    "name": full_name,
-                    "param_id": snake_to_camel(full_name),
+                    "field_name": field_name,
+                    "param_id": ".".join(current_path),
                     "label": vst_param.label or field_name.replace("_", " ").title(),
                     "type": "int",
                     "min": vst_param.min,
                     "max": vst_param.max,
                     "default": vst_param.default,
-                    "parent_variant": parent_variant,
                 }
             )
         elif isinstance(vst_param, vst_params.VSTFloat):
-            params.append(
+            result["params"].append(
                 {
-                    "name": full_name,
-                    "param_id": snake_to_camel(full_name),
+                    "field_name": field_name,
+                    "param_id": ".".join(current_path),
                     "label": vst_param.label or field_name.replace("_", " ").title(),
                     "type": "float",
                     "min": vst_param.min,
                     "max": vst_param.max,
                     "default": vst_param.default,
-                    "parent_variant": parent_variant,
                 }
             )
         elif isinstance(vst_param, vst_params.VSTBool):
-            params.append(
+            result["params"].append(
                 {
-                    "name": full_name,
-                    "param_id": snake_to_camel(full_name),
+                    "field_name": field_name,
+                    "param_id": ".".join(current_path),
                     "label": vst_param.label or field_name.replace("_", " ").title(),
                     "type": "bool",
                     "default": vst_param.default,
-                    "parent_variant": parent_variant,
                 }
             )
         elif isinstance(vst_param, vst_params.VSTIntChoice):
-            # Generate choices as strings from min to max
             choices = [str(i) for i in range(vst_param.min, vst_param.max + 1)]
-            params.append(
+            result["params"].append(
                 {
-                    "name": full_name,
-                    "param_id": snake_to_camel(full_name),
+                    "field_name": field_name,
+                    "param_id": ".".join(current_path),
                     "label": vst_param.label or field_name.replace("_", " ").title(),
                     "type": "int_choice",
                     "choices": choices,
-                    "namespace": snake_to_pascal(full_name) + "Choices",
-                    "default": vst_param.default - vst_param.min,  # Convert to index
-                    "parent_variant": parent_variant,
+                    "namespace": snake_to_pascal(field_name) + "Choices",
+                    "default": vst_param.default - vst_param.min,
                 }
             )
         elif isinstance(vst_param, vst_params.VSTString):
-            # For now, skip strings as JUCE doesn't have a native string parameter
-            # Could implement as a special case later
-            print(f"  Warning: Skipping string field {full_name} (not supported yet)")
+            print(f"  Warning: Skipping string field {'.'.join(current_path)} (not supported yet)")
         elif isinstance(vst_param, vst_params.VSTChordQualityMap):
             # Expand to one int parameter per chord quality
             for quality in ChordQuality:
                 quality_name = quality.name.lower()
-                param_name = f"{full_name}_{quality_name}"
                 label_prefix = vst_param.label_prefix or field_name.replace("_", " ").title()
-                params.append(
+                result["params"].append(
                     {
-                        "name": param_name,
-                        "param_id": snake_to_camel(param_name),
+                        "field_name": f"{field_name}_{quality_name}",
+                        "param_id": ".".join(current_path + [quality_name]),
                         "label": f"{label_prefix} {quality.name.replace('_', ' ').title()}",
                         "type": "int",
                         "min": vst_param.min,
                         "max": vst_param.max,
                         "default": 0,
-                        "parent_variant": parent_variant,
                     }
                 )
 
+    return result
+
+
+def flatten_params(tree: dict) -> list[dict]:
+    """Flatten the hierarchical tree into a list of all params (for header generation)."""
+    params = list(tree["params"])
+    for child in tree["children"]:
+        params.extend(flatten_params(child))
     return params
 
 
-def generate_header(params: list[dict]) -> str:
+def generate_params_struct(tree: dict, indent: str = "") -> list[str]:
+    """Generate a nested struct for cached parameter pointers."""
+    lines = []
+
+    # Generate fields for direct params
+    for p in tree["params"]:
+        lines.append(f"{indent}std::atomic<float>* {p['field_name']} = nullptr;")
+
+    # Generate nested structs for children
+    for child in tree["children"]:
+        struct_name = snake_to_pascal(child["group_name"])
+        lines.append(f"{indent}struct {struct_name}Params {{")
+        lines.extend(generate_params_struct(child, indent + "    "))
+        lines.append(f"{indent}    void init(juce::AudioProcessorValueTreeState& apvts);")
+        lines.append(f"{indent}}} {child['group_name']};")
+
+    return lines
+
+
+def generate_params_init(tree: dict, parent_path: str = "") -> list[str]:
+    """Generate init() method implementations for all nested structs."""
+    lines = []
+
+    # Build the full struct path for this level
+    if parent_path:
+        struct_path = f"{parent_path}::{snake_to_pascal(tree['group_name'])}Params"
+        method_name = f"{struct_path}::init"
+    else:
+        struct_path = "Params"
+        method_name = "Params::init"
+
+    lines.append(f"void {method_name}(juce::AudioProcessorValueTreeState& apvts) {{")
+
+    # Initialize direct params
+    for p in tree["params"]:
+        lines.append(f'    {p["field_name"]} = apvts.getRawParameterValue("{p["param_id"]}");')
+
+    # Initialize children
+    for child in tree["children"]:
+        lines.append(f"    {child['group_name']}.init(apvts);")
+
+    lines.append("}")
+    lines.append("")
+
+    # Recursively generate init for children
+    for child in tree["children"]:
+        lines.extend(generate_params_init(child, struct_path))
+
+    return lines
+
+
+def generate_header(tree: dict, params: list[dict]) -> str:
     """Generate the .h file content."""
     lines = [
         "// AUTO-GENERATED FILE - DO NOT EDIT",
@@ -243,14 +306,7 @@ def generate_header(params: list[dict]) -> str:
         "",
         "namespace GeneratedParams {",
         "",
-        "// Parameter IDs",
-        "namespace ParamIDs {",
     ]
-
-    for p in params:
-        lines.append(f'constexpr const char* {snake_to_screaming(p["name"])} = "{p["param_id"]}";')
-
-    lines.extend(["", "} // namespace ParamIDs", ""])
 
     # Generate choice arrays
     for p in params:
@@ -261,21 +317,29 @@ def generate_header(params: list[dict]) -> str:
             if "values" in p:
                 values_str = ", ".join(f'"{v}"' for v in p["values"])
                 lines.append(f"inline const juce::StringArray values = {{{values_str}}};")
-            lines.append(f"}} // namespace {p['namespace']}")
+            lines.append(f"}}  // namespace {p['namespace']}")
             lines.append("")
         elif p["type"] == "int_choice":
             lines.append(f"namespace {p['namespace']} {{")
             choices_str = ", ".join(f'"{c}"' for c in p["choices"])
             lines.append(f"inline const juce::StringArray choices = {{{choices_str}}};")
-            lines.append(f"}} // namespace {p['namespace']}")
+            lines.append(f"}}  // namespace {p['namespace']}")
             lines.append("")
+
+    # Generate Params struct
+    lines.append("// Cached parameter pointers")
+    lines.append("struct Params {")
+    lines.extend(generate_params_struct(tree, "    "))
+    lines.append("    void init(juce::AudioProcessorValueTreeState& apvts);")
+    lines.append("};")
+    lines.append("")
 
     lines.extend(
         [
             "// Create the parameter layout",
             "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();",
             "",
-            "} // namespace GeneratedParams",
+            "}  // namespace GeneratedParams",
             "",
         ]
     )
@@ -283,8 +347,79 @@ def generate_header(params: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def generate_cpp(params: list[dict]) -> str:
-    """Generate the .cpp file content."""
+def generate_param_code(p: dict, indent: str = "    ") -> str:
+    """Generate the code to create a single parameter (as a single string)."""
+    param_id = p["param_id"]
+    if p["type"] == "choice":
+        return (
+            f"{indent}std::make_unique<juce::AudioParameterChoice>(\n"
+            f'{indent}    juce::ParameterID("{param_id}", 1),\n'
+            f'{indent}    "{p["label"]}",\n'
+            f"{indent}    {p['namespace']}::labels,\n"
+            f"{indent}    0)"
+        )
+    elif p["type"] == "int_choice":
+        return (
+            f"{indent}std::make_unique<juce::AudioParameterChoice>(\n"
+            f'{indent}    juce::ParameterID("{param_id}", 1),\n'
+            f'{indent}    "{p["label"]}",\n'
+            f"{indent}    {p['namespace']}::choices,\n"
+            f"{indent}    {p['default']})"
+        )
+    elif p["type"] == "int":
+        return (
+            f"{indent}std::make_unique<juce::AudioParameterInt>(\n"
+            f'{indent}    juce::ParameterID("{param_id}", 1),\n'
+            f'{indent}    "{p["label"]}",\n'
+            f"{indent}    {p['min']}, {p['max']}, {p.get('default', p['min'])})"
+        )
+    elif p["type"] == "float":
+        default = p.get("default", p["min"])
+        return (
+            f"{indent}std::make_unique<juce::AudioParameterFloat>(\n"
+            f'{indent}    juce::ParameterID("{param_id}", 1),\n'
+            f'{indent}    "{p["label"]}",\n'
+            f"{indent}    {p['min']}f, {p['max']}f, {default}f)"
+        )
+    elif p["type"] == "bool":
+        default = "true" if p.get("default") else "false"
+        return (
+            f"{indent}std::make_unique<juce::AudioParameterBool>(\n"
+            f'{indent}    juce::ParameterID("{param_id}", 1),\n'
+            f'{indent}    "{p["label"]}",\n'
+            f"{indent}    {default})"
+        )
+    return ""
+
+
+def generate_group_code(tree: dict, var_name: str, indent: str = "    ") -> list[str]:
+    """Recursively generate code to build a parameter group."""
+    lines = []
+
+    group_id = tree["group_name"] if tree["group_name"] else "root"
+    group_label = tree["group_label"] or "Parameters"
+
+    lines.append(f'{indent}auto {var_name} = std::make_unique<juce::AudioProcessorParameterGroup>("{group_id}", "{group_label}", "|");')
+
+    # Add direct parameters
+    for p in tree["params"]:
+        param_code = generate_param_code(p, indent)
+        if param_code:
+            lines.append(f"{indent}{var_name}->addChild(")
+            lines.append(param_code + ");")
+
+    # Recursively add child groups
+    for i, child in enumerate(tree["children"]):
+        child_var = f"{var_name}_child{i}"
+        lines.append("")
+        lines.extend(generate_group_code(child, child_var, indent))
+        lines.append(f"{indent}{var_name}->addChild(std::move({child_var}));")
+
+    return lines
+
+
+def generate_cpp(tree: dict) -> str:
+    """Generate the .cpp file content with hierarchical parameter groups."""
     lines = [
         "// AUTO-GENERATED FILE - DO NOT EDIT",
         "// Generated by generate_vst_params.py from DaemomnifySettings",
@@ -292,60 +427,43 @@ def generate_cpp(params: list[dict]) -> str:
         "",
         "namespace GeneratedParams {",
         "",
-        "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {",
-        "    juce::AudioProcessorValueTreeState::ParameterLayout layout;",
-        "",
     ]
 
-    for p in params:
-        variant_comment = f" (when {p['parent_variant']})" if p.get("parent_variant") else ""
+    # Generate Params::init() implementations
+    lines.extend(generate_params_init(tree))
 
-        if p["type"] == "choice":
-            lines.append(f"    // {p['label']}")
-            lines.append("    layout.add(std::make_unique<juce::AudioParameterChoice>(")
-            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
-            lines.append(f'        "{p["label"]}",')
-            lines.append(f"        {p['namespace']}::labels,")
-            lines.append("        0));")
+    lines.append("juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {")
+
+    # For root level, we need to handle params and children differently
+    # Root params go directly to layout, root children become top-level groups
+
+    # Add root-level params directly
+    for p in tree["params"]:
+        param_code = generate_param_code(p, "    ")
+        if param_code:
+            lines.append("    layout.add(")
+            lines.append(param_code + ");")
             lines.append("")
-        elif p["type"] == "int_choice":
-            lines.append(f"    // {p['label']}{variant_comment}")
-            lines.append("    layout.add(std::make_unique<juce::AudioParameterChoice>(")
-            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
-            lines.append(f'        "{p["label"]}",')
-            lines.append(f"        {p['namespace']}::choices,")
-            lines.append(f"        {p['default']}));")
-            lines.append("")
-        elif p["type"] == "int":
-            lines.append(f"    // {p['label']}{variant_comment}")
-            lines.append("    layout.add(std::make_unique<juce::AudioParameterInt>(")
-            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
-            lines.append(f'        "{p["label"]}",')
-            lines.append(f"        {p['min']}, {p['max']}, {p.get('default', p['min'])}));")
-            lines.append("")
-        elif p["type"] == "float":
-            lines.append(f"    // {p['label']}{variant_comment}")
-            lines.append("    layout.add(std::make_unique<juce::AudioParameterFloat>(")
-            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
-            lines.append(f'        "{p["label"]}",')
-            default = p.get("default", p["min"])
-            lines.append(f"        {p['min']}f, {p['max']}f, {default}f));")
-            lines.append("")
-        elif p["type"] == "bool":
-            lines.append(f"    // {p['label']}{variant_comment}")
-            lines.append("    layout.add(std::make_unique<juce::AudioParameterBool>(")
-            lines.append(f"        juce::ParameterID(ParamIDs::{snake_to_screaming(p['name'])}, 1),")
-            lines.append(f'        "{p["label"]}",')
-            default = "true" if p.get("default") else "false"
-            lines.append(f"        {default}));")
-            lines.append("")
+
+    # Add child groups
+    for i, child in enumerate(tree["children"]):
+        var_name = f"group{i}"
+        lines.append("")
+        lines.extend(generate_group_code(child, var_name, "    "))
+        lines.append(f"    layout.add(std::move({var_name}));")
+
+    # Need to declare layout at the start - find the createParameterLayout line
+    layout_line_idx = next(i for i, line in enumerate(lines) if "createParameterLayout()" in line)
+    lines.insert(layout_line_idx + 1, "    juce::AudioProcessorValueTreeState::ParameterLayout layout;")
+    lines.insert(layout_line_idx + 2, "")
 
     lines.extend(
         [
+            "",
             "    return layout;",
             "}",
             "",
-            "} // namespace GeneratedParams",
+            "}  // namespace GeneratedParams",
             "",
         ]
     )
@@ -353,20 +471,37 @@ def generate_cpp(params: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def print_tree(tree: dict, indent: int = 0) -> None:
+    """Pretty print the parameter tree."""
+    prefix = "  " * indent
+    if tree["group_name"]:
+        print(f"{prefix}[{tree['group_label']}] ({tree['group_name']})")
+    else:
+        print(f"{prefix}(root)")
+
+    for p in tree["params"]:
+        print(f"{prefix}  - {p['param_id']}: {p['type']}")
+
+    for child in tree["children"]:
+        print_tree(child, indent + 1)
+
+
 def main():
     output_dir = Path(__file__).parent
 
     print("Collecting parameters from DaemomnifySettings...")
-    params = collect_params(DaemomnifySettings)
+    tree = collect_params(DaemomnifySettings)
 
-    print(f"\nFound {len(params)} parameters:")
-    for p in params:
-        variant_info = f" (variant: {p['parent_variant']})" if p.get("parent_variant") else ""
-        print(f"  {p['name']}: {p['type']}{variant_info}")
+    print("\nParameter hierarchy:")
+    print_tree(tree)
+
+    # Flatten for header generation (needs choice arrays)
+    flat_params = flatten_params(tree)
+    print(f"\nTotal parameters: {len(flat_params)}")
 
     # Generate files
-    header_content = generate_header(params)
-    cpp_content = generate_cpp(params)
+    header_content = generate_header(tree, flat_params)
+    cpp_content = generate_cpp(tree)
 
     header_path = output_dir / "GeneratedParams.h"
     cpp_path = output_dir / "GeneratedParams.cpp"
@@ -376,7 +511,6 @@ def main():
 
     print(f"\nGenerated {header_path}")
     print(f"Generated {cpp_path}")
-    print(f"\nTotal parameters: {len(params)}")
 
 
 if __name__ == "__main__":
