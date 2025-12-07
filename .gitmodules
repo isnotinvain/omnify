@@ -1,6 +1,6 @@
 [submodule "vst/JUCE"]
 	path = vst/JUCE
-	url = https://github.com/juce-framework/JUCE.git
+	url = https://github.com/isnotinvain/JUCE.git
 [submodule "vst/foleys_gui_magic"]
 	path = vst/foleys_gui_magic
 	url = https://github.com/isnotinvain/foleys_gui_magic.git
