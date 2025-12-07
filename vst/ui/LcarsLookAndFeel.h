@@ -13,6 +13,12 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
 
         setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colours::black);
         setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colours::black);
+
+        // Default popup menu colors (can be overridden via XML)
+        setColour(juce::PopupMenu::backgroundColourId, juce::Colour(0xFF1A1A2E));
+        setColour(juce::PopupMenu::textColourId, LcarsColors::sunflower);
+        setColour(juce::PopupMenu::highlightedBackgroundColourId, LcarsColors::orange.withAlpha(0.3f));
+        setColour(juce::PopupMenu::highlightedTextColourId, LcarsColors::spaceWhite);
     }
 
    private:
@@ -80,6 +86,8 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
             box.findColour(juce::ComboBox::arrowColourId).withAlpha(box.isEnabled() ? 0.9f : 0.2f));
         g.fillPath(path);
     }
+
+    int getPopupMenuBorderSize() override { return 2; }
 
     void drawTabButton(juce::TabBarButton& button, juce::Graphics& g, bool isMouseOver,
                        bool isMouseDown) override {
