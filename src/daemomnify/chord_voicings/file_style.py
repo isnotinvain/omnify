@@ -25,6 +25,7 @@ class FileStyle(ChordVoicingStyle):
     @classmethod
     def vst_label(cls) -> str:
         return "File"
+
     _data: ChordFile | None = PrivateAttr(default=None)
 
     @staticmethod
@@ -42,7 +43,9 @@ class FileStyle(ChordVoicingStyle):
         lookup = data.chords[quality]
         note_class = root % 12
         offsets_or_notes = lookup[note_class]
+
         if data.is_offset_file:
-            return [root + x for x in offsets_or_notes]
+            notes = [root + x for x in offsets_or_notes]
         else:
-            return offsets_or_notes
+            notes = offsets_or_notes
+        return notes

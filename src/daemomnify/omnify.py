@@ -119,7 +119,6 @@ class Omnify:
             on = mido.Message("note_on", note=clamped, velocity=msg.velocity, channel=self.settings.chord_channel - 1)
             events.append(on)
             self.note_on_events_of_current_chord.append(on)
-
         return events
 
     def is_chord_note_off(self, msg):
