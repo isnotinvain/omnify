@@ -29,7 +29,7 @@ void ChordQualitySelectorComponent::paint(juce::Graphics& g) {
 
         // Alternate colors for LCARS feel
         g.setColour(LcarsColors::orange);
-        g.setFont(getLookAndFeel().getPopupMenuFont());
+        g.setFont(getLookAndFeel().getPopupMenuFont().withHeight(fontSize));
         g.drawText(GeneratedParams::ChordQualities::NAMES[i], labelBounds.reduced(5),
                    juce::Justification::centredLeft);
     }

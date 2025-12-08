@@ -45,7 +45,11 @@ void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
     builder.registerJUCEFactories();
     builder.registerJUCELookAndFeels();
-    builder.registerLookAndFeel("Lcars", std::make_unique<LcarsLookAndFeel>());
+
+    auto lcarsLookAndFeel = std::make_unique<LcarsLookAndFeel>();
+    lcarsLookAndFeel->setBuilder(&builder);
+    builder.registerLookAndFeel("Lcars", std::move(lcarsLookAndFeel));
+
     builder.registerFactory("OmnifyMidiLearn", &MidiLearnItem::factory);
     builder.registerFactory("ChordQualitySelector", &ChordQualitySelectorItem::factory);
 }

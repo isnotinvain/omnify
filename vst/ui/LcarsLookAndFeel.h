@@ -22,7 +22,36 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         setColour(juce::PopupMenu::highlightedTextColourId, LcarsColors::spaceWhite);
     }
 
+    void setBuilder(foleys::MagicGUIBuilder* b) { builder = b; }
+
+    float getSetting(const juce::String& name, float defaultVal) const {
+        if (builder) {
+            auto settings = builder->getConfigTree().getChildWithName("LcarsSettings");
+            if (settings.isValid() && settings.hasProperty(name)) {
+                return static_cast<float>(settings.getProperty(name));
+            }
+        }
+        return defaultVal;
+    }
+
+    juce::Colour getSettingColour(const juce::String& name, juce::Colour defaultVal) const {
+        if (builder) {
+            auto settings = builder->getConfigTree().getChildWithName("LcarsSettings");
+            if (settings.isValid() && settings.hasProperty(name)) {
+                auto colourStr = settings.getProperty(name).toString();
+                // Support palette references like "$lcars-orange"
+                if (colourStr.startsWith("$")) {
+                    return builder->getStylesheet().getColour(colourStr);
+                }
+                // Otherwise parse as hex color
+                return juce::Colour::fromString(colourStr);
+            }
+        }
+        return defaultVal;
+    }
+
    private:
+    foleys::MagicGUIBuilder* builder = nullptr;
     juce::Typeface::Ptr orbitronTypeface;
 
     juce::Font getOrbitronFont(float height) const {
@@ -51,7 +80,7 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         return getOrbitronFont(juce::jmin(15.0f, buttonHeight * 0.6f));
     }
 
-    juce::Font getPopupMenuFont() override { return getOrbitronFont(40.0f); }
+    juce::Font getPopupMenuFont() override { return getOrbitronFont(15.0f); }
 
     void getIdealPopupMenuItemSizeWithOptions(const juce::String& text, bool isSeparator,
                                               int standardMenuItemHeight, int& idealWidth,
@@ -66,8 +95,9 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
                 if (auto* guiItem = dynamic_cast<foleys::GuiItem*>(target->getParentComponent())) {
                     auto captionSize =
                         static_cast<float>(guiItem->getProperty(foleys::IDs::captionSize));
-                    if (captionSize > 0)
+                    if (captionSize > 0) {
                         fontSize = captionSize * 0.8f;
+                    }
                 }
             }
             idealHeight = static_cast<int>(fontSize * 1.3f);
@@ -128,14 +158,14 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         const auto activeArea = button.getActiveArea();
 
         if (button.getToggleState()) {
-            g.setColour(LcarsColors::orange);
+            g.setColour(getSettingColour("tabActiveColor", LcarsColors::orange));
         } else {
-            g.setColour(LcarsColors::red);
+            g.setColour(getSettingColour("tabInactiveColor", LcarsColors::red));
         }
         g.fillRect(activeArea);
 
-        g.setColour(juce::Colours::black);
-        g.setFont(getOrbitronFont(14.0f));
+        g.setColour(getSettingColour("tabTextColor", juce::Colours::black));
+        g.setFont(getOrbitronFont(getSetting("tabFontSize", 14.0f)));
         g.drawText(button.getButtonText(), activeArea, juce::Justification::centred);
     }
 };

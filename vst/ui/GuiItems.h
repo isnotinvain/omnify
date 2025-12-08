@@ -30,10 +30,13 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
    public:
     FOLEYS_DECLARE_GUI_FACTORY(ChordQualitySelectorItem)
 
+    static const juce::Identifier pFontSize;
+
     ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
 
     void update() override;
     juce::Component* getWrappedComponent() override;
+    std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
    private:
     ChordQualitySelectorComponent chordQualitySelector;
