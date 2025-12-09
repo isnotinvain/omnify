@@ -15,18 +15,6 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colours::black);
     }
 
-    void applyPopupMenuColors() {
-        setColour(juce::PopupMenu::backgroundColourId,
-                  getSettingColour("popup-menu-background-color", juce::Colour(0xFF1A1A2E)));
-        setColour(juce::PopupMenu::textColourId,
-                  getSettingColour("popup-menu-text-color", LcarsColors::sunflower));
-        setColour(juce::PopupMenu::highlightedBackgroundColourId,
-                  getSettingColour("popup-menu-highlighted-background-color",
-                                   LcarsColors::orange.withAlpha(0.3f)));
-        setColour(juce::PopupMenu::highlightedTextColourId,
-                  getSettingColour("popup-menu-highlighted-text-color", LcarsColors::spaceWhite));
-    }
-
     void setBuilder(foleys::MagicGUIBuilder* b) {
         builder = b;
         refreshSettingsCache();
@@ -36,7 +24,6 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         if (builder) {
             auto rootView = builder->getConfigTree().getChildWithName("View");
             settingsCache = rootView.getChildWithName("LcarsSettings");
-            applyPopupMenuColors();
         }
     }
 

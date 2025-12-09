@@ -59,14 +59,6 @@ const juce::Identifier LcarsSettingsItem::pTabActiveColor{"tab-active-color"};
 const juce::Identifier LcarsSettingsItem::pTabInactiveColor{"tab-inactive-color"};
 const juce::Identifier LcarsSettingsItem::pTabTextColor{"tab-text-color"};
 
-// Popup menu colors
-const juce::Identifier LcarsSettingsItem::pPopupMenuBackgroundColor{"popup-menu-background-color"};
-const juce::Identifier LcarsSettingsItem::pPopupMenuTextColor{"popup-menu-text-color"};
-const juce::Identifier LcarsSettingsItem::pPopupMenuHighlightedBackgroundColor{
-    "popup-menu-highlighted-background-color"};
-const juce::Identifier LcarsSettingsItem::pPopupMenuHighlightedTextColor{
-    "popup-menu-highlighted-text-color"};
-
 // Font size multipliers
 const juce::Identifier LcarsSettingsItem::pComboboxLabelFontMultiplier{
     "combobox-label-font-multiplier"};
@@ -78,7 +70,6 @@ const juce::Identifier LcarsSettingsItem::pPopupMenuItemFontMultiplier{
     "popup-menu-item-font-multiplier"};
 const juce::Identifier LcarsSettingsItem::pPopupMenuItemHeightMultiplier{
     "popup-menu-item-height-multiplier"};
-const juce::Identifier LcarsSettingsItem::pMenuBarFontSize{"menu-bar-font-size"};
 
 // ComboBox drawing
 const juce::Identifier LcarsSettingsItem::pComboboxBorderRadius{"combobox-border-radius"};
@@ -97,11 +88,7 @@ LcarsSettingsItem::LcarsSettingsItem(foleys::MagicGUIBuilder& builder, const juc
 
     setColourTranslation({{"tab-active-color", 0},
                           {"tab-inactive-color", 1},
-                          {"tab-text-color", 2},
-                          {"popup-menu-background-color", 3},
-                          {"popup-menu-text-color", 4},
-                          {"popup-menu-highlighted-background-color", 5},
-                          {"popup-menu-highlighted-text-color", 6}});
+                          {"tab-text-color", 2}});
 }
 
 void LcarsSettingsItem::update() {
@@ -134,7 +121,6 @@ std::vector<foleys::SettableProperty> LcarsSettingsItem::getSettableProperties()
         {configNode, pPopupMenuItemFontMultiplier, foleys::SettableProperty::Number, 0.8f, {}});
     props.push_back(
         {configNode, pPopupMenuItemHeightMultiplier, foleys::SettableProperty::Number, 1.3f, {}});
-    props.push_back({configNode, pMenuBarFontSize, foleys::SettableProperty::Number, 15.0f, {}});
 
     // ComboBox drawing
     props.push_back(

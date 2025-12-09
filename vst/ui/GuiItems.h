@@ -54,12 +54,6 @@ class LcarsSettingsItem : public foleys::GuiItem {
     static const juce::Identifier pTabInactiveColor;
     static const juce::Identifier pTabTextColor;
 
-    // Popup menu colors
-    static const juce::Identifier pPopupMenuBackgroundColor;
-    static const juce::Identifier pPopupMenuTextColor;
-    static const juce::Identifier pPopupMenuHighlightedBackgroundColor;
-    static const juce::Identifier pPopupMenuHighlightedTextColor;
-
     // Font size multipliers
     static const juce::Identifier pComboboxLabelFontMultiplier;
     static const juce::Identifier pComboboxFontMultiplier;
@@ -68,7 +62,6 @@ class LcarsSettingsItem : public foleys::GuiItem {
     static const juce::Identifier pPopupMenuFontSize;
     static const juce::Identifier pPopupMenuItemFontMultiplier;
     static const juce::Identifier pPopupMenuItemHeightMultiplier;
-    static const juce::Identifier pMenuBarFontSize;
 
     // ComboBox drawing
     static const juce::Identifier pComboboxBorderRadius;
