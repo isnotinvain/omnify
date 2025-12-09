@@ -90,7 +90,7 @@ juce::String MidiLearnComponent::getDisplayText() const {
 void MidiLearnComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().reduced(2);
     int boxWidth = static_cast<int>(bounds.getHeight() * 2.5f);
-    boxBounds = bounds.removeFromLeft(boxWidth);
+    boxBounds = bounds.removeFromRight(boxWidth);
 
     if (isLearning.load()) {
         g.setColour(juce::Colours::black);

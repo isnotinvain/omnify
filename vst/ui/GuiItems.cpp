@@ -58,6 +58,7 @@ const juce::Identifier LcarsSettingsItem::pTabFontSize{"tab-font-size"};
 const juce::Identifier LcarsSettingsItem::pTabActiveColor{"tab-active-color"};
 const juce::Identifier LcarsSettingsItem::pTabInactiveColor{"tab-inactive-color"};
 const juce::Identifier LcarsSettingsItem::pTabTextColor{"tab-text-color"};
+const juce::Identifier LcarsSettingsItem::pTabUnderlineColor{"tab-underline-color"};
 
 // Font size multipliers
 const juce::Identifier LcarsSettingsItem::pComboboxLabelFontMultiplier{
@@ -88,7 +89,8 @@ LcarsSettingsItem::LcarsSettingsItem(foleys::MagicGUIBuilder& builder, const juc
 
     setColourTranslation({{"tab-active-color", 0},
                           {"tab-inactive-color", 1},
-                          {"tab-text-color", 2}});
+                          {"tab-text-color", 2},
+                          {"tab-underline-color", 3}});
 }
 
 void LcarsSettingsItem::update() {

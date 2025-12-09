@@ -21,13 +21,13 @@ void ChordQualitySelectorComponent::paint(juce::Graphics& g) {
 
     auto bounds = getLocalBounds();
     int rowHeight = bounds.getHeight() / NUM_QUALITIES;
-    int labelWidth = 120;
+    int learnerWidth = static_cast<int>(rowHeight * 2.5f) + 4;
 
     for (size_t i = 0; i < NUM_QUALITIES; ++i) {
         auto rowBounds = bounds.removeFromTop(rowHeight);
-        auto labelBounds = rowBounds.removeFromLeft(labelWidth);
+        rowBounds.removeFromRight(learnerWidth);  // Skip learner area
+        auto labelBounds = rowBounds;
 
-        // Alternate colors for LCARS feel
         g.setColour(LcarsColors::orange);
         g.setFont(getLookAndFeel().getPopupMenuFont().withHeight(fontSize));
         g.drawText(GeneratedParams::ChordQualities::NAMES[i], labelBounds.reduced(5),
@@ -38,11 +38,11 @@ void ChordQualitySelectorComponent::paint(juce::Graphics& g) {
 void ChordQualitySelectorComponent::resized() {
     auto bounds = getLocalBounds();
     int rowHeight = bounds.getHeight() / NUM_QUALITIES;
-    int labelWidth = 120;
+    int learnerWidth = static_cast<int>(rowHeight * 2.5f) + 4;
 
     for (size_t i = 0; i < NUM_QUALITIES; ++i) {
         auto rowBounds = bounds.removeFromTop(rowHeight);
-        rowBounds.removeFromLeft(labelWidth);  // Skip label area
-        learners[i]->setBounds(rowBounds.reduced(2));
+        auto learnerBounds = rowBounds.removeFromRight(learnerWidth);
+        learners[i]->setBounds(learnerBounds.reduced(2));
     }
 }

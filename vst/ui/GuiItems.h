@@ -53,6 +53,7 @@ class LcarsSettingsItem : public foleys::GuiItem {
     static const juce::Identifier pTabActiveColor;
     static const juce::Identifier pTabInactiveColor;
     static const juce::Identifier pTabTextColor;
+    static const juce::Identifier pTabUnderlineColor;
 
     // Font size multipliers
     static const juce::Identifier pComboboxLabelFontMultiplier;

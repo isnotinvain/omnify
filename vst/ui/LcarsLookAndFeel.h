@@ -62,8 +62,8 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
                 auto captionSize =
                     static_cast<float>(guiItem->getProperty(foleys::IDs::captionSize));
                 if (captionSize > 0) {
-                    return getOrbitronFont(
-                        captionSize * getSetting("combobox-label-font-multiplier", 0.8f));
+                    return getOrbitronFont(captionSize *
+                                           getSetting("combobox-label-font-multiplier", 0.8f));
                 }
             }
             return getOrbitronFont(comboBox->getHeight() *
@@ -73,15 +73,15 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
     }
 
     juce::Font getComboBoxFont(juce::ComboBox& box) override {
-        return getOrbitronFont(juce::jmin(getSetting("popup-menu-font-size", 15.0f),
-                                          (float)box.getHeight() *
-                                              getSetting("combobox-font-multiplier", 0.85f)));
+        return getOrbitronFont(
+            juce::jmin(getSetting("popup-menu-font-size", 15.0f),
+                       (float)box.getHeight() * getSetting("combobox-font-multiplier", 0.85f)));
     }
 
     juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override {
-        return getOrbitronFont(juce::jmin(getSetting("popup-menu-font-size", 15.0f),
-                                          buttonHeight *
-                                              getSetting("text-button-font-multiplier", 0.6f)));
+        return getOrbitronFont(
+            juce::jmin(getSetting("popup-menu-font-size", 15.0f),
+                       buttonHeight * getSetting("text-button-font-multiplier", 0.6f)));
     }
 
     juce::Font getPopupMenuFont() override {
@@ -107,8 +107,8 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
                     }
                 }
             }
-            idealHeight = static_cast<int>(
-                fontSize * getSetting("popup-menu-item-height-multiplier", 1.3f));
+            idealHeight =
+                static_cast<int>(fontSize * getSetting("popup-menu-item-height-multiplier", 1.3f));
             auto font = getOrbitronFont(fontSize);
             idealWidth = font.getStringWidth(text) + idealHeight * 2;
         }
@@ -130,7 +130,9 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         return getOrbitronFont(height * getSetting("tab-button-font-multiplier", 0.6f));
     }
 
-    juce::Font getSidePanelTitleFont(juce::SidePanel&) override { return juce::Font(orbitronTypeface); }
+    juce::Font getSidePanelTitleFont(juce::SidePanel&) override {
+        return juce::Font(orbitronTypeface);
+    }
 
     void drawComboBox(juce::Graphics& g, int width, int height, bool isButtonDown, int buttonX,
                       int buttonY, int buttonW, int buttonH, juce::ComboBox& box) override {
@@ -179,5 +181,26 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
         g.setColour(getSettingColour("tab-text-color", juce::Colours::black));
         g.setFont(getOrbitronFont(getSetting("tab-font-size", 14.0f)));
         g.drawText(button.getButtonText(), activeArea, juce::Justification::centred);
+    }
+
+    int getTabButtonBestWidth(juce::TabBarButton& button, int tabDepth) override {
+        auto font = getOrbitronFont(getSetting("tab-font-size", 14.0f));
+        int width = font.getStringWidth(button.getButtonText().trim()) + tabDepth;
+
+        if (auto* extraComponent = button.getExtraComponent())
+            width += button.getTabbedButtonBar().isVertical() ? extraComponent->getHeight()
+                                                              : extraComponent->getWidth();
+
+        return juce::jmax(tabDepth * 2, width);
+    }
+
+    void drawTabAreaBehindFrontButton(juce::TabbedButtonBar& bar, juce::Graphics& g, int w,
+                                      int h) override {
+        g.setColour(getSettingColour("tab-underline-color", LcarsColors::orange));
+        juce::Path line;
+        line.startNewSubPath(1.0f, h - 1.0f);
+        line.lineTo(w - 1.0f, h - 1.0f);
+        g.strokePath(line, juce::PathStrokeType(2.0f, juce::PathStrokeType::curved,
+                                                 juce::PathStrokeType::rounded));
     }
 };
