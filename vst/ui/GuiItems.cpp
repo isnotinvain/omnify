@@ -29,29 +29,6 @@ std::vector<foleys::SettableProperty> MidiLearnItem::getSettableProperties() con
     return props;
 }
 
-const juce::Identifier ChordQualitySelectorItem::pFontSize{"font-size"};
-
-ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder,
-                                                   const juce::ValueTree& node)
-    : foleys::GuiItem(builder, node) {
-    addAndMakeVisible(chordQualitySelector);
-}
-
-void ChordQualitySelectorItem::update() {
-    auto fontSizeVar = magicBuilder.getStyleProperty(pFontSize, configNode);
-    if (!fontSizeVar.isVoid()) {
-        chordQualitySelector.setFontSize(static_cast<float>(fontSizeVar));
-    }
-}
-
-juce::Component* ChordQualitySelectorItem::getWrappedComponent() { return &chordQualitySelector; }
-
-std::vector<foleys::SettableProperty> ChordQualitySelectorItem::getSettableProperties() const {
-    std::vector<foleys::SettableProperty> props;
-    props.push_back({configNode, pFontSize, foleys::SettableProperty::Number, 24.0f, {}});
-    return props;
-}
-
 // LcarsSettingsItem implementation
 // Tab settings
 const juce::Identifier LcarsSettingsItem::pTabFontSize{"tab-font-size"};

@@ -6,3 +6,4 @@
   - Example: `.claude/hooks/run-with-log.sh ./vst/compile.sh -d`
   - This logs to a temp file, opens it in VSCode, and waits for completion
   - After it exits, inspect the tmp file as needed (be efficient with tokens)
+- Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
