@@ -144,42 +144,104 @@ void OmnifyAudioProcessor::wireUpSettingsBindings(foleys::MagicGUIBuilder& build
         };
     }
 
-    // Wire up chord_quality_selector (for NotePerChordQuality mode)
+    // Wire up chord_voicing_style
+    if (auto* chordVoicingSelector = dynamic_cast<VariantSelectorItem*>(
+            builder.findGuiItemWithId("chord_voicing_style"))) {
+        // Load initial selection from variant index
+        chordVoicingSelector->setSelectedIndex(
+            static_cast<int>(additionalSettings.chord_voicing_style.index()));
+        // Set callback for when user changes selection
+        chordVoicingSelector->onSelectionChanged = [this](int index, juce::Component*) {
+            switch (index) {
+                case 0:
+                    additionalSettings.chord_voicing_style =
+                        GeneratedAdditionalSettings::RootPositionStyle{};
+                    break;
+                case 1:
+                    additionalSettings.chord_voicing_style =
+                        GeneratedAdditionalSettings::FileStyle{};
+                    break;
+                case 2:
+                    additionalSettings.chord_voicing_style =
+                        GeneratedAdditionalSettings::Omni84Style{};
+                    break;
+            }
+            saveAdditionalSettingsToValueTree();
+        };
+    }
+
+    // Wire up strum_voicing_style
+    if (auto* strumVoicingSelector = dynamic_cast<VariantSelectorItem*>(
+            builder.findGuiItemWithId("strum_voicing_style"))) {
+        // Load initial selection from variant index
+        strumVoicingSelector->setSelectedIndex(
+            static_cast<int>(additionalSettings.strum_voicing_style.index()));
+        // Set callback for when user changes selection
+        strumVoicingSelector->onSelectionChanged = [this](int index, juce::Component*) {
+            switch (index) {
+                case 0:
+                    additionalSettings.strum_voicing_style =
+                        GeneratedAdditionalSettings::PlainAscendingStrumStyle{};
+                    break;
+                case 1:
+                    additionalSettings.strum_voicing_style =
+                        GeneratedAdditionalSettings::OmnichordStrumStyle{};
+                    break;
+            }
+            saveAdditionalSettingsToValueTree();
+        };
+    }
+
+    // Wire up chord_quality_selector (for ButtonPerChordQuality mode)
     if (auto* selector = dynamic_cast<ChordQualitySelectorItem*>(
             builder.findGuiItemWithId("chord_quality_selector"))) {
-        // Load initial values if we're in NotePerChordQuality mode
-        if (auto* noteStyle = std::get_if<GeneratedAdditionalSettings::NotePerChordQuality>(
+        // Load initial values if we're in ButtonPerChordQuality mode
+        if (auto* buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
                 &additionalSettings.chord_quality_selection_style)) {
-            for (const auto& [note, quality] : noteStyle->note_mapping) {
+            for (const auto& [note, quality] : buttonStyle->notes) {
                 auto qualityIndex = static_cast<size_t>(quality);
                 selector->setLearnerValue(qualityIndex, {MidiLearnedType::Note, note});
+            }
+            for (const auto& [cc, quality] : buttonStyle->ccs) {
+                auto qualityIndex = static_cast<size_t>(quality);
+                selector->setLearnerValue(qualityIndex, {MidiLearnedType::CC, cc});
             }
         }
         // Set callbacks for each quality
         for (size_t i = 0; i < ChordQualitySelectorItem::NUM_QUALITIES; ++i) {
             selector->setOnValueChanged(i, [this, i](MidiLearnedValue val) {
-                // Get or create NotePerChordQuality
-                auto* noteStyle = std::get_if<GeneratedAdditionalSettings::NotePerChordQuality>(
+                // Get or create ButtonPerChordQuality
+                auto* buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
                     &additionalSettings.chord_quality_selection_style);
-                if (noteStyle == nullptr) {
+                if (buttonStyle == nullptr) {
                     additionalSettings.chord_quality_selection_style =
-                        GeneratedAdditionalSettings::NotePerChordQuality{};
-                    noteStyle = std::get_if<GeneratedAdditionalSettings::NotePerChordQuality>(
+                        GeneratedAdditionalSettings::ButtonPerChordQuality{};
+                    buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
                         &additionalSettings.chord_quality_selection_style);
                 }
                 auto quality = static_cast<GeneratedAdditionalSettings::ChordQuality>(i);
-                // Remove old mapping for this quality
-                for (auto it = noteStyle->note_mapping.begin();
-                     it != noteStyle->note_mapping.end();) {
+                // Remove old mapping for this quality from both maps
+                for (auto it = buttonStyle->notes.begin(); it != buttonStyle->notes.end();) {
                     if (it->second == quality) {
-                        it = noteStyle->note_mapping.erase(it);
+                        it = buttonStyle->notes.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+                for (auto it = buttonStyle->ccs.begin(); it != buttonStyle->ccs.end();) {
+                    if (it->second == quality) {
+                        it = buttonStyle->ccs.erase(it);
                     } else {
                         ++it;
                     }
                 }
                 // Add new mapping if valid
-                if (val.type == MidiLearnedType::Note && val.value >= 0) {
-                    noteStyle->note_mapping[val.value] = quality;
+                if (val.value >= 0) {
+                    if (val.type == MidiLearnedType::Note) {
+                        buttonStyle->notes[val.value] = quality;
+                    } else if (val.type == MidiLearnedType::CC) {
+                        buttonStyle->ccs[val.value] = quality;
+                    }
                 }
                 saveAdditionalSettingsToValueTree();
             });

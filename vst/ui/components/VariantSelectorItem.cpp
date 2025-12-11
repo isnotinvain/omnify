@@ -1,98 +1,129 @@
 #include "../GuiItems.h"
 
-const juce::Identifier VariantSelectorItem::pComboBoxHeight{"combobox-height"};
-
 VariantSelectorItem::VariantSelectorItem(foleys::MagicGUIBuilder& builder,
                                          const juce::ValueTree& node)
     : foleys::Container(builder, node) {
-    addAndMakeVisible(comboBox);
+    // createSubComponents() is called by our DECLARE_CONTAINER_FACTORY
+}
 
-    comboBox.onChange = [this]() {
+void VariantSelectorItem::createSubComponents() {
+    foleys::Container::createSubComponents();
+
+    // Find the first direct child that is a ComboBox
+    comboBoxItem = nullptr;
+    for (int i = 0; i < configNode.getNumChildren(); ++i) {
+        auto childNode = configNode.getChild(i);
+        if (childNode.getType() == foleys::IDs::comboBox) {
+            comboBoxItem = findGuiItem(childNode);
+            break;
+        }
+    }
+
+    auto* comboBox = getComboBox();
+    if (comboBox == nullptr) {
+        DBG("VariantSelectorItem: No ComboBox found among direct children!");
+        return;
+    }
+
+    // Populate ComboBox from variant children (non-ComboBox children)
+    comboBox->clear();
+    int itemId = 1;
+    for (auto it = begin(); it != end(); ++it) {
+        if (it->get() == comboBoxItem) continue;
+        auto caption = (*it)->getTabCaption("Option " + juce::String(itemId));
+        comboBox->addItem(caption, itemId++);
+    }
+
+    if (comboBox->getNumItems() > 0) {
+        comboBox->setSelectedItemIndex(0, juce::dontSendNotification);
+    }
+
+    // Capture initial max sizes from XML before we modify anything
+    for (auto it = begin(); it != end(); ++it) {
+        auto* item = it->get();
+        if (item == comboBoxItem) continue;
+        auto& flexItem = item->getFlexItem();
+        originalMaxSizes[item] = {flexItem.maxWidth, flexItem.maxHeight};
+    }
+
+    comboBox->onChange = [this]() {
         updateChildVisibility();
         if (onSelectionChanged) {
-            int index = comboBox.getSelectedItemIndex();
+            int index = getComboBox()->getSelectedItemIndex();
             juce::Component* visibleChild = nullptr;
-            if (auto* item = getChildAtIndex(index)) {
+            if (auto* item = getVariantChildAtIndex(index)) {
                 visibleChild = item->getWrappedComponent();
             }
             onSelectionChanged(index, visibleChild);
         }
     };
-    // createSubComponents() is called by our DECLARE_CONTAINER_FACTORY
-}
-
-void VariantSelectorItem::createSubComponents() {
-    // Let parent build children from XML
-    foleys::Container::createSubComponents();
-
-    // Populate ComboBox from child captions
-    comboBox.clear();
-    int itemId = 1;
-    for (auto it = begin(); it != end(); ++it) {
-        auto caption = (*it)->getTabCaption("Option " + juce::String(itemId));
-        comboBox.addItem(caption, itemId++);
-    }
-
-    if (comboBox.getNumItems() > 0) {
-        comboBox.setSelectedItemIndex(0, juce::dontSendNotification);
-    }
 
     updateChildVisibility();
 }
 
 void VariantSelectorItem::update() {
-    auto heightVar = magicBuilder.getStyleProperty(pComboBoxHeight, configNode);
-    if (!heightVar.isVoid()) {
-        comboBoxHeight = static_cast<int>(heightVar);
-    }
-
     foleys::Container::update();
+    updateChildVisibility();
 }
 
-void VariantSelectorItem::resized() {
-    auto bounds = getLocalBounds();
-
-    // ComboBox takes top portion
-    comboBox.setBounds(bounds.removeFromTop(comboBoxHeight));
-
-    // Let Container handle the rest for the visible child
-    // We need to manually position children since we're overriding resized
-    for (auto it = begin(); it != end(); ++it) {
-        if ((*it)->isVisible()) {
-            (*it)->setBounds(bounds);
-        }
-    }
+juce::ComboBox* VariantSelectorItem::getComboBox() const {
+    if (comboBoxItem == nullptr) return nullptr;
+    return dynamic_cast<juce::ComboBox*>(comboBoxItem->getWrappedComponent());
 }
 
-std::vector<foleys::SettableProperty> VariantSelectorItem::getSettableProperties() const {
-    auto props = foleys::Container::getSettableProperties();
-    props.push_back({configNode, pComboBoxHeight, foleys::SettableProperty::Number, 30, {}});
-    return props;
+int VariantSelectorItem::getSelectedIndex() const {
+    auto* comboBox = getComboBox();
+    return comboBox ? comboBox->getSelectedItemIndex() : -1;
 }
-
-int VariantSelectorItem::getSelectedIndex() const { return comboBox.getSelectedItemIndex(); }
 
 void VariantSelectorItem::setSelectedIndex(int index) {
-    comboBox.setSelectedItemIndex(index, juce::sendNotificationSync);
+    if (auto* comboBox = getComboBox()) {
+        comboBox->setSelectedItemIndex(index, juce::sendNotificationSync);
+    }
 }
 
 void VariantSelectorItem::updateChildVisibility() {
-    int selectedIndex = comboBox.getSelectedItemIndex();
-    int childIndex = 0;
+    auto* comboBox = getComboBox();
+    if (comboBox == nullptr) return;
+
+    int selectedIndex = comboBox->getSelectedItemIndex();
+
+    // Find and hide the currently visible item, saving its values
     for (auto it = begin(); it != end(); ++it) {
-        (*it)->setVisible(childIndex == selectedIndex);
-        ++childIndex;
+        auto* item = it->get();
+        if (item == comboBoxItem) continue;
+
+        if (item->isVisible()) {
+            auto& flexItem = item->getFlexItem();
+            originalMaxSizes[item] = {flexItem.maxWidth, flexItem.maxHeight};
+            flexItem.maxWidth = 0;
+            flexItem.maxHeight = 0;
+            item->setVisible(false);
+        }
     }
-    resized();
+
+    // Show the selected item
+    if (auto* selectedItem = getVariantChildAtIndex(selectedIndex)) {
+        auto savedIt = originalMaxSizes.find(selectedItem);
+        if (savedIt != originalMaxSizes.end()) {
+            auto& flexItem = selectedItem->getFlexItem();
+            flexItem.maxWidth = savedIt->second.first;
+            flexItem.maxHeight = savedIt->second.second;
+        }
+        selectedItem->setVisible(true);
+    }
+
+    updateLayout();
 }
 
-foleys::GuiItem* VariantSelectorItem::getChildAtIndex(int index) {
-    int childIndex = 0;
+foleys::GuiItem* VariantSelectorItem::getVariantChildAtIndex(int index) {
+    int variantIndex = 0;
     for (auto it = begin(); it != end(); ++it) {
-        if (childIndex == index) {
+        if (it->get() == comboBoxItem) continue;
+        if (variantIndex == index) {
             return it->get();
         }
-        ++childIndex;
+        ++variantIndex;
     }
     return nullptr;
 }

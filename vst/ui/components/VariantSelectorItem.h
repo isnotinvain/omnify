@@ -3,11 +3,14 @@
 #include <foleys_gui_magic/foleys_gui_magic.h>
 
 #include <functional>
+#include <map>
 
-// A reusable container that shows a ComboBox and displays one child at a time.
-// Child Views are declared in XML with captions that populate the ComboBox.
+// A container that displays one child at a time, controlled by a ComboBox.
+// The first child must be a ComboBox, subsequent children are the variants.
+// The ComboBox is auto-populated from the captions of the variant children.
 // Usage in XML:
 //   <VariantSelector>
+//     <ComboBox/>
 //     <View caption="Option A">...</View>
 //     <View caption="Option B">...</View>
 //   </VariantSelector>
@@ -15,14 +18,10 @@ class VariantSelectorItem : public foleys::Container {
    public:
     DECLARE_CONTAINER_FACTORY(VariantSelectorItem)
 
-    static const juce::Identifier pComboBoxHeight;
-
     VariantSelectorItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
 
     void createSubComponents() override;
     void update() override;
-    void resized() override;
-    std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
     int getSelectedIndex() const;
     void setSelectedIndex(int index);
@@ -31,11 +30,12 @@ class VariantSelectorItem : public foleys::Container {
     std::function<void(int, juce::Component*)> onSelectionChanged;
 
    private:
-    juce::ComboBox comboBox;
-    int comboBoxHeight = 30;
+    foleys::GuiItem* comboBoxItem = nullptr;
+    std::map<foleys::GuiItem*, std::pair<float, float>> originalMaxSizes;  // maxWidth, maxHeight
 
+    juce::ComboBox* getComboBox() const;
     void updateChildVisibility();
-    foleys::GuiItem* getChildAtIndex(int index);
+    foleys::GuiItem* getVariantChildAtIndex(int index);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VariantSelectorItem)
 };

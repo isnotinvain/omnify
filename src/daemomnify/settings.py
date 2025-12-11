@@ -14,23 +14,16 @@ from daemomnify.chord_voicings.root_position_style import (
 )
 
 
-class NotePerChordQuality(BaseModel):
-    type: Literal["NotePerChordQuality"] = "NotePerChordQuality"
-    note_mapping: dict[int, chord_quality.ChordQuality]
+class ButtonPerChordQuality(BaseModel):
+    type: Literal["ButtonPerChordQuality"] = "ButtonPerChordQuality"
+    notes: dict[int, chord_quality.ChordQuality]
+    ccs: dict[int, chord_quality.ChordQuality]
 
     def handles_message(self, msg):
-        if msg.type == "note_on" and msg.note in self.note_mapping:
-            return self.note_mapping[msg.note]
-        return None
-
-
-class CCPerChordQuality(BaseModel):
-    type: Literal["CCPerChordQuality"] = "CCPerChordQuality"
-    cc_mapping: dict[int, chord_quality.ChordQuality]
-
-    def handles_message(self, msg):
-        if msg.type == "control_change" and msg.control in self.cc_mapping:
-            return self.cc_mapping[msg.control]
+        if msg.type == "note_on" and msg.note in self.notes:
+            return self.notes[msg.note]
+        if msg.type == "control_change" and msg.control in self.ccs:
+            return self.ccs[msg.control]
         return None
 
 
@@ -46,7 +39,7 @@ class CCRangePerChordQuality(BaseModel):
 
 
 ChordQualitySelectionStyle = Annotated[
-    NotePerChordQuality | CCPerChordQuality | CCRangePerChordQuality,
+    ButtonPerChordQuality | CCRangePerChordQuality,
     Field(discriminator="type"),
 ]
 
@@ -121,8 +114,8 @@ class DaemomnifySettings(BaseModel):
     # TODO: just make a set of these in the constructor
     def is_note_control_note(self, note: int) -> bool:
         match self.additional_settings.chord_quality_selection_style:
-            case NotePerChordQuality() as m:
-                if note in m.note_mapping:
+            case ButtonPerChordQuality() as m:
+                if note in m.notes:
                     return True
             case _:
                 pass
@@ -164,12 +157,13 @@ DEFAULT_SETTINGS: DaemomnifySettings = DaemomnifySettings(
     additional_settings=AdditionalSettings(
         chord_voicing_style=RootPositionStyle(),
         strum_voicing_style=PlainAscendingStrumStyle(),
-        chord_quality_selection_style=NotePerChordQuality(
-            note_mapping={
+        chord_quality_selection_style=ButtonPerChordQuality(
+            notes={
                 0: chord_quality.ChordQuality.MAJOR,
                 1: chord_quality.ChordQuality.MINOR,
                 2: chord_quality.ChordQuality.DOM_7,
-            }
+            },
+            ccs={},
         ),
         latch_toggle_button=MidiCCButton(cc=102, is_toggle=True),
         stop_button=MidiCCButton(cc=103, is_toggle=False),
