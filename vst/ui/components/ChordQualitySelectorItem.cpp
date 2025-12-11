@@ -12,7 +12,7 @@ ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& buil
 
     setColourTranslation({{"label-color", juce::Label::textColourId}});
 
-    for (int i = 0; i < NUM_QUALITIES; ++i) {
+    for (size_t i = 0; i < NUM_QUALITIES; ++i) {
         auto& row = rows[i];
         row.label.setText(GeneratedAdditionalSettings::ChordQualities::NAMES[i],
                           juce::dontSendNotification);
@@ -37,7 +37,7 @@ void ChordQualitySelectorItem::update() {
     }
 
     for (auto& row : rows) {
-        row.label.setFont(juce::Font(fontSizeVal));
+        row.label.setFont(juce::Font(juce::FontOptions(fontSizeVal)));
         row.label.setColour(juce::Label::textColourId, labelColorVal);
     }
 }
@@ -81,4 +81,17 @@ MidiLearnedValue ChordQualitySelectorItem::getLearnerValue(size_t qualityIndex) 
         return rows[qualityIndex].midiLearn.getLearnedValue();
     }
     return {};
+}
+
+void ChordQualitySelectorItem::setLearnerValue(size_t qualityIndex, MidiLearnedValue value) {
+    if (qualityIndex < NUM_QUALITIES) {
+        rows[qualityIndex].midiLearn.setLearnedValue(value);
+    }
+}
+
+void ChordQualitySelectorItem::setOnValueChanged(
+    size_t qualityIndex, std::function<void(MidiLearnedValue)> callback) {
+    if (qualityIndex < NUM_QUALITIES) {
+        rows[qualityIndex].midiLearn.onValueChanged = std::move(callback);
+    }
 }

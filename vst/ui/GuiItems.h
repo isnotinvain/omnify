@@ -31,6 +31,8 @@ class MidiLearnItem : public foleys::GuiItem {
     juce::Component* getWrappedComponent() override;
     std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
+    MidiLearnComponent& getMidiLearnComponent() { return midiLearnComponent; }
+
    private:
     MidiLearnComponent midiLearnComponent;
 

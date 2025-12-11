@@ -7,3 +7,4 @@
   - This logs to a temp file, opens it in VSCode, and waits for completion
   - After it exits, inspect the tmp file as needed (be efficient with tokens)
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
+- If you explain multiple ways something could be done, ask me which one I want before proceding with Edits

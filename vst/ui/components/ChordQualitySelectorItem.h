@@ -24,6 +24,8 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
     MidiLearnedValue getLearnerValue(size_t qualityIndex) const;
+    void setLearnerValue(size_t qualityIndex, MidiLearnedValue value);
+    void setOnValueChanged(size_t qualityIndex, std::function<void(MidiLearnedValue)> callback);
 
    private:
     juce::Component container;

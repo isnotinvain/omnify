@@ -88,9 +88,7 @@ juce::String MidiLearnComponent::getDisplayText() const {
 }
 
 void MidiLearnComponent::paint(juce::Graphics& g) {
-    auto bounds = getLocalBounds().reduced(2);
-    int boxWidth = static_cast<int>(bounds.getHeight() * 2.5f);
-    boxBounds = bounds.removeFromRight(boxWidth);
+    boxBounds = getLocalBounds().reduced(2);
 
     if (isLearning.load()) {
         g.setColour(juce::Colours::black);

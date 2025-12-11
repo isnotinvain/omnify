@@ -110,7 +110,9 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
             idealHeight =
                 static_cast<int>(fontSize * getSetting("popup-menu-item-height-multiplier", 1.3F));
             auto font = getOrbitronFont(fontSize);
-            idealWidth = font.getStringWidth(text) + idealHeight * 2;
+            juce::GlyphArrangement glyphs;
+            glyphs.addLineOfText(font, text, 0, 0);
+            idealWidth = static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth()) + idealHeight * 2;
         }
     }
 
@@ -192,7 +194,9 @@ class LcarsLookAndFeel : public foleys::LookAndFeel {
 
     int getTabButtonBestWidth(juce::TabBarButton& button, int tabDepth) override {
         auto font = getOrbitronFont(getSetting("tab-font-size", 14.0F));
-        int width = font.getStringWidth(button.getButtonText().trim()) + tabDepth;
+        juce::GlyphArrangement glyphs;
+        glyphs.addLineOfText(font, button.getButtonText().trim(), 0, 0);
+        int width = static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth()) + tabDepth;
 
         if (auto* extraComponent = button.getExtraComponent()) {
             width += button.getTabbedButtonBar().isVertical() ? extraComponent->getHeight()

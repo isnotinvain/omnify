@@ -17,12 +17,14 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor {
 
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void initialiseBuilder(foleys::MagicGUIBuilder& builder) override;
+    juce::AudioProcessorEditor* createEditor() override;
 
     // AdditionalSettings access
     const GeneratedAdditionalSettings::Settings& getAdditionalSettings() const { return additionalSettings; }
     void setAdditionalSettings(const GeneratedAdditionalSettings::Settings& settings);
 
    private:
+    void wireUpSettingsBindings(foleys::MagicGUIBuilder& builder);
     GeneratedParams::Params params;
     juce::AudioProcessorValueTreeState parameters;
 
