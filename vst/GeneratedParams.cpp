@@ -8,32 +8,47 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     auto p0 = std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("midi_device_name", 1), "MIDI Device", juce::StringArray{"(none)"}, 0);
+        juce::ParameterID("midi_device_name", 1),
+        "MIDI Device",
+        juce::StringArray{"(none)"},
+        0);
     params.midi_device_name = p0.get();
     layout.add(std::move(p0));
 
     auto p1 = std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("chord_channel", 1), "Chord Channel", ChordChannelChoices::choices, 0);
+        juce::ParameterID("chord_channel", 1),
+        "Chord Channel",
+        ChordChannelChoices::choices,
+        0);
     params.chord_channel = p1.get();
     layout.add(std::move(p1));
 
     auto p2 = std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("strum_channel", 1), "Strum Channel", StrumChannelChoices::choices, 1);
+        juce::ParameterID("strum_channel", 1),
+        "Strum Channel",
+        StrumChannelChoices::choices,
+        1);
     params.strum_channel = p2.get();
     layout.add(std::move(p2));
 
     auto p3 = std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("strum_cooldown_secs", 1), "Strum Cooldown (sec)", 0.0F, 5.0F, 0.0F);
+        juce::ParameterID("strum_cooldown_secs", 1),
+        "Strum Cooldown (sec)",
+        0.0F, 5.0F, 0.0F);
     params.strum_cooldown_secs = p3.get();
     layout.add(std::move(p3));
 
     auto p4 = std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("strum_gate_time_secs", 1), "Strum Gate Time (sec)", 0.0F, 5.0F, 0.0F);
+        juce::ParameterID("strum_gate_time_secs", 1),
+        "Strum Gate Time (sec)",
+        0.0F, 5.0F, 0.0F);
     params.strum_gate_time_secs = p4.get();
     layout.add(std::move(p4));
 
-    auto p5 = std::make_unique<juce::AudioParameterInt>(juce::ParameterID("strum_plate_cc", 1),
-                                                        "Strum Plate CC", 0, 127, 0);
+    auto p5 = std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID("strum_plate_cc", 1),
+        "Strum Plate CC",
+        0, 127, 0);
     params.strum_plate_cc = p5.get();
     layout.add(std::move(p5));
 

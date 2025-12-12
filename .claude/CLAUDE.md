@@ -4,7 +4,7 @@
 - For long commands or commands that output a lot of tokens (e.g. compiling):
   - Use: `.claude/hooks/run-with-log.sh <command>`
   - Example: `.claude/hooks/run-with-log.sh ./vst/compile.sh -d`
-  - This logs to a temp file, opens it in VSCode, and waits for completion
-  - After it exits, inspect the tmp file as needed (be efficient with tokens)
+  - This `tee`s the output to a file and to stdout. You can head/tail the stdout.
+  - If you need more than what you got from head/tail, you can inspect the log file instead or re-running.
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
 - If you explain multiple ways something could be done, ask me which one I want before proceding with Edits

@@ -16,9 +16,6 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     // Update parameter map after APVTS is created so Foleys can see the parameters
     magicState.updateParameterMap();
 
-    // Load additional settings from ValueTree if present
-    loadAdditionalSettingsFromValueTree();
-
     // Load the GUI layout - from file in debug mode for hot reload, from binary data in release
 #if JUCE_DEBUG
     auto xmlFile = juce::File(__FILE__).getParentDirectory().getChildFile("Resources/magic.xml");
@@ -30,6 +27,13 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
 #else
     magicState.setGuiValueTree(BinaryData::magic_xml, BinaryData::magic_xmlSize);
 #endif
+
+    setupValueListeners();
+}
+
+OmnifyAudioProcessor::~OmnifyAudioProcessor() {
+    chordVoicingStyleValue.removeListener(this);
+    strumVoicingStyleValue.removeListener(this);
 }
 
 //==============================================================================
@@ -61,207 +65,63 @@ void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
 }
 
 //==============================================================================
-juce::AudioProcessorEditor* OmnifyAudioProcessor::createEditor() {
-    auto* editor = foleys::MagicProcessor::createEditor();
-    auto* magicEditor = dynamic_cast<foleys::MagicPluginEditor*>(editor);
-    if (magicEditor != nullptr) {
-        wireUpSettingsBindings(magicEditor->getGUIBuilder());
-    }
-    return editor;
-}
-
-void OmnifyAudioProcessor::wireUpSettingsBindings(foleys::MagicGUIBuilder& builder) {
-    // Wire up latch_toggle_button
-    if (auto* latchItem = dynamic_cast<MidiLearnItem*>(builder.findGuiItemWithId("latch_toggle_button"))) {
-        auto& midiLearn = latchItem->getMidiLearnComponent();
-        // Load initial value from settings
-        std::visit(
-            [&midiLearn](auto&& btn) {
-                using T = std::decay_t<decltype(btn)>;
-                if constexpr (std::is_same_v<T, GeneratedAdditionalSettings::MidiNoteButton>) {
-                    midiLearn.setLearnedValue({MidiLearnedType::Note, btn.note});
-                } else if constexpr (std::is_same_v<T, GeneratedAdditionalSettings::MidiCCButton>) {
-                    midiLearn.setLearnedValue({MidiLearnedType::CC, btn.cc});
-                }
-            },
-            additionalSettings.latch_toggle_button);
-        // Set callback for when user changes value
-        midiLearn.onValueChanged = [this](MidiLearnedValue val) {
-            if (val.type == MidiLearnedType::Note) {
-                additionalSettings.latch_toggle_button =
-                    GeneratedAdditionalSettings::MidiNoteButton{.note = val.value};
-            } else if (val.type == MidiLearnedType::CC) {
-                additionalSettings.latch_toggle_button =
-                    GeneratedAdditionalSettings::MidiCCButton{.cc = val.value, .is_toggle = true};
-            }
-            saveAdditionalSettingsToValueTree();
-        };
-    }
-
-    // Wire up stop_button
-    if (auto* stopItem = dynamic_cast<MidiLearnItem*>(builder.findGuiItemWithId("stop_button"))) {
-        auto& midiLearn = stopItem->getMidiLearnComponent();
-        // Load initial value from settings
-        std::visit(
-            [&midiLearn](auto&& btn) {
-                using T = std::decay_t<decltype(btn)>;
-                if constexpr (std::is_same_v<T, GeneratedAdditionalSettings::MidiNoteButton>) {
-                    midiLearn.setLearnedValue({MidiLearnedType::Note, btn.note});
-                } else if constexpr (std::is_same_v<T, GeneratedAdditionalSettings::MidiCCButton>) {
-                    midiLearn.setLearnedValue({MidiLearnedType::CC, btn.cc});
-                }
-            },
-            additionalSettings.stop_button);
-        // Set callback for when user changes value
-        midiLearn.onValueChanged = [this](MidiLearnedValue val) {
-            if (val.type == MidiLearnedType::Note) {
-                additionalSettings.stop_button =
-                    GeneratedAdditionalSettings::MidiNoteButton{.note = val.value};
-            } else if (val.type == MidiLearnedType::CC) {
-                additionalSettings.stop_button =
-                    GeneratedAdditionalSettings::MidiCCButton{.cc = val.value, .is_toggle = false};
-            }
-            saveAdditionalSettingsToValueTree();
-        };
-    }
-
-    // Wire up chord_quality_cc (for CCRangePerChordQuality mode)
-    if (auto* ccItem = dynamic_cast<MidiLearnItem*>(builder.findGuiItemWithId("chord_quality_cc"))) {
-        auto& midiLearn = ccItem->getMidiLearnComponent();
-        // Load initial value if we're in CCRangePerChordQuality mode
-        if (auto* ccRange =
-                std::get_if<GeneratedAdditionalSettings::CCRangePerChordQuality>(
-                    &additionalSettings.chord_quality_selection_style)) {
-            midiLearn.setLearnedValue({MidiLearnedType::CC, ccRange->cc});
-        }
-        // Set callback for when user changes value
-        midiLearn.onValueChanged = [this](MidiLearnedValue val) {
-            if (val.type == MidiLearnedType::CC) {
-                additionalSettings.chord_quality_selection_style =
-                    GeneratedAdditionalSettings::CCRangePerChordQuality{.cc = val.value};
-                saveAdditionalSettingsToValueTree();
-            }
-        };
-    }
-
-    // Wire up chord_voicing_style
-    if (auto* chordVoicingSelector = dynamic_cast<VariantSelectorItem*>(
-            builder.findGuiItemWithId("chord_voicing_style"))) {
-        // Load initial selection from variant index
-        chordVoicingSelector->setSelectedIndex(
-            static_cast<int>(additionalSettings.chord_voicing_style.index()));
-        // Set callback for when user changes selection
-        chordVoicingSelector->onSelectionChanged = [this](int index, juce::Component*) {
-            switch (index) {
-                case 0:
-                    additionalSettings.chord_voicing_style =
-                        GeneratedAdditionalSettings::RootPositionStyle{};
-                    break;
-                case 1:
-                    additionalSettings.chord_voicing_style =
-                        GeneratedAdditionalSettings::FileStyle{};
-                    break;
-                case 2:
-                    additionalSettings.chord_voicing_style =
-                        GeneratedAdditionalSettings::Omni84Style{};
-                    break;
-            }
-            saveAdditionalSettingsToValueTree();
-        };
-    }
-
-    // Wire up strum_voicing_style
-    if (auto* strumVoicingSelector = dynamic_cast<VariantSelectorItem*>(
-            builder.findGuiItemWithId("strum_voicing_style"))) {
-        // Load initial selection from variant index
-        strumVoicingSelector->setSelectedIndex(
-            static_cast<int>(additionalSettings.strum_voicing_style.index()));
-        // Set callback for when user changes selection
-        strumVoicingSelector->onSelectionChanged = [this](int index, juce::Component*) {
-            switch (index) {
-                case 0:
-                    additionalSettings.strum_voicing_style =
-                        GeneratedAdditionalSettings::PlainAscendingStrumStyle{};
-                    break;
-                case 1:
-                    additionalSettings.strum_voicing_style =
-                        GeneratedAdditionalSettings::OmnichordStrumStyle{};
-                    break;
-            }
-            saveAdditionalSettingsToValueTree();
-        };
-    }
-
-    // Wire up chord_quality_selector (for ButtonPerChordQuality mode)
-    if (auto* selector = dynamic_cast<ChordQualitySelectorItem*>(
-            builder.findGuiItemWithId("chord_quality_selector"))) {
-        // Load initial values if we're in ButtonPerChordQuality mode
-        if (auto* buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
-                &additionalSettings.chord_quality_selection_style)) {
-            for (const auto& [note, quality] : buttonStyle->notes) {
-                auto qualityIndex = static_cast<size_t>(quality);
-                selector->setLearnerValue(qualityIndex, {MidiLearnedType::Note, note});
-            }
-            for (const auto& [cc, quality] : buttonStyle->ccs) {
-                auto qualityIndex = static_cast<size_t>(quality);
-                selector->setLearnerValue(qualityIndex, {MidiLearnedType::CC, cc});
-            }
-        }
-        // Set callbacks for each quality
-        for (size_t i = 0; i < ChordQualitySelectorItem::NUM_QUALITIES; ++i) {
-            selector->setOnValueChanged(i, [this, i](MidiLearnedValue val) {
-                // Get or create ButtonPerChordQuality
-                auto* buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
-                    &additionalSettings.chord_quality_selection_style);
-                if (buttonStyle == nullptr) {
-                    additionalSettings.chord_quality_selection_style =
-                        GeneratedAdditionalSettings::ButtonPerChordQuality{};
-                    buttonStyle = std::get_if<GeneratedAdditionalSettings::ButtonPerChordQuality>(
-                        &additionalSettings.chord_quality_selection_style);
-                }
-                auto quality = static_cast<GeneratedAdditionalSettings::ChordQuality>(i);
-                // Remove old mapping for this quality from both maps
-                for (auto it = buttonStyle->notes.begin(); it != buttonStyle->notes.end();) {
-                    if (it->second == quality) {
-                        it = buttonStyle->notes.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
-                for (auto it = buttonStyle->ccs.begin(); it != buttonStyle->ccs.end();) {
-                    if (it->second == quality) {
-                        it = buttonStyle->ccs.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
-                // Add new mapping if valid
-                if (val.value >= 0) {
-                    if (val.type == MidiLearnedType::Note) {
-                        buttonStyle->notes[val.value] = quality;
-                    } else if (val.type == MidiLearnedType::CC) {
-                        buttonStyle->ccs[val.value] = quality;
-                    }
-                }
-                saveAdditionalSettingsToValueTree();
-            });
-        }
-    }
+void OmnifyAudioProcessor::postSetStateInformation() {
+    loadAdditionalSettingsFromValueTree();
+    pushVariantIndexesToValueTree();
 }
 
 //==============================================================================
-void OmnifyAudioProcessor::setAdditionalSettings(const GeneratedAdditionalSettings::Settings& settings) {
-    additionalSettings = settings;
-    saveAdditionalSettingsToValueTree();
+void OmnifyAudioProcessor::setupValueListeners() {
+    chordVoicingStyleValue.referTo(magicState.getValueTree().getPropertyAsValue("variant_chord_voicing_style", nullptr));
+    strumVoicingStyleValue.referTo(magicState.getValueTree().getPropertyAsValue("variant_strum_voicing_style", nullptr));
+
+    chordVoicingStyleValue.addListener(this);
+    strumVoicingStyleValue.addListener(this);
+}
+
+void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
+    if (value.refersToSameSourceAs(chordVoicingStyleValue)) {
+        int index = static_cast<int>(chordVoicingStyleValue.getValue());
+        switch (index) {
+            case 0:
+                additionalSettings.chord_voicing_style = GeneratedAdditionalSettings::RootPositionStyle{};
+                break;
+            case 1:
+                additionalSettings.chord_voicing_style = GeneratedAdditionalSettings::FileStyle{};
+                break;
+            case 2:
+                additionalSettings.chord_voicing_style = GeneratedAdditionalSettings::Omni84Style{};
+                break;
+        }
+        saveAdditionalSettingsToValueTree();
+    } else if (value.refersToSameSourceAs(strumVoicingStyleValue)) {
+        int index = static_cast<int>(strumVoicingStyleValue.getValue());
+        switch (index) {
+            case 0:
+                additionalSettings.strum_voicing_style = GeneratedAdditionalSettings::PlainAscendingStrumStyle{};
+                break;
+            case 1:
+                additionalSettings.strum_voicing_style = GeneratedAdditionalSettings::OmnichordStrumStyle{};
+                break;
+        }
+        saveAdditionalSettingsToValueTree();
+    }
+}
+
+void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
+    // Write variant indexes so UI can restore them on rebuild
+    magicState.getValueTree().setProperty("variant_chord_voicing_style",
+                                          static_cast<int>(additionalSettings.chord_voicing_style.index()), nullptr);
+    magicState.getValueTree().setProperty("variant_strum_voicing_style",
+                                          static_cast<int>(additionalSettings.strum_voicing_style.index()), nullptr);
 }
 
 void OmnifyAudioProcessor::loadAdditionalSettingsFromValueTree() {
-    auto jsonString = parameters.state.getProperty(ADDITIONAL_SETTINGS_KEY, "").toString();
+    auto jsonString = magicState.getValueTree().getProperty(ADDITIONAL_SETTINGS_KEY, "").toString();
     if (jsonString.isNotEmpty()) {
         try {
             additionalSettings = GeneratedAdditionalSettings::fromJson(jsonString.toStdString());
         } catch (...) {
-            // If parsing fails, keep defaults
             additionalSettings = GeneratedAdditionalSettings::Settings::defaults();
         }
     }
@@ -269,7 +129,7 @@ void OmnifyAudioProcessor::loadAdditionalSettingsFromValueTree() {
 
 void OmnifyAudioProcessor::saveAdditionalSettingsToValueTree() {
     auto jsonString = GeneratedAdditionalSettings::toJson(additionalSettings);
-    parameters.state.setProperty(ADDITIONAL_SETTINGS_KEY, juce::String(jsonString), nullptr);
+    magicState.getValueTree().setProperty(ADDITIONAL_SETTINGS_KEY, juce::String(jsonString), nullptr);
 }
 
 //==============================================================================

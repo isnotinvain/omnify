@@ -7,9 +7,10 @@
 #include "ui/components/MidiLearnComponent.h"
 
 //==============================================================================
-class OmnifyAudioProcessor : public foleys::MagicProcessor {
+class OmnifyAudioProcessor : public foleys::MagicProcessor, private juce::Value::Listener {
    public:
     OmnifyAudioProcessor();
+    ~OmnifyAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -17,14 +18,13 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor {
 
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void initialiseBuilder(foleys::MagicGUIBuilder& builder) override;
-    juce::AudioProcessorEditor* createEditor() override;
+
+    void postSetStateInformation() override;
 
     // AdditionalSettings access
     const GeneratedAdditionalSettings::Settings& getAdditionalSettings() const { return additionalSettings; }
-    void setAdditionalSettings(const GeneratedAdditionalSettings::Settings& settings);
 
    private:
-    void wireUpSettingsBindings(foleys::MagicGUIBuilder& builder);
     GeneratedParams::Params params;
     juce::AudioProcessorValueTreeState parameters;
 
@@ -34,9 +34,18 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor {
     // ValueTree property key for JSON storage
     static constexpr const char* ADDITIONAL_SETTINGS_KEY = "additional_settings_json";
 
+    // Value listeners for variant selectors
+    juce::Value chordVoicingStyleValue;
+    juce::Value strumVoicingStyleValue;
+    void valueChanged(juce::Value& value) override;
+    void setupValueListeners();
+
     // Load/save additional settings from ValueTree
     void loadAdditionalSettingsFromValueTree();
     void saveAdditionalSettingsToValueTree();
+
+    // Write variant indexes to ValueTree (for UI to read on rebuild)
+    void pushVariantIndexesToValueTree();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OmnifyAudioProcessor)
 };

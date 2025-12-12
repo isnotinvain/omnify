@@ -2,7 +2,6 @@
 
 #include <foleys_gui_magic/foleys_gui_magic.h>
 
-#include <functional>
 #include <map>
 
 // A container that displays one child at a time, controlled by a ComboBox.
@@ -19,15 +18,13 @@ class VariantSelectorItem : public foleys::Container {
     DECLARE_CONTAINER_FACTORY(VariantSelectorItem)
 
     VariantSelectorItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
+    ~VariantSelectorItem() override;
 
     void createSubComponents() override;
     void update() override;
 
     int getSelectedIndex() const;
     void setSelectedIndex(int index);
-
-    // Called when user changes selection: (newIndex, visibleChildComponent)
-    std::function<void(int, juce::Component*)> onSelectionChanged;
 
    private:
     foleys::GuiItem* comboBoxItem = nullptr;
