@@ -13,6 +13,7 @@
     }
 
 #include "components/ChordQualitySelectorItem.h"
+#include "components/FilePickerItem.h"
 #include "components/MidiLearnComponent.h"
 #include "components/VariantSelectorItem.h"
 

@@ -34,9 +34,10 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor, private juce::Value:
     // ValueTree property key for JSON storage
     static constexpr const char* ADDITIONAL_SETTINGS_KEY = "additional_settings_json";
 
-    // Value listeners for variant selectors
+    // Value listeners for variant selectors and file paths
     juce::Value chordVoicingStyleValue;
     juce::Value strumVoicingStyleValue;
+    juce::Value chordVoicingFilePathValue;
     void valueChanged(juce::Value& value) override;
     void setupValueListeners();
 

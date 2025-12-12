@@ -6,5 +6,6 @@
   - Example: `.claude/hooks/run-with-log.sh ./vst/compile.sh -d`
   - This `tee`s the output to a file and to stdout. You can head/tail the stdout.
   - If you need more than what you got from head/tail, you can inspect the log file instead or re-running.
+  - Always run `run-with-log.sh` commands in the background so we can continue working while they execute.
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
 - If you explain multiple ways something could be done, ask me which one I want before proceding with Edits
