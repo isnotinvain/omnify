@@ -73,6 +73,7 @@ void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
     builder.registerFactory("VariantSelector", &VariantSelectorItem::factory);
     builder.registerFactory("LcarsSettings", &LcarsSettingsItem::factory);
     builder.registerFactory("FilePicker", &FilePickerItem::factory);
+    builder.registerFactory("MidiDeviceSelector", &MidiDeviceSelectorItem::factory);
 }
 
 //==============================================================================
@@ -238,15 +239,9 @@ void OmnifyAudioProcessor::sendSettingsToDaemon() {
     // Build JSON object matching DaemomnifySettings structure
     nlohmann::json settings;
 
-    // Scalar parameters
-    // midi_device_name is a choice parameter - get the selected string
-    if (params.midi_device_name) {
-        int idx = params.midi_device_name->getIndex();
-        auto choices = params.midi_device_name->choices;
-        if (idx >= 0 && idx < choices.size()) {
-            settings["midi_device_name"] = choices[idx].toStdString();
-        }
-    }
+    // midi_device_name comes from state property (set by MidiDeviceSelector UI)
+    auto deviceName = magicState.getPropertyAsValue("midi_device_name").toString();
+    settings["midi_device_name"] = deviceName.toStdString();
 
     // Channel params are 1-indexed choices (strings "1" through "16")
     if (params.chord_channel) {
