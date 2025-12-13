@@ -29,6 +29,8 @@ MidiLearnedValue MidiLearnComponent::getLearnedValue() const {
 
 void MidiLearnComponent::setAcceptMode(MidiAcceptMode mode) { acceptMode = mode; }
 
+void MidiLearnComponent::setAspectRatio(float ratio) { aspectRatio = ratio; }
+
 void MidiLearnComponent::processNextMidiBuffer(const juce::MidiBuffer& buffer) {
     if (!isLearning.load()) {
         return;
@@ -88,18 +90,39 @@ juce::String MidiLearnComponent::getDisplayText() const {
 }
 
 void MidiLearnComponent::paint(juce::Graphics& g) {
-    boxBounds = getLocalBounds().reduced(2);
+    auto localBounds = getLocalBounds().reduced(2);
 
-    if (isLearning.load()) {
-        g.setColour(juce::Colours::black);
-    } else {
-        g.setColour(juce::Colours::black);
+    // Apply aspect ratio constraint if set - fit largest possible rectangle maintaining ratio
+    if (aspectRatio > 0.0F) {
+        float currentRatio = static_cast<float>(localBounds.getWidth()) / localBounds.getHeight();
+
+        if (currentRatio > aspectRatio) {
+            // Too wide - constrain width based on height
+            int targetWidth = static_cast<int>(localBounds.getHeight() * aspectRatio);
+            int xOffset = (localBounds.getWidth() - targetWidth) / 2;
+            localBounds = localBounds.withWidth(targetWidth).withX(localBounds.getX() + xOffset);
+        } else if (currentRatio < aspectRatio) {
+            // Too tall - constrain height based on width
+            int targetHeight = static_cast<int>(localBounds.getWidth() / aspectRatio);
+            int yOffset = (localBounds.getHeight() - targetHeight) / 2;
+            localBounds = localBounds.withHeight(targetHeight).withY(localBounds.getY() + yOffset);
+        }
     }
-    g.fillRect(boxBounds);
 
+    boxBounds = localBounds;
+    auto bounds = boxBounds.toFloat();
+    const float borderThickness = 2.0F;
+    const float radius = bounds.getHeight() * 0.5F;
+
+    // Background
+    g.setColour(juce::Colours::black);
+    g.fillRoundedRectangle(bounds.reduced(borderThickness * 0.5F), radius);
+
+    // Border
     g.setColour(isLearning.load() ? LcarsColors::africanViolet : LcarsColors::orange);
-    g.drawRect(boxBounds, 2);
+    g.drawRoundedRectangle(bounds.reduced(borderThickness * 0.5F), radius, borderThickness);
 
+    // Text
     g.setColour(LcarsColors::orange);
     g.drawText(getDisplayText(), boxBounds, juce::Justification::centred);
 }

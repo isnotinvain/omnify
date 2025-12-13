@@ -4,6 +4,7 @@ const juce::Identifier ChordQualitySelectorItem::pFontSize{"font-size"};
 const juce::Identifier ChordQualitySelectorItem::pLabelColor{"label-color"};
 const juce::Identifier ChordQualitySelectorItem::pMidiLearnWidth{"midi-learn-width"};
 const juce::Identifier ChordQualitySelectorItem::pRowSpacing{"row-spacing"};
+const juce::Identifier ChordQualitySelectorItem::pMidiLearnAspectRatio{"midi-learn-aspect-ratio"};
 
 ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder,
                                                    const juce::ValueTree& node)
@@ -24,8 +25,10 @@ ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& buil
 void ChordQualitySelectorItem::update() {
     auto fontSize = magicBuilder.getStyleProperty(pFontSize, configNode);
     auto labelColor = magicBuilder.getStyleProperty(pLabelColor, configNode);
+    auto aspectRatioVar = magicBuilder.getStyleProperty(pMidiLearnAspectRatio, configNode);
 
     float fontSizeVal = fontSize.isVoid() ? 14.0F : static_cast<float>(fontSize);
+    float aspectRatio = aspectRatioVar.isVoid() ? 0.0F : static_cast<float>(aspectRatioVar);
     juce::Colour labelColorVal = juce::Colours::white;
     if (!labelColor.isVoid()) {
         auto colorStr = labelColor.toString();
@@ -39,6 +42,7 @@ void ChordQualitySelectorItem::update() {
     for (auto& row : rows) {
         row.label.setFont(juce::Font(juce::FontOptions(fontSizeVal)));
         row.label.setColour(juce::Label::textColourId, labelColorVal);
+        row.midiLearn.setAspectRatio(aspectRatio);
     }
 }
 
@@ -73,6 +77,7 @@ std::vector<foleys::SettableProperty> ChordQualitySelectorItem::getSettablePrope
     props.push_back({configNode, pLabelColor, foleys::SettableProperty::Colour, "FFFFFFFF", {}});
     props.push_back({configNode, pMidiLearnWidth, foleys::SettableProperty::Number, 80.0F, {}});
     props.push_back({configNode, pRowSpacing, foleys::SettableProperty::Number, 2.0F, {}});
+    props.push_back({configNode, pMidiLearnAspectRatio, foleys::SettableProperty::Number, 0.0F, {}});
     return props;
 }
 

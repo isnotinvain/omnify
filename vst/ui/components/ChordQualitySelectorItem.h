@@ -13,6 +13,7 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     static const juce::Identifier pLabelColor;
     static const juce::Identifier pMidiLearnWidth;
     static const juce::Identifier pRowSpacing;
+    static const juce::Identifier pMidiLearnAspectRatio;
 
     static constexpr int NUM_QUALITIES = GeneratedAdditionalSettings::ChordQualities::NUM_QUALITIES;
 

@@ -26,6 +26,7 @@ class MidiLearnComponent : public juce::Component, private juce::AsyncUpdater {
     void setLearnedValue(MidiLearnedValue val);
     MidiLearnedValue getLearnedValue() const;
     void setAcceptMode(MidiAcceptMode mode);
+    void setAspectRatio(float ratio);
 
     void processNextMidiBuffer(const juce::MidiBuffer& buffer);
 
@@ -49,6 +50,7 @@ class MidiLearnComponent : public juce::Component, private juce::AsyncUpdater {
     std::atomic<int> learnedValue{-1};
     std::atomic<bool> isLearning{false};
     MidiAcceptMode acceptMode{MidiAcceptMode::Both};
+    float aspectRatio{0.0F};  // 0 means no constraint (width/height)
 
     juce::Rectangle<int> boxBounds;
 

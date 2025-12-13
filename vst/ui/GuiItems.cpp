@@ -3,6 +3,7 @@
 #include "../PluginProcessor.h"
 
 const juce::Identifier MidiLearnItem::pAcceptMode{"accept-mode"};
+const juce::Identifier MidiLearnItem::pAspectRatio{"aspect-ratio"};
 
 MidiLearnItem::MidiLearnItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node)
     : foleys::GuiItem(builder, node) {
@@ -18,6 +19,10 @@ void MidiLearnItem::update() {
     } else {
         midiLearnComponent.setAcceptMode(MidiAcceptMode::Both);
     }
+
+    auto aspectRatioVar = magicBuilder.getStyleProperty(pAspectRatio, configNode);
+    float aspectRatio = aspectRatioVar.isVoid() ? 0.0F : static_cast<float>(aspectRatioVar);
+    midiLearnComponent.setAspectRatio(aspectRatio);
 }
 
 juce::Component* MidiLearnItem::getWrappedComponent() { return &midiLearnComponent; }
@@ -26,6 +31,7 @@ std::vector<foleys::SettableProperty> MidiLearnItem::getSettableProperties() con
     std::vector<foleys::SettableProperty> props;
     props.push_back({configNode, pAcceptMode, foleys::SettableProperty::Choice, pAcceptModes[2],
                      magicBuilder.createChoicesMenuLambda(pAcceptModes)});
+    props.push_back({configNode, pAspectRatio, foleys::SettableProperty::Number, 0.0F, {}});
     return props;
 }
 
