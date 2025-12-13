@@ -1,5 +1,7 @@
 #include "PluginProcessor.h"
 
+#include <nlohmann/json.hpp>
+
 #include "BinaryData.h"
 #include "ui/GuiItems.h"
 #include "ui/LcarsLookAndFeel.h"
@@ -30,7 +32,11 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
 
     setupValueListeners();
 
-    // Start the Python daemon
+    // Load default settings from bundled JSON (first run, before any saved state is restored)
+    loadDefaultSettings();
+
+    // Start the Python daemon and listen for ready signal
+    daemonManager.setListener(this);
     daemonManager.start();
 }
 
@@ -154,6 +160,124 @@ void OmnifyAudioProcessor::loadAdditionalSettingsFromValueTree() {
 void OmnifyAudioProcessor::saveAdditionalSettingsToValueTree() {
     auto jsonString = GeneratedAdditionalSettings::toJson(additionalSettings);
     magicState.getValueTree().setProperty(ADDITIONAL_SETTINGS_KEY, juce::String(jsonString), nullptr);
+}
+
+void OmnifyAudioProcessor::loadDefaultSettings() {
+    try {
+        // Parse the bundled default_settings.json
+        juce::String jsonStr(BinaryData::default_settings_json, BinaryData::default_settings_jsonSize);
+        auto json = nlohmann::json::parse(jsonStr.toStdString());
+
+        // Set scalar parameters via APVTS
+        // midi_device_name - find index in choices list
+        if (json.contains("midi_device_name") && params.midi_device_name) {
+            juce::String deviceName = juce::String(json["midi_device_name"].get<std::string>());
+            int idx = params.midi_device_name->choices.indexOf(deviceName);
+            if (idx >= 0) {
+                params.midi_device_name->setValueNotifyingHost(
+                    params.midi_device_name->convertTo0to1(static_cast<float>(idx)));
+            }
+        }
+
+        // chord_channel (1-indexed in JSON, 0-indexed in param)
+        if (json.contains("chord_channel") && params.chord_channel) {
+            int channel = json["chord_channel"].get<int>() - 1;
+            params.chord_channel->setValueNotifyingHost(
+                params.chord_channel->convertTo0to1(static_cast<float>(channel)));
+        }
+
+        // strum_channel (1-indexed in JSON, 0-indexed in param)
+        if (json.contains("strum_channel") && params.strum_channel) {
+            int channel = json["strum_channel"].get<int>() - 1;
+            params.strum_channel->setValueNotifyingHost(
+                params.strum_channel->convertTo0to1(static_cast<float>(channel)));
+        }
+
+        // strum_cooldown_secs
+        if (json.contains("strum_cooldown_secs") && params.strum_cooldown_secs) {
+            float value = json["strum_cooldown_secs"].get<float>();
+            params.strum_cooldown_secs->setValueNotifyingHost(
+                params.strum_cooldown_secs->convertTo0to1(value));
+        }
+
+        // strum_gate_time_secs
+        if (json.contains("strum_gate_time_secs") && params.strum_gate_time_secs) {
+            float value = json["strum_gate_time_secs"].get<float>();
+            params.strum_gate_time_secs->setValueNotifyingHost(
+                params.strum_gate_time_secs->convertTo0to1(value));
+        }
+
+        // strum_plate_cc
+        if (json.contains("strum_plate_cc") && params.strum_plate_cc) {
+            int value = json["strum_plate_cc"].get<int>();
+            params.strum_plate_cc->setValueNotifyingHost(
+                params.strum_plate_cc->convertTo0to1(static_cast<float>(value)));
+        }
+
+        // additional_settings - parse directly with generated code
+        if (json.contains("additional_settings")) {
+            std::string additionalJson = json["additional_settings"].dump();
+            additionalSettings = GeneratedAdditionalSettings::fromJson(additionalJson);
+            saveAdditionalSettingsToValueTree();
+            pushVariantIndexesToValueTree();
+        }
+
+        DBG("OmnifyAudioProcessor: Loaded default settings from bundled JSON");
+    } catch (const std::exception& e) {
+        DBG("OmnifyAudioProcessor: Failed to load default settings: " << e.what());
+    }
+}
+
+//==============================================================================
+void OmnifyAudioProcessor::daemonReady() {
+    DBG("OmnifyAudioProcessor: Daemon ready, sending settings");
+    sendSettingsToDaemon();
+}
+
+void OmnifyAudioProcessor::sendSettingsToDaemon() {
+    // Build JSON object matching DaemomnifySettings structure
+    nlohmann::json settings;
+
+    // Scalar parameters
+    // midi_device_name is a choice parameter - get the selected string
+    if (params.midi_device_name) {
+        int idx = params.midi_device_name->getIndex();
+        auto choices = params.midi_device_name->choices;
+        if (idx >= 0 && idx < choices.size()) {
+            settings["midi_device_name"] = choices[idx].toStdString();
+        }
+    }
+
+    // Channel params are 1-indexed choices (strings "1" through "16")
+    if (params.chord_channel) {
+        settings["chord_channel"] = params.chord_channel->getIndex() + 1;
+    }
+    if (params.strum_channel) {
+        settings["strum_channel"] = params.strum_channel->getIndex() + 1;
+    }
+
+    // Float params
+    if (params.strum_cooldown_secs) {
+        settings["strum_cooldown_secs"] = params.strum_cooldown_secs->get();
+    }
+    if (params.strum_gate_time_secs) {
+        settings["strum_gate_time_secs"] = params.strum_gate_time_secs->get();
+    }
+
+    // Int param
+    if (params.strum_plate_cc) {
+        settings["strum_plate_cc"] = params.strum_plate_cc->get();
+    }
+
+    // Additional settings as nested object
+    auto additionalJson = nlohmann::json::parse(GeneratedAdditionalSettings::toJson(additionalSettings));
+    settings["additional_settings"] = additionalJson;
+
+    // Send as OSC message with JSON string
+    std::string jsonStr = settings.dump();
+    daemonManager.getOscSender().send("/settings", juce::String(jsonStr));
+
+    DBG("OmnifyAudioProcessor: Sent settings: " << jsonStr);
 }
 
 //==============================================================================

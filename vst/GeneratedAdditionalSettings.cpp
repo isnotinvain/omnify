@@ -61,8 +61,12 @@ void to_json(nlohmann::json& j, const ButtonPerChordQuality& s) {
 }
 
 void from_json(const nlohmann::json& j, ButtonPerChordQuality& s) {
-    j.at("notes").get_to(s.notes);
-    j.at("ccs").get_to(s.ccs);
+    for (auto& [key, val] : j.at("notes").items()) {
+        s.notes[std::stoi(key)] = val.get<ChordQuality>();
+    }
+    for (auto& [key, val] : j.at("ccs").items()) {
+        s.ccs[std::stoi(key)] = val.get<ChordQuality>();
+    }
 }
 
 void to_json(nlohmann::json& j, const CCRangePerChordQuality& s) {

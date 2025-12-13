@@ -12,14 +12,21 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 from daemomnify.event_dispatcher import EventDispatcher
 from daemomnify.message_scheduler import MessageScheduler
 from daemomnify.omnify import Omnify
-from daemomnify.settings import load_settings
+from daemomnify.settings import DaemomnifySettings, load_settings
 from daemomnify.wizard import run_wizard
 
 # Global flag to signal shutdown
 _shutdown_requested = threading.Event()
 
+# Event + storage for settings received from VST
+_settings_received = threading.Event()
+_received_settings: DaemomnifySettings | None = None
+
 # Exit code to signal graceful shutdown (don't restart)
 EXIT_CODE_QUIT = 42
+
+# Magic string to signal OSC server is ready (VST watches stdout for this)
+OSC_READY_MARKER = "<DAEMOMNIFY_OSC_SERVER_READY>"
 
 
 def _handle_quit(address, *args):
@@ -28,15 +35,31 @@ def _handle_quit(address, *args):
     _shutdown_requested.set()
 
 
+def _handle_settings(address, json_str):
+    """OSC handler for /settings - receives full settings dump from VST."""
+    global _received_settings
+    print(f"Received /settings OSC message")
+    try:
+        _received_settings = DaemomnifySettings.model_validate_json(json_str)
+        print(f"Settings parsed successfully: {_received_settings.midi_device_name}")
+        _settings_received.set()
+    except Exception as e:
+        print(f"Error parsing settings: {e}")
+        traceback.print_exc()
+
+
 def _start_osc_server(port: int) -> BlockingOSCUDPServer:
     """Start OSC server in a background thread."""
     dispatcher = Dispatcher()
     dispatcher.map("/quit", _handle_quit)
+    dispatcher.map("/settings", _handle_settings)
 
     server = BlockingOSCUDPServer(("127.0.0.1", port), dispatcher)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     print(f"OSC server listening on 127.0.0.1:{port}")
+    # Signal to VST that we're ready to receive settings
+    print(OSC_READY_MARKER, flush=True)
     return server
 
 
@@ -75,17 +98,30 @@ def run_message_loop(device_name, event_dispatcher, scheduler, virtual_output):
 
 
 def main(osc_port: int | None = None):
+    global _received_settings
     print("=== Welcome to Daemomnify. Let's Omnify some instruments! ===")
 
     # Start OSC server if port specified (for VST control)
-    osc_server = None
     if osc_port:
-        osc_server = _start_osc_server(osc_port)
+        _start_osc_server(osc_port)
 
-    settings = load_settings()
-    if not settings:
-        settings = run_wizard()
-        sys.exit(0)
+        # Wait for settings from VST
+        print("Waiting for settings from VST...")
+        while not _settings_received.is_set() and not _shutdown_requested.is_set():
+            time.sleep(0.1)
+
+        if _shutdown_requested.is_set():
+            print("Shutdown requested while waiting for settings.")
+            print("Daemomnify banished.")
+            sys.exit(EXIT_CODE_QUIT)
+
+        settings = _received_settings
+    else:
+        # Standalone mode: load from file
+        settings = load_settings()
+        if not settings:
+            settings = run_wizard()
+            sys.exit(0)
 
     # Wait for MIDI input device to become available
     if settings.midi_device_name not in mido.get_input_names():

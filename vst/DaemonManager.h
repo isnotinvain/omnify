@@ -15,12 +15,23 @@
  */
 class DaemonManager : private juce::Thread {
    public:
+    /** Callback interface for daemon events. */
+    class Listener {
+       public:
+        virtual ~Listener() = default;
+        /** Called when the daemon's OSC server is ready to receive messages. */
+        virtual void daemonReady() = 0;
+    };
+
     DaemonManager();
     ~DaemonManager() override;
 
     // Non-copyable
     DaemonManager(const DaemonManager&) = delete;
     DaemonManager& operator=(const DaemonManager&) = delete;
+
+    /** Set the listener for daemon events. */
+    void setListener(Listener* l);
 
     /** Start the daemon process. Returns true if successful. */
     bool start();
@@ -33,6 +44,9 @@ class DaemonManager : private juce::Thread {
 
     /** Get the OSC port this daemon is listening on. */
     int getPort() const { return oscPort; }
+
+    /** Get the OSC sender for sending messages to daemon. */
+    juce::OSCSender& getOscSender() { return oscSender; }
 
    private:
     /** Thread run loop - forwards daemon stdout/stderr. */
@@ -50,7 +64,10 @@ class DaemonManager : private juce::Thread {
     /** Send OSC /quit message to daemon for graceful shutdown. */
     void sendOscQuit();
 
+    static constexpr const char* READY_MARKER = "<DAEMOMNIFY_OSC_SERVER_READY>";
+
     std::unique_ptr<juce::ChildProcess> process;
     juce::OSCSender oscSender;
+    Listener* listener = nullptr;
     int oscPort = 0;
 };

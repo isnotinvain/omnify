@@ -16,6 +16,8 @@
 
 DaemonManager::DaemonManager() : juce::Thread("DaemonOutputReader"), process(std::make_unique<juce::ChildProcess>()) {}
 
+void DaemonManager::setListener(Listener* l) { listener = l; }
+
 DaemonManager::~DaemonManager() {
     stop();
     stopThread(2000);
@@ -149,12 +151,35 @@ bool DaemonManager::start() {
 
 void DaemonManager::run() {
     // Read and forward daemon output (stdout + stderr interleaved) to stdout
+    // Also watch for the ready marker to trigger settings dump
+    juce::String outputBuffer;
+    bool readyFired = false;
+
     while (!threadShouldExit() && process && process->isRunning()) {
         char buffer[1024];
         auto bytesRead = process->readProcessOutput(buffer, sizeof(buffer) - 1);
         if (bytesRead > 0) {
             buffer[bytesRead] = '\0';
             std::cout << buffer << std::flush;
+
+            // Check for ready marker if we haven't fired yet
+            if (!readyFired && listener) {
+                outputBuffer += buffer;
+                if (outputBuffer.contains(READY_MARKER)) {
+                    readyFired = true;
+                    // Call listener on message thread to avoid threading issues
+                    juce::MessageManager::callAsync([this]() {
+                        if (listener) {
+                            listener->daemonReady();
+                        }
+                    });
+                    outputBuffer.clear();  // No longer need to buffer
+                }
+                // Prevent unbounded growth while waiting for marker
+                if (outputBuffer.length() > 4096) {
+                    outputBuffer = outputBuffer.substring(outputBuffer.length() - 1024);
+                }
+            }
         } else {
             // No data available, sleep briefly
             Thread::sleep(10);

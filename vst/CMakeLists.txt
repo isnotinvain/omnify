@@ -42,11 +42,12 @@ target_sources(Omnify
     PRIVATE
         ${OMNIFY_SOURCES})
 
-# Add binary resources (magic.xml for GUI, fonts)
+# Add binary resources (magic.xml for GUI, fonts, default settings)
 juce_add_binary_data(OmnifyBinaryData
     SOURCES
         Resources/magic.xml
-        Resources/Orbitron-Regular.ttf)
+        Resources/Orbitron-Regular.ttf
+        Resources/default_settings.json)
 
 target_link_libraries(Omnify
     PRIVATE

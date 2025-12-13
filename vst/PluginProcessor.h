@@ -8,7 +8,9 @@
 #include "ui/components/MidiLearnComponent.h"
 
 //==============================================================================
-class OmnifyAudioProcessor : public foleys::MagicProcessor, private juce::Value::Listener {
+class OmnifyAudioProcessor : public foleys::MagicProcessor,
+                             private juce::Value::Listener,
+                             private DaemonManager::Listener {
    public:
     OmnifyAudioProcessor();
     ~OmnifyAudioProcessor() override;
@@ -46,8 +48,17 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor, private juce::Value:
     void loadAdditionalSettingsFromValueTree();
     void saveAdditionalSettingsToValueTree();
 
+    // Load default settings from bundled JSON (called on first run)
+    void loadDefaultSettings();
+
     // Write variant indexes to ValueTree (for UI to read on rebuild)
     void pushVariantIndexesToValueTree();
+
+    // DaemonManager::Listener
+    void daemonReady() override;
+
+    // Send all current settings to daemon via OSC
+    void sendSettingsToDaemon();
 
     // Python daemon process manager
     DaemonManager daemonManager;

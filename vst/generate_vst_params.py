@@ -564,7 +564,14 @@ def generate_additional_settings_cpp(additional_settings_class: type[BaseModel])
         else:
             lines.append(f"void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] {struct_name}& s) {{")
         for field in struct["fields"]:
-            lines.append(f'    j.at("{field["name"]}").get_to(s.{field["name"]});')
+            # Special handling for std::map<int, ...> - JSON has string keys
+            if field["cpp_type"].startswith("std::map<int,"):
+                value_type = field["cpp_type"].split(",", 1)[1].strip().rstrip(">")
+                lines.append(f'    for (auto& [key, val] : j.at("{field["name"]}").items()) {{')
+                lines.append(f'        s.{field["name"]}[std::stoi(key)] = val.get<{value_type}>();')
+                lines.append("    }")
+            else:
+                lines.append(f'    j.at("{field["name"]}").get_to(s.{field["name"]});')
         lines.append("}")
         lines.append("")
 
