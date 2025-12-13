@@ -4,7 +4,7 @@ import argparse
 import time
 from multiprocessing import Process
 
-from daemomnify.daemomnify import main
+from daemomnify.daemomnify import EXIT_CODE_QUIT, main
 
 
 def run_forever(osc_port: int | None = None):
@@ -21,6 +21,11 @@ def run_forever(osc_port: int | None = None):
             p.terminate()
             p.join()
             print("\nShutting down.")
+            break
+
+        # Check if this was a graceful shutdown (don't restart)
+        if p.exitcode == EXIT_CODE_QUIT:
+            print("Graceful shutdown complete.")
             break
 
         # Track crash time

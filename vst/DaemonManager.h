@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_core/juce_core.h>
+#include <juce_osc/juce_osc.h>
 
 /**
  * Manages the lifecycle of the Python daemon process.
@@ -46,6 +47,10 @@ class DaemonManager : private juce::Thread {
     /** Get the command and arguments to launch the daemon. */
     std::pair<juce::String, juce::StringArray> getLaunchCommand() const;
 
+    /** Send OSC /quit message to daemon for graceful shutdown. */
+    void sendOscQuit();
+
     std::unique_ptr<juce::ChildProcess> process;
+    juce::OSCSender oscSender;
     int oscPort = 0;
 };

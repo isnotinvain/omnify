@@ -45,7 +45,7 @@ fi
 
 cd "$SCRIPT_DIR/build"
 cmake .. -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
-make
+make -j$(sysctl -n hw.ncpu)
 
 if [ $? -eq 0 ]; then
     echo -e "\033[0;32mBuild completed successfully!\033[0m"

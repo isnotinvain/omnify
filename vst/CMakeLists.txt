@@ -53,6 +53,7 @@ target_link_libraries(Omnify
         juce::juce_audio_processors
         juce::juce_audio_utils
         juce::juce_audio_devices
+        juce::juce_osc
         foleys_gui_magic
         OmnifyBinaryData
     PUBLIC

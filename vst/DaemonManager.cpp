@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+// Socket headers still needed for findFreePort()
 #if JUCE_MAC || JUCE_LINUX
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -137,6 +138,11 @@ bool DaemonManager::start() {
     // Start the output reader thread
     startThread();
 
+    // Connect OSC sender to the daemon
+    if (!oscSender.connect("127.0.0.1", oscPort)) {
+        DBG("DaemonManager: Failed to connect OSC sender");
+    }
+
     DBG("DaemonManager: Daemon started successfully");
     return true;
 }
@@ -156,6 +162,10 @@ void DaemonManager::run() {
     }
 }
 
+void DaemonManager::sendOscQuit() {
+    oscSender.send("/quit");
+}
+
 void DaemonManager::stop() {
     if (!process || !process->isRunning()) {
         return;
@@ -163,11 +173,19 @@ void DaemonManager::stop() {
 
     DBG("DaemonManager: Stopping daemon");
 
-    // Kill the process and wait for it to finish
-    process->kill();
+    // Send OSC /quit for graceful shutdown
+    sendOscQuit();
 
-    // Wait up to 2 seconds for the process to exit
-    process->waitForProcessToFinish(2000);
+    // Wait up to 2 seconds for graceful exit
+    if (process->waitForProcessToFinish(2000)) {
+        DBG("DaemonManager: Daemon exited gracefully");
+        return;
+    }
+
+    // Force kill if graceful shutdown didn't work
+    DBG("DaemonManager: Forcing kill");
+    process->kill();
+    process->waitForProcessToFinish(1000);
 }
 
 bool DaemonManager::isRunning() const { return process && process->isRunning(); }
