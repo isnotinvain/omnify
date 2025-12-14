@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from daemomnify import chord_quality, vst_params
+from daemomnify import chord_quality
 from daemomnify.chord_voicings.file_style import FileStyle
 from daemomnify.chord_voicings.omni84_style import Omni84Style
 from daemomnify.chord_voicings.omnichord_strum_style import OmnichordStrumStyle
@@ -90,42 +90,43 @@ StrumStyleConfig = Annotated[
 ]
 
 
-class AdditionalSettings(BaseModel):
-    """Complex settings that are serialized as a JSON blob."""
+class DaemomnifySettings(BaseModel):
+    """All settings for Daemomnify - flat structure, no nesting."""
+
+    # Device and channel settings
+    midi_device_name: str
+    chord_channel: int  # 1-16
+    strum_channel: int  # 1-16
+
+    # Strum parameters
+    strum_cooldown_secs: float  # realtime
+    strum_gate_time_secs: float  # realtime
+
+    strum_plate_cc: int
+
+    # Voicing styles
     chord_voicing_style: ChordStyleConfig
     strum_voicing_style: StrumStyleConfig
+
     chord_quality_selection_style: ChordQualitySelectionStyle
     latch_toggle_button: MidiButton
     stop_button: MidiButton
 
-
-class DaemomnifySettings(BaseModel):
-    # Scalar VST parameters
-    midi_device_name: Annotated[str, vst_params.VSTString(label="MIDI Device")]
-    chord_channel: Annotated[int, vst_params.VSTIntChoice(min=1, max=16, default=1, label="Chord Channel")]
-    strum_channel: Annotated[int, vst_params.VSTIntChoice(min=1, max=16, default=2, label="Strum Channel")]
-    strum_cooldown_secs: Annotated[float, vst_params.VSTFloat(min=0.0, max=5.0, label="Strum Cooldown (sec)")]
-    strum_gate_time_secs: Annotated[float, vst_params.VSTFloat(min=0.0, max=5.0, label="Strum Gate Time (sec)")]
-    strum_plate_cc: Annotated[int, vst_params.VSTInt(min=0, max=127, label="Strum Plate CC")]
-
-    # JSON blob containing complex/nested settings
-    additional_settings: Annotated[AdditionalSettings, vst_params.VSTJsonBlob()]
-
-    # TODO: just make a set of these in the constructor
     def is_note_control_note(self, note: int) -> bool:
-        match self.additional_settings.chord_quality_selection_style:
+        """Check if a note is used for control (not chord playing)."""
+        match self.chord_quality_selection_style:
             case ButtonPerChordQuality() as m:
                 if note in m.notes:
                     return True
             case _:
                 pass
-        match self.additional_settings.latch_toggle_button:
+        match self.latch_toggle_button:
             case MidiNoteButton() as b:
                 if b.note == note:
                     return True
             case _:
                 pass
-        match self.additional_settings.stop_button:
+        match self.stop_button:
             case MidiNoteButton() as b:
                 if b.note == note:
                     return True
@@ -154,20 +155,18 @@ DEFAULT_SETTINGS: DaemomnifySettings = DaemomnifySettings(
     strum_cooldown_secs=0.3,
     strum_gate_time_secs=0.5,
     strum_plate_cc=1,
-    additional_settings=AdditionalSettings(
-        chord_voicing_style=RootPositionStyle(),
-        strum_voicing_style=PlainAscendingStrumStyle(),
-        chord_quality_selection_style=ButtonPerChordQuality(
-            notes={
-                0: chord_quality.ChordQuality.MAJOR,
-                1: chord_quality.ChordQuality.MINOR,
-                2: chord_quality.ChordQuality.DOM_7,
-            },
-            ccs={},
-        ),
-        latch_toggle_button=MidiCCButton(cc=102, is_toggle=True),
-        stop_button=MidiCCButton(cc=103, is_toggle=False),
+    chord_voicing_style=RootPositionStyle(),
+    strum_voicing_style=PlainAscendingStrumStyle(),
+    chord_quality_selection_style=ButtonPerChordQuality(
+        notes={
+            0: chord_quality.ChordQuality.MAJOR,
+            1: chord_quality.ChordQuality.MINOR,
+            2: chord_quality.ChordQuality.DOM_7,
+        },
+        ccs={},
     ),
+    latch_toggle_button=MidiCCButton(cc=102, is_toggle=True),
+    stop_button=MidiCCButton(cc=103, is_toggle=False),
 )
 
 if __name__ == "__main__":

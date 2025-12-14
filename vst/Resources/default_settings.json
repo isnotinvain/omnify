@@ -5,32 +5,30 @@
   "strum_cooldown_secs": 0.3,
   "strum_gate_time_secs": 0.5,
   "strum_plate_cc": 1,
-  "additional_settings": {
-    "chord_voicing_style": {
-      "type": "FileStyle",
-      "path": "src/daemomnify/chord_voicings/chord_voicing_files/om_108_chord_voicing_offsets.json"
-    },
-    "strum_voicing_style": {
-      "type": "OmnichordStrumStyle"
-    },
-    "chord_quality_selection_style": {
-      "type": "ButtonPerChordQuality",
-      "notes": {},
-      "ccs": {
-        "105": "MAJOR",
-        "106": "MINOR",
-        "107": "DOM_7"
-      }
-    },
-    "latch_toggle_button": {
-      "type": "MidiCCButton",
-      "cc": 102,
-      "is_toggle": true
-    },
-    "stop_button": {
-      "type": "MidiCCButton",
-      "cc": 103,
-      "is_toggle": false
+  "chord_voicing_style": {
+    "type": "FileStyle",
+    "path": "src/daemomnify/chord_voicings/chord_voicing_files/om_108_chord_voicing_offsets.json"
+  },
+  "strum_voicing_style": {
+    "type": "OmnichordStrumStyle"
+  },
+  "chord_quality_selection_style": {
+    "type": "ButtonPerChordQuality",
+    "notes": {},
+    "ccs": {
+      "105": "MAJOR",
+      "106": "MINOR",
+      "107": "DOM_7"
     }
+  },
+  "latch_toggle_button": {
+    "type": "MidiCCButton",
+    "cc": 102,
+    "is_toggle": true
+  },
+  "stop_button": {
+    "type": "MidiCCButton",
+    "cc": 103,
+    "is_toggle": false
   }
 }

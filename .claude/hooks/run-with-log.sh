@@ -5,5 +5,5 @@
 tmpfile=$(mktemp /tmp/claude-cmd-XXXXXX)
 mv "$tmpfile" "$tmpfile.log"
 tmpfile="$tmpfile.log"
-echo "Log: $tmpfile" > /dev/tty
+echo "Log: $tmpfile"
 "$@" 2>&1 | tee "$tmpfile"

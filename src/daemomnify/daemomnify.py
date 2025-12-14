@@ -22,6 +22,9 @@ _shutdown_requested = threading.Event()
 _settings_received = threading.Event()
 _received_settings: DaemomnifySettings | None = None
 
+# Global reference to Omnify instance for realtime parameter updates
+_omnify: Omnify | None = None
+
 # Exit code to signal graceful shutdown (don't restart)
 EXIT_CODE_QUIT = 42
 
@@ -48,11 +51,27 @@ def _handle_settings(address, json_str):
         traceback.print_exc()
 
 
+def _handle_strum_gate(address, value):
+    """OSC handler for /strum_gate - realtime strum gate time update."""
+    global _omnify
+    if _omnify:
+        _omnify.set_strum_gate_time(value)
+
+
+def _handle_strum_cooldown(address, value):
+    """OSC handler for /strum_cooldown - realtime strum cooldown update."""
+    global _omnify
+    if _omnify:
+        _omnify.set_strum_cooldown(value)
+
+
 def _start_osc_server(port: int) -> BlockingOSCUDPServer:
     """Start OSC server in a background thread."""
     dispatcher = Dispatcher()
     dispatcher.map("/quit", _handle_quit)
     dispatcher.map("/settings", _handle_settings)
+    dispatcher.map("/strum_gate", _handle_strum_gate)
+    dispatcher.map("/strum_cooldown", _handle_strum_cooldown)
 
     server = BlockingOSCUDPServer(("127.0.0.1", port), dispatcher)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -153,7 +172,8 @@ def main(osc_port: int | None = None):
     event_dispatcher = EventDispatcher()
 
     # omnify will register itself as handlers for things
-    Omnify(scheduler, event_dispatcher, settings)
+    global _omnify
+    _omnify = Omnify(scheduler, event_dispatcher, settings)
 
     graceful_exit = False
     try:

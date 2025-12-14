@@ -26,9 +26,9 @@ class Omnify:
         self.latch = False
 
         # Buttons and control signals first so that they don't get treated as normal notes etc
-        event_dispatcher.register_handler(self.settings.additional_settings.chord_quality_selection_style.handles_message, self.on_chord_quality_change)
-        event_dispatcher.register_handler(self.settings.additional_settings.stop_button.handles_message, self.on_stop_button)
-        event_dispatcher.register_handler(self.settings.additional_settings.latch_toggle_button.handles_message, self.on_latch_button)
+        event_dispatcher.register_handler(self.settings.chord_quality_selection_style.handles_message, self.on_chord_quality_change)
+        event_dispatcher.register_handler(self.settings.stop_button.handles_message, self.on_stop_button)
+        event_dispatcher.register_handler(self.settings.latch_toggle_button.handles_message, self.on_latch_button)
 
         # now these guys don't have to filter out things that belong to the guys above
         event_dispatcher.register_handler(self.is_chord_note_on, self.on_chord_note_on)
@@ -78,7 +78,7 @@ class Omnify:
             # we'll allow it, we've crossed into the next strumming area or it's been long enough
 
             # find the note within the arp sequence for this given root
-            note_to_play = self.settings.additional_settings.strum_voicing_style.construct_chord(self.current_chord_quality, self.current_root)[strum_plate_zone]
+            note_to_play = self.settings.strum_voicing_style.construct_chord(self.current_chord_quality, self.current_root)[strum_plate_zone]
 
             # create the note on event
             events.append(mido.Message("note_on", note=note_to_play, velocity=velocity, channel=self.settings.strum_channel - 1))
@@ -110,7 +110,7 @@ class Omnify:
         # and it might have the wrong channel anyway)
         self.current_root = msg.note
         clamped_notes = set()
-        for note in self.settings.additional_settings.chord_voicing_style.construct_chord(self.current_chord_quality, self.current_root):
+        for note in self.settings.chord_voicing_style.construct_chord(self.current_chord_quality, self.current_root):
             clamped = clamp_note(note)
             if clamped in clamped_notes:
                 continue
@@ -148,3 +148,10 @@ class Omnify:
             events.append(mido.Message("note_off", note=note.note, velocity=note.velocity, channel=note.channel))
         self.note_on_events_of_current_chord.clear()
         return events
+
+    # Realtime parameter setters (called from OSC handlers)
+    def set_strum_cooldown(self, value: float):
+        self.settings.strum_cooldown_secs = value
+
+    def set_strum_gate_time(self, value: float):
+        self.settings.strum_gate_time_secs = value

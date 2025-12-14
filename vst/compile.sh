@@ -26,13 +26,13 @@ done
 
 echo "Starting compilation..."
 
-# Generate VST parameters from Python settings
-echo "Generating VST parameters..."
-uv run python "$SCRIPT_DIR/generate_vst_params.py"
+# Generate settings code from Python settings
+echo "Generating settings code..."
+uv run python "$SCRIPT_DIR/generate_settings.py"
 
 # Format generated C++ files
-"$(dirname "$SCRIPT_DIR")/.claude/hooks/format-cpp.sh" "$SCRIPT_DIR/GeneratedParams.h"
-"$(dirname "$SCRIPT_DIR")/.claude/hooks/format-cpp.sh" "$SCRIPT_DIR/GeneratedParams.cpp"
+"$(dirname "$SCRIPT_DIR")/.claude/hooks/format-cpp.sh" "$SCRIPT_DIR/GeneratedSettings.h"
+"$(dirname "$SCRIPT_DIR")/.claude/hooks/format-cpp.sh" "$SCRIPT_DIR/GeneratedSettings.cpp"
 
 # Determine build type
 if [ "$DEBUG" = true ]; then

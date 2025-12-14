@@ -3,13 +3,13 @@
 #include <foleys_gui_magic/foleys_gui_magic.h>
 
 #include "DaemonManager.h"
-#include "GeneratedAdditionalSettings.h"
-#include "GeneratedParams.h"
+#include "GeneratedSettings.h"
 #include "ui/components/MidiLearnComponent.h"
 
 //==============================================================================
 class OmnifyAudioProcessor : public foleys::MagicProcessor,
                              private juce::Value::Listener,
+                             private juce::AudioProcessorValueTreeState::Listener,
                              private DaemonManager::Listener {
    public:
     OmnifyAudioProcessor();
@@ -24,29 +24,37 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor,
 
     void postSetStateInformation() override;
 
-    // AdditionalSettings access
-    const GeneratedAdditionalSettings::Settings& getAdditionalSettings() const { return additionalSettings; }
+    // Settings access
+    const GeneratedSettings::DaemomnifySettings& getSettings() const { return settings; }
 
    private:
-    GeneratedParams::Params params;
+    // Only 2 APVTS params - for DAW automation of realtime controls
     juce::AudioProcessorValueTreeState parameters;
+    juce::AudioParameterFloat* strumGateTimeParam = nullptr;
+    juce::AudioParameterFloat* strumCooldownParam = nullptr;
 
-    // Complex settings stored as JSON in ValueTree
-    GeneratedAdditionalSettings::Settings additionalSettings;
+    // All settings stored in one flat struct
+    GeneratedSettings::DaemomnifySettings settings;
 
-    // ValueTree property key for JSON storage
-    static constexpr const char* ADDITIONAL_SETTINGS_KEY = "additional_settings_json";
+    // ValueTree property key for JSON storage of full settings
+    static constexpr const char* SETTINGS_JSON_KEY = "settings_json";
 
-    // Value listeners for variant selectors and file paths
+    // Value listeners for property-based settings
+    juce::Value midiDeviceNameValue;
+    juce::Value chordChannelValue;
+    juce::Value strumChannelValue;
+    juce::Value strumPlateCcValue;
     juce::Value chordVoicingStyleValue;
     juce::Value strumVoicingStyleValue;
     juce::Value chordVoicingFilePathValue;
+
     void valueChanged(juce::Value& value) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
     void setupValueListeners();
 
-    // Load/save additional settings from ValueTree
-    void loadAdditionalSettingsFromValueTree();
-    void saveAdditionalSettingsToValueTree();
+    // Load/save settings from ValueTree
+    void loadSettingsFromValueTree();
+    void saveSettingsToValueTree();
 
     // Load default settings from bundled JSON (called on first run)
     void loadDefaultSettings();
@@ -59,6 +67,9 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor,
 
     // Send all current settings to daemon via OSC
     void sendSettingsToDaemon();
+
+    // Send realtime parameter updates via OSC
+    void sendRealtimeParam(const juce::String& address, float value);
 
     // Python daemon process manager
     DaemonManager daemonManager;

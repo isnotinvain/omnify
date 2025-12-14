@@ -15,7 +15,7 @@ ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& buil
 
     for (size_t i = 0; i < NUM_QUALITIES; ++i) {
         auto& row = rows[i];
-        row.label.setText(GeneratedAdditionalSettings::ChordQualities::NAMES[i],
+        row.label.setText(GeneratedSettings::ChordQualities::NAMES[i],
                           juce::dontSendNotification);
         container.addAndMakeVisible(row.label);
         container.addAndMakeVisible(row.midiLearn);

@@ -2,7 +2,7 @@
 
 #include <foleys_gui_magic/foleys_gui_magic.h>
 
-#include "../../GeneratedAdditionalSettings.h"
+#include "../../GeneratedSettings.h"
 #include "MidiLearnComponent.h"
 
 class ChordQualitySelectorItem : public foleys::GuiItem {
@@ -15,7 +15,7 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     static const juce::Identifier pRowSpacing;
     static const juce::Identifier pMidiLearnAspectRatio;
 
-    static constexpr int NUM_QUALITIES = GeneratedAdditionalSettings::ChordQualities::NUM_QUALITIES;
+    static constexpr int NUM_QUALITIES = GeneratedSettings::ChordQualities::NUM_QUALITIES;
 
     ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
 

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-Generate C++ parameter definitions and settings structs from DaemomnifySettings pydantic model.
+Generate C++ settings structs from DaemomnifySettings pydantic model.
 
 This script introspects the DaemomnifySettings class and generates:
-- GeneratedParams.h/cpp: Scalar VST parameter definitions
-- GeneratedAdditionalSettings.h/cpp: C++ structs + JSON serialization for the JSON blob
+- GeneratedSettings.h/cpp: C++ structs + JSON serialization for all settings
 
-It uses VSTParam annotations from vst_params.py to determine how fields
-should be exposed as VST parameters vs included in the JSON blob.
+The generated code uses nlohmann::json for JSON marshalling.
 """
 
 from pathlib import Path
@@ -15,25 +13,13 @@ from typing import Annotated, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
-from daemomnify import vst_params
 from daemomnify.chord_quality import ChordQuality
-from daemomnify.settings import AdditionalSettings, DaemomnifySettings
+from daemomnify.settings import DaemomnifySettings
 
 
 def snake_to_pascal(name: str) -> str:
     """Convert snake_case to PascalCase."""
     return "".join(x.title() for x in name.split("_"))
-
-
-def get_vst_annotation(annotation) -> vst_params.VSTParam | None:
-    """Extract VSTParam from an Annotated type's metadata."""
-    if get_origin(annotation) is not Annotated:
-        return None
-
-    for arg in get_args(annotation):
-        if isinstance(arg, vst_params.VSTParam):
-            return arg
-    return None
 
 
 def get_base_type(annotation):
@@ -44,7 +30,8 @@ def get_base_type(annotation):
 
 
 def get_union_types(annotation) -> list[type] | None:
-    """Extract types from a Union type."""
+    """Extract types from a Union type, unwrapping Annotated if needed."""
+    # Unwrap Annotated first
     base = get_base_type(annotation)
     origin = get_origin(base)
 
@@ -63,206 +50,7 @@ def get_discriminator_value(model_class: type) -> str | None:
 
 
 # =============================================================================
-# Scalar Parameters Generation (GeneratedParams.h/cpp)
-# =============================================================================
-
-
-def collect_scalar_params(model_class: type[BaseModel]) -> list[dict]:
-    """Collect scalar VST parameters (non-JSON-blob fields)."""
-    params = []
-
-    for field_name, field_info in model_class.model_fields.items():
-        annotation = model_class.__annotations__[field_name]
-        vst_param = get_vst_annotation(annotation)
-
-        # Skip JSON blob fields and explicitly skipped fields
-        if isinstance(vst_param, (vst_params.VSTSkip, vst_params.VSTJsonBlob)):
-            continue
-
-        if isinstance(vst_param, vst_params.VSTInt):
-            params.append({
-                "field_name": field_name,
-                "param_id": field_name,
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "int",
-                "min": vst_param.min,
-                "max": vst_param.max,
-                "default": vst_param.default,
-            })
-        elif isinstance(vst_param, vst_params.VSTFloat):
-            params.append({
-                "field_name": field_name,
-                "param_id": field_name,
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "float",
-                "min": vst_param.min,
-                "max": vst_param.max,
-                "default": vst_param.default,
-            })
-        elif isinstance(vst_param, vst_params.VSTBool):
-            params.append({
-                "field_name": field_name,
-                "param_id": field_name,
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "bool",
-                "default": vst_param.default,
-            })
-        elif isinstance(vst_param, vst_params.VSTIntChoice):
-            choices = [str(i) for i in range(vst_param.min, vst_param.max + 1)]
-            params.append({
-                "field_name": field_name,
-                "param_id": field_name,
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "int_choice",
-                "choices": choices,
-                "namespace": snake_to_pascal(field_name) + "Choices",
-                "default": vst_param.default - vst_param.min,
-            })
-        elif isinstance(vst_param, vst_params.VSTString):
-            params.append({
-                "field_name": field_name,
-                "param_id": field_name,
-                "label": vst_param.label or field_name.replace("_", " ").title(),
-                "type": "string",
-                "default": vst_param.default,
-            })
-
-    return params
-
-
-def generate_params_header(params: list[dict]) -> str:
-    """Generate the GeneratedParams.h file content."""
-    lines = [
-        "// AUTO-GENERATED FILE - DO NOT EDIT",
-        "// Generated by vst/generate_vst_params.py",
-        "#pragma once",
-        "",
-        "#include <juce_audio_processors/juce_audio_processors.h>",
-        "",
-        "namespace GeneratedParams {",
-        "",
-    ]
-
-    # Generate choice arrays for int_choice params
-    for p in params:
-        if p["type"] == "int_choice":
-            lines.append(f"namespace {p['namespace']} {{")
-            choices_str = ", ".join(f'"{c}"' for c in p["choices"])
-            lines.append(f"inline const juce::StringArray choices = {{{choices_str}}};")
-            lines.append(f"}}  // namespace {p['namespace']}")
-            lines.append("")
-
-    # Parameter IDs
-    lines.append("namespace ParamIDs {")
-    for p in params:
-        const_name = p["param_id"].upper()
-        lines.append(f'inline constexpr const char* {const_name} = "{p["param_id"]}";')
-    lines.append("}  // namespace ParamIDs")
-    lines.append("")
-
-    # Params struct
-    lines.append("struct Params {")
-    type_map = {
-        "choice": "juce::AudioParameterChoice",
-        "int_choice": "juce::AudioParameterChoice",
-        "int": "juce::AudioParameterInt",
-        "float": "juce::AudioParameterFloat",
-        "bool": "juce::AudioParameterBool",
-        "string": "juce::AudioParameterChoice",  # Use choice for string (device name)
-    }
-    for p in params:
-        cpp_type = type_map[p["type"]]
-        lines.append(f"    {cpp_type}* {p['field_name']} = nullptr;")
-    lines.append("};")
-    lines.append("")
-
-    lines.extend([
-        "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params& params);",
-        "",
-        "}  // namespace GeneratedParams",
-        "",
-    ])
-
-    return "\n".join(lines)
-
-
-def generate_params_cpp(params: list[dict]) -> str:
-    """Generate the GeneratedParams.cpp file content."""
-    lines = [
-        "// AUTO-GENERATED FILE - DO NOT EDIT",
-        "// Generated by vst/generate_vst_params.py",
-        '#include "GeneratedParams.h"',
-        "",
-        "namespace GeneratedParams {",
-        "",
-        "juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Params& params) {",
-        "    juce::AudioProcessorValueTreeState::ParameterLayout layout;",
-        "",
-    ]
-
-    for i, p in enumerate(params):
-        var = f"p{i}"
-        param_id = p["param_id"]
-
-        if p["type"] == "int_choice":
-            lines.append(
-                f"    auto {var} = std::make_unique<juce::AudioParameterChoice>(\n"
-                f'        juce::ParameterID("{param_id}", 1),\n'
-                f'        "{p["label"]}",\n'
-                f"        {p['namespace']}::choices,\n"
-                f"        {p['default']});"
-            )
-        elif p["type"] == "int":
-            lines.append(
-                f"    auto {var} = std::make_unique<juce::AudioParameterInt>(\n"
-                f'        juce::ParameterID("{param_id}", 1),\n'
-                f'        "{p["label"]}",\n'
-                f"        {p['min']}, {p['max']}, {p.get('default', p['min'])});"
-            )
-        elif p["type"] == "float":
-            default = p.get("default", p["min"])
-            lines.append(
-                f"    auto {var} = std::make_unique<juce::AudioParameterFloat>(\n"
-                f'        juce::ParameterID("{param_id}", 1),\n'
-                f'        "{p["label"]}",\n'
-                f"        {p['min']}F, {p['max']}F, {default}F);"
-            )
-        elif p["type"] == "bool":
-            default = "true" if p.get("default") else "false"
-            lines.append(
-                f"    auto {var} = std::make_unique<juce::AudioParameterBool>(\n"
-                f'        juce::ParameterID("{param_id}", 1),\n'
-                f'        "{p["label"]}",\n'
-                f"        {default});"
-            )
-        elif p["type"] == "string":
-            # For string params (like midi_device_name), use a choice with placeholder
-            # The actual choices will be populated at runtime
-            lines.append(
-                f"    auto {var} = std::make_unique<juce::AudioParameterChoice>(\n"
-                f'        juce::ParameterID("{param_id}", 1),\n'
-                f'        "{p["label"]}",\n'
-                f'        juce::StringArray{{"(none)"}},\n'
-                f"        0);"
-            )
-
-        lines.append(f"    params.{p['field_name']} = {var}.get();")
-        lines.append(f"    layout.add(std::move({var}));")
-        lines.append("")
-
-    lines.extend([
-        "    return layout;",
-        "}",
-        "",
-        "}  // namespace GeneratedParams",
-        "",
-    ])
-
-    return "\n".join(lines)
-
-
-# =============================================================================
-# JSON Blob C++ Code Generation (GeneratedAdditionalSettings.h/cpp)
+# JSON Blob C++ Code Generation (GeneratedSettings.h/cpp)
 # =============================================================================
 
 
@@ -282,7 +70,6 @@ def collect_variant_types(model_class: type[BaseModel], collected: dict, variant
             continue
 
         annotation = model_class.__annotations__[field_name]
-        base_type = get_base_type(annotation)
         union_types = get_union_types(annotation)
 
         if union_types:
@@ -318,9 +105,9 @@ def collect_variant_types(model_class: type[BaseModel], collected: dict, variant
                     "is_alias": False,
                 }
                 variant_signatures[sig] = variant_name
-        elif hasattr(base_type, "model_fields"):
+        elif hasattr(annotation, "model_fields"):
             # Nested model
-            collect_variant_types(base_type, collected, variant_signatures)
+            collect_variant_types(annotation, collected, variant_signatures)
 
 
 def collect_struct_fields(model_class: type[BaseModel]) -> list[dict]:
@@ -371,11 +158,11 @@ def python_type_to_cpp(py_type, field_name: str) -> str | None:
     return None
 
 
-def generate_additional_settings_header(additional_settings_class: type[BaseModel]) -> str:
-    """Generate GeneratedAdditionalSettings.h"""
+def generate_settings_header(settings_class: type[BaseModel]) -> str:
+    """Generate GeneratedSettings.h"""
     lines = [
         "// AUTO-GENERATED FILE - DO NOT EDIT",
-        "// Generated by vst/generate_vst_params.py",
+        "// Generated by vst/generate_settings.py",
         "#pragma once",
         "",
         "#include <string>",
@@ -384,7 +171,7 @@ def generate_additional_settings_header(additional_settings_class: type[BaseMode
         "#include <vector>",
         "#include <json.hpp>",
         "",
-        "namespace GeneratedAdditionalSettings {",
+        "namespace GeneratedSettings {",
         "",
     ]
 
@@ -410,10 +197,10 @@ def generate_additional_settings_header(additional_settings_class: type[BaseMode
     lines.append("}  // namespace ChordQualities")
     lines.append("")
 
-    # Collect all types from AdditionalSettings
+    # Collect all variant types from DaemomnifySettings
     collected = {}
     variant_signatures = {}
-    collect_variant_types(additional_settings_class, collected, variant_signatures)
+    collect_variant_types(settings_class, collected, variant_signatures)
 
     # Generate struct definitions for each variant
     all_structs = []
@@ -449,35 +236,35 @@ def generate_additional_settings_header(additional_settings_class: type[BaseMode
         lines.append(f"using {typedef_name} = std::variant<{variant_types}>;")
     lines.append("")
 
-    # Main Settings struct
-    lines.append("struct Settings {")
-    for field_name in additional_settings_class.model_fields:
-        annotation = additional_settings_class.__annotations__[field_name]
-        base_type = get_base_type(annotation)
+    # Main DaemomnifySettings struct (all settings flat)
+    lines.append("struct DaemomnifySettings {")
+    for field_name in settings_class.model_fields:
+        annotation = settings_class.__annotations__[field_name]
         union_types = get_union_types(annotation)
 
         if union_types:
             cpp_type = collected[field_name]["variant_name"]
         else:
+            base_type = get_base_type(annotation)
             cpp_type = python_type_to_cpp(base_type, field_name)
 
         if cpp_type:
             lines.append(f"    {cpp_type} {field_name};")
     lines.append("")
-    lines.append("    static Settings defaults();")
+    lines.append("    static DaemomnifySettings defaults();")
     lines.append("};")
     lines.append("")
 
     # Function declarations
     lines.extend([
         "// JSON serialization",
-        "std::string toJson(const Settings& settings);",
-        "Settings fromJson(const std::string& json);",
+        "std::string toJson(const DaemomnifySettings& settings);",
+        "DaemomnifySettings fromJson(const std::string& json);",
         "bool isValidJson(const std::string& json);",
         "",
         "// nlohmann JSON conversion declarations",
-        "void to_json(nlohmann::json& j, const Settings& s);",
-        "void from_json(const nlohmann::json& j, Settings& s);",
+        "void to_json(nlohmann::json& j, const DaemomnifySettings& s);",
+        "void from_json(const nlohmann::json& j, DaemomnifySettings& s);",
         "",
     ])
 
@@ -499,21 +286,21 @@ def generate_additional_settings_header(additional_settings_class: type[BaseMode
     lines.append("")
 
     lines.extend([
-        "}  // namespace GeneratedAdditionalSettings",
+        "}  // namespace GeneratedSettings",
         "",
     ])
 
     return "\n".join(lines)
 
 
-def generate_additional_settings_cpp(additional_settings_class: type[BaseModel]) -> str:
-    """Generate GeneratedAdditionalSettings.cpp"""
+def generate_settings_cpp(settings_class: type[BaseModel]) -> str:
+    """Generate GeneratedSettings.cpp"""
     lines = [
         "// AUTO-GENERATED FILE - DO NOT EDIT",
-        "// Generated by vst/generate_vst_params.py",
-        '#include "GeneratedAdditionalSettings.h"',
+        "// Generated by vst/generate_settings.py",
+        '#include "GeneratedSettings.h"',
         "",
-        "namespace GeneratedAdditionalSettings {",
+        "namespace GeneratedSettings {",
         "",
     ]
 
@@ -528,7 +315,7 @@ def generate_additional_settings_cpp(additional_settings_class: type[BaseModel])
     # Collect types
     collected = {}
     variant_signatures = {}
-    collect_variant_types(additional_settings_class, collected, variant_signatures)
+    collect_variant_types(settings_class, collected, variant_signatures)
 
     all_structs = []
     for field_name, info in collected.items():
@@ -605,29 +392,29 @@ def generate_additional_settings_cpp(additional_settings_class: type[BaseModel])
         lines.append("}")
         lines.append("")
 
-    # Settings to_json/from_json
-    lines.append("void to_json(nlohmann::json& j, const Settings& s) {")
-    for field_name in additional_settings_class.model_fields:
+    # DaemomnifySettings to_json/from_json
+    lines.append("void to_json(nlohmann::json& j, const DaemomnifySettings& s) {")
+    for field_name in settings_class.model_fields:
         lines.append(f'    j["{field_name}"] = s.{field_name};')
     lines.append("}")
     lines.append("")
 
-    lines.append("void from_json(const nlohmann::json& j, Settings& s) {")
-    for field_name in additional_settings_class.model_fields:
+    lines.append("void from_json(const nlohmann::json& j, DaemomnifySettings& s) {")
+    for field_name in settings_class.model_fields:
         lines.append(f'    j.at("{field_name}").get_to(s.{field_name});')
     lines.append("}")
     lines.append("")
 
     # Public API functions
-    lines.append("std::string toJson(const Settings& settings) {")
+    lines.append("std::string toJson(const DaemomnifySettings& settings) {")
     lines.append("    nlohmann::json j = settings;")
     lines.append("    return j.dump();")
     lines.append("}")
     lines.append("")
 
-    lines.append("Settings fromJson(const std::string& json) {")
+    lines.append("DaemomnifySettings fromJson(const std::string& json) {")
     lines.append("    auto j = nlohmann::json::parse(json);")
-    lines.append("    return j.get<Settings>();")
+    lines.append("    return j.get<DaemomnifySettings>();")
     lines.append("}")
     lines.append("")
 
@@ -642,15 +429,15 @@ def generate_additional_settings_cpp(additional_settings_class: type[BaseModel])
     lines.append("")
 
     # defaults() function
-    lines.append("Settings Settings::defaults() {")
-    lines.append("    return Settings{")
+    lines.append("DaemomnifySettings DaemomnifySettings::defaults() {")
+    lines.append("    return DaemomnifySettings{")
 
     # Import default values from Python
     from daemomnify.settings import DEFAULT_SETTINGS
-    additional = DEFAULT_SETTINGS.additional_settings
+    settings = DEFAULT_SETTINGS
 
-    for field_name in additional_settings_class.model_fields:
-        field_value = getattr(additional, field_name)
+    for field_name in settings_class.model_fields:
+        field_value = getattr(settings, field_name)
         cpp_init = python_value_to_cpp_init(field_value)
         lines.append(f"        .{field_name} = {cpp_init},")
 
@@ -659,7 +446,7 @@ def generate_additional_settings_cpp(additional_settings_class: type[BaseModel])
     lines.append("")
 
     lines.extend([
-        "}  // namespace GeneratedAdditionalSettings",
+        "}  // namespace GeneratedSettings",
         "",
     ])
 
@@ -713,38 +500,18 @@ def python_value_to_cpp_init(value) -> str:
 def main():
     output_dir = Path(__file__).parent
 
-    print("Collecting scalar parameters from DaemomnifySettings...")
-    scalar_params = collect_scalar_params(DaemomnifySettings)
-    print(f"  Found {len(scalar_params)} scalar parameters:")
-    for p in scalar_params:
-        print(f"    - {p['field_name']}: {p['type']}")
+    print("Generating DaemomnifySettings C++ code...")
+    settings_header = generate_settings_header(DaemomnifySettings)
+    settings_cpp = generate_settings_cpp(DaemomnifySettings)
 
-    # Generate scalar params files
-    params_header = generate_params_header(scalar_params)
-    params_cpp = generate_params_cpp(scalar_params)
+    settings_header_path = output_dir / "GeneratedSettings.h"
+    settings_cpp_path = output_dir / "GeneratedSettings.cpp"
 
-    params_header_path = output_dir / "GeneratedParams.h"
-    params_cpp_path = output_dir / "GeneratedParams.cpp"
+    settings_header_path.write_text(settings_header)
+    settings_cpp_path.write_text(settings_cpp)
 
-    params_header_path.write_text(params_header)
-    params_cpp_path.write_text(params_cpp)
-
-    print(f"\nGenerated {params_header_path}")
-    print(f"Generated {params_cpp_path}")
-
-    # Generate additional settings files
-    print("\nGenerating AdditionalSettings C++ code...")
-    additional_header = generate_additional_settings_header(AdditionalSettings)
-    additional_cpp = generate_additional_settings_cpp(AdditionalSettings)
-
-    additional_header_path = output_dir / "GeneratedAdditionalSettings.h"
-    additional_cpp_path = output_dir / "GeneratedAdditionalSettings.cpp"
-
-    additional_header_path.write_text(additional_header)
-    additional_cpp_path.write_text(additional_cpp)
-
-    print(f"Generated {additional_header_path}")
-    print(f"Generated {additional_cpp_path}")
+    print(f"Generated {settings_header_path}")
+    print(f"Generated {settings_cpp_path}")
 
 
 if __name__ == "__main__":
