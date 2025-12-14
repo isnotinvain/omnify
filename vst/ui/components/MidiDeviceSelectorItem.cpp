@@ -1,5 +1,7 @@
 #include "MidiDeviceSelectorItem.h"
 
+#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
+
 //==============================================================================
 // MidiDeviceSelectorComponent
 //==============================================================================
@@ -15,6 +17,7 @@ MidiDeviceSelectorComponent::MidiDeviceSelectorComponent() {
         int idx = comboBox.getSelectedItemIndex();
         if (idx >= 0 && idx < deviceNames.size()) {
             boundValue.setValue(deviceNames[idx]);
+            enableMidiDeviceInStandalone(deviceNames[idx]);
         }
     };
 
@@ -38,6 +41,12 @@ void MidiDeviceSelectorComponent::resized() {
 void MidiDeviceSelectorComponent::bindToValue(juce::Value& value) {
     boundValue.referTo(value);
     updateComboBoxFromValue();
+
+    // Enable the device in standalone mode on startup
+    juce::String selectedName = boundValue.getValue().toString();
+    if (selectedName.isNotEmpty()) {
+        enableMidiDeviceInStandalone(selectedName);
+    }
 }
 
 void MidiDeviceSelectorComponent::refreshDeviceList() {
@@ -71,6 +80,27 @@ void MidiDeviceSelectorComponent::setCaption(const juce::String& text) {
 }
 
 void MidiDeviceSelectorComponent::timerCallback() { refreshDeviceList(); }
+
+void MidiDeviceSelectorComponent::enableMidiDeviceInStandalone(const juce::String& deviceName) {
+    auto* holder = juce::StandalonePluginHolder::getInstance();
+    if (holder == nullptr)
+        return;  // Not running standalone (e.g., in a DAW)
+
+    auto& deviceManager = holder->deviceManager;
+
+    // Disable all MIDI inputs first
+    for (const auto& device : juce::MidiInput::getAvailableDevices()) {
+        deviceManager.setMidiInputDeviceEnabled(device.identifier, false);
+    }
+
+    // Find and enable the selected device by name
+    for (const auto& device : juce::MidiInput::getAvailableDevices()) {
+        if (device.name == deviceName) {
+            deviceManager.setMidiInputDeviceEnabled(device.identifier, true);
+            break;
+        }
+    }
+}
 
 void MidiDeviceSelectorComponent::updateComboBoxFromValue() {
     juce::String selectedName = boundValue.getValue().toString();

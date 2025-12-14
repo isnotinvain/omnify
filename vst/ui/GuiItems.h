@@ -30,6 +30,7 @@ class MidiLearnItem : public foleys::GuiItem {
     static inline const juce::StringArray pAcceptModes{"Notes Only", "CCs Only", "Both"};
 
     MidiLearnItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
+    ~MidiLearnItem() override;
 
     void update() override;
     juce::Component* getWrappedComponent() override;
@@ -38,7 +39,16 @@ class MidiLearnItem : public foleys::GuiItem {
     MidiLearnComponent& getMidiLearnComponent() { return midiLearnComponent; }
 
    private:
+    // Override from foleys::GuiItem (which inherits from juce::Value::Listener)
+    void valueChanged(juce::Value& value) override;
+    void bindToValueTree();
+    void updateComponentFromValues();
+
     MidiLearnComponent midiLearnComponent;
+
+    // ValueTree bindings: stores type ("note" or "cc") and the number
+    juce::Value typeValue;
+    juce::Value numberValue;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiLearnItem)
 };

@@ -18,6 +18,7 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     static constexpr int NUM_QUALITIES = GeneratedSettings::ChordQualities::NUM_QUALITIES;
 
     ChordQualitySelectorItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
+    ~ChordQualitySelectorItem() override;
 
     void update() override;
     void resized() override;
@@ -29,11 +30,18 @@ class ChordQualitySelectorItem : public foleys::GuiItem {
     void setOnValueChanged(size_t qualityIndex, std::function<void(MidiLearnedValue)> callback);
 
    private:
+    void valueChanged(juce::Value& value) override;
+    void bindToValueTree();
+    void updateComponentsFromValues();
+    void onMidiLearnChanged(size_t qualityIndex, MidiLearnedValue val);
+
     juce::Component container;
 
     struct Row {
         juce::Label label;
         MidiLearnComponent midiLearn;
+        juce::Value typeValue;
+        juce::Value numberValue;
     };
     std::array<Row, NUM_QUALITIES> rows;
 

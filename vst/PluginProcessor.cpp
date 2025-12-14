@@ -73,10 +73,22 @@ OmnifyAudioProcessor::~OmnifyAudioProcessor() {
     midiDeviceNameValue.removeListener(this);
     chordChannelValue.removeListener(this);
     strumChannelValue.removeListener(this);
-    strumPlateCcValue.removeListener(this);
     chordVoicingStyleValue.removeListener(this);
     strumVoicingStyleValue.removeListener(this);
     chordVoicingFilePathValue.removeListener(this);
+
+    latchToggleButtonTypeValue.removeListener(this);
+    latchToggleButtonNumberValue.removeListener(this);
+    latchIsToggleValue.removeListener(this);
+    stopButtonTypeValue.removeListener(this);
+    stopButtonNumberValue.removeListener(this);
+    strumPlateCcTypeValue.removeListener(this);
+    strumPlateCcNumberValue.removeListener(this);
+
+    for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
+        chordQualityTypeValues[i].removeListener(this);
+        chordQualityNumberValues[i].removeListener(this);
+    }
 }
 
 //==============================================================================
@@ -130,20 +142,53 @@ void OmnifyAudioProcessor::setupValueListeners() {
     midiDeviceNameValue.referTo(magicState.getPropertyAsValue("midi_device_name"));
     chordChannelValue.referTo(magicState.getValueTree().getPropertyAsValue("chord_channel", nullptr));
     strumChannelValue.referTo(magicState.getValueTree().getPropertyAsValue("strum_channel", nullptr));
-    strumPlateCcValue.referTo(magicState.getValueTree().getPropertyAsValue("strum_plate_cc", nullptr));
     chordVoicingStyleValue.referTo(
         magicState.getValueTree().getPropertyAsValue("variant_chord_voicing_style", nullptr));
     strumVoicingStyleValue.referTo(
         magicState.getValueTree().getPropertyAsValue("variant_strum_voicing_style", nullptr));
     chordVoicingFilePathValue.referTo(magicState.getPropertyAsValue("chords_json_file"));
 
+    // MidiLearn bindings - these match the ids in magic.xml + "_type" / "_number" suffixes
+    latchToggleButtonTypeValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("latch_toggle_button_type", nullptr));
+    latchToggleButtonNumberValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("latch_toggle_button_number", nullptr));
+    latchIsToggleValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("latch_is_toggle", nullptr));
+    stopButtonTypeValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("stop_button_type", nullptr));
+    stopButtonNumberValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("stop_button_number", nullptr));
+    strumPlateCcTypeValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("strum_plate_cc_type", nullptr));
+    strumPlateCcNumberValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("strum_plate_cc_number", nullptr));
+
     midiDeviceNameValue.addListener(this);
     chordChannelValue.addListener(this);
     strumChannelValue.addListener(this);
-    strumPlateCcValue.addListener(this);
     chordVoicingStyleValue.addListener(this);
     strumVoicingStyleValue.addListener(this);
     chordVoicingFilePathValue.addListener(this);
+
+    latchToggleButtonTypeValue.addListener(this);
+    latchToggleButtonNumberValue.addListener(this);
+    latchIsToggleValue.addListener(this);
+    stopButtonTypeValue.addListener(this);
+    stopButtonNumberValue.addListener(this);
+    strumPlateCcTypeValue.addListener(this);
+    strumPlateCcNumberValue.addListener(this);
+
+    // Chord quality selector bindings - use enum names for stability
+    for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
+        auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
+        chordQualityTypeValues[i].referTo(
+            magicState.getValueTree().getPropertyAsValue(prefix + "_type", nullptr));
+        chordQualityNumberValues[i].referTo(
+            magicState.getValueTree().getPropertyAsValue(prefix + "_number", nullptr));
+        chordQualityTypeValues[i].addListener(this);
+        chordQualityNumberValues[i].addListener(this);
+    }
 }
 
 void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
@@ -157,9 +202,6 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
         settingsChanged = true;
     } else if (value.refersToSameSourceAs(strumChannelValue)) {
         settings.strum_channel = static_cast<int>(strumChannelValue.getValue());
-        settingsChanged = true;
-    } else if (value.refersToSameSourceAs(strumPlateCcValue)) {
-        settings.strum_plate_cc = static_cast<int>(strumPlateCcValue.getValue());
         settingsChanged = true;
     } else if (value.refersToSameSourceAs(chordVoicingStyleValue)) {
         int index = static_cast<int>(chordVoicingStyleValue.getValue());
@@ -194,6 +236,68 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
         if (auto* fileStyle = std::get_if<GeneratedSettings::FileStyle>(&settings.chord_voicing_style)) {
             fileStyle->path = path;
             settingsChanged = true;
+        }
+    } else if (value.refersToSameSourceAs(latchToggleButtonTypeValue) ||
+               value.refersToSameSourceAs(latchToggleButtonNumberValue) ||
+               value.refersToSameSourceAs(latchIsToggleValue)) {
+        // Update latch_toggle_button from ValueTree properties
+        auto typeStr = latchToggleButtonTypeValue.getValue().toString();
+        int number = static_cast<int>(latchToggleButtonNumberValue.getValue());
+        bool isToggle = static_cast<bool>(latchIsToggleValue.getValue());
+
+        if (typeStr == "note") {
+            settings.latch_toggle_button = GeneratedSettings::MidiNoteButton{number};
+        } else if (typeStr == "cc") {
+            settings.latch_toggle_button = GeneratedSettings::MidiCCButton{number, isToggle};
+        }
+        settingsChanged = true;
+    } else if (value.refersToSameSourceAs(stopButtonTypeValue) ||
+               value.refersToSameSourceAs(stopButtonNumberValue)) {
+        // Update stop_button from ValueTree properties
+        auto typeStr = stopButtonTypeValue.getValue().toString();
+        int number = static_cast<int>(stopButtonNumberValue.getValue());
+
+        if (typeStr == "note") {
+            settings.stop_button = GeneratedSettings::MidiNoteButton{number};
+        } else if (typeStr == "cc") {
+            // stop_button is never toggle mode
+            settings.stop_button = GeneratedSettings::MidiCCButton{number, false};
+        }
+        settingsChanged = true;
+    } else if (value.refersToSameSourceAs(strumPlateCcTypeValue) ||
+               value.refersToSameSourceAs(strumPlateCcNumberValue)) {
+        // strum_plate_cc is just an int (CC number)
+        int number = static_cast<int>(strumPlateCcNumberValue.getValue());
+        if (number > 0) {
+            settings.strum_plate_cc = number;
+            settingsChanged = true;
+        }
+    } else {
+        // Check if it's a chord quality value
+        for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
+            if (value.refersToSameSourceAs(chordQualityTypeValues[i]) ||
+                value.refersToSameSourceAs(chordQualityNumberValues[i])) {
+                // Rebuild the entire ButtonPerChordQuality from current values
+                GeneratedSettings::ButtonPerChordQuality bpq;
+
+                for (size_t j = 0; j < NUM_CHORD_QUALITIES; ++j) {
+                    auto typeStr = chordQualityTypeValues[j].getValue().toString();
+                    int number = static_cast<int>(chordQualityNumberValues[j].getValue());
+
+                    if (number > 0) {
+                        auto quality = static_cast<GeneratedSettings::ChordQuality>(j);
+                        if (typeStr == "note") {
+                            bpq.notes[number] = quality;
+                        } else if (typeStr == "cc") {
+                            bpq.ccs[number] = quality;
+                        }
+                    }
+                }
+
+                settings.chord_quality_selection_style = bpq;
+                settingsChanged = true;
+                break;
+            }
         }
     }
 
@@ -233,8 +337,61 @@ void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
     // Write scalar settings to ValueTree properties
     magicState.getValueTree().setProperty("chord_channel", settings.chord_channel, nullptr);
     magicState.getValueTree().setProperty("strum_channel", settings.strum_channel, nullptr);
-    magicState.getValueTree().setProperty("strum_plate_cc", settings.strum_plate_cc, nullptr);
     magicState.getPropertyAsValue("midi_device_name").setValue(juce::String(settings.midi_device_name));
+
+    // Write MidiLearn values to ValueTree
+    // latch_toggle_button
+    if (auto* noteBtn =
+            std::get_if<GeneratedSettings::MidiNoteButton>(&settings.latch_toggle_button)) {
+        magicState.getValueTree().setProperty("latch_toggle_button_type", "note", nullptr);
+        magicState.getValueTree().setProperty("latch_toggle_button_number", noteBtn->note, nullptr);
+        magicState.getValueTree().setProperty("latch_is_toggle", false, nullptr);
+    } else if (auto* ccBtn =
+                   std::get_if<GeneratedSettings::MidiCCButton>(&settings.latch_toggle_button)) {
+        magicState.getValueTree().setProperty("latch_toggle_button_type", "cc", nullptr);
+        magicState.getValueTree().setProperty("latch_toggle_button_number", ccBtn->cc, nullptr);
+        magicState.getValueTree().setProperty("latch_is_toggle", ccBtn->is_toggle, nullptr);
+    }
+
+    // stop_button
+    if (auto* noteBtn = std::get_if<GeneratedSettings::MidiNoteButton>(&settings.stop_button)) {
+        magicState.getValueTree().setProperty("stop_button_type", "note", nullptr);
+        magicState.getValueTree().setProperty("stop_button_number", noteBtn->note, nullptr);
+    } else if (auto* ccBtn = std::get_if<GeneratedSettings::MidiCCButton>(&settings.stop_button)) {
+        magicState.getValueTree().setProperty("stop_button_type", "cc", nullptr);
+        magicState.getValueTree().setProperty("stop_button_number", ccBtn->cc, nullptr);
+    }
+
+    // strum_plate_cc - just a CC number
+    magicState.getValueTree().setProperty("strum_plate_cc_type", "cc", nullptr);
+    magicState.getValueTree().setProperty("strum_plate_cc_number", settings.strum_plate_cc, nullptr);
+
+    // Chord quality selector - write from ButtonPerChordQuality
+    // First clear all chord quality properties (use enum names for stability)
+    for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
+        auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
+        magicState.getValueTree().setProperty(prefix + "_type", "", nullptr);
+        magicState.getValueTree().setProperty(prefix + "_number", -1, nullptr);
+    }
+
+    // Now write the mappings from the settings
+    if (auto* bpq = std::get_if<GeneratedSettings::ButtonPerChordQuality>(
+            &settings.chord_quality_selection_style)) {
+        // Write note mappings
+        for (const auto& [noteNum, quality] : bpq->notes) {
+            int qualityIdx = static_cast<int>(quality);
+            auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[qualityIdx];
+            magicState.getValueTree().setProperty(prefix + "_type", "note", nullptr);
+            magicState.getValueTree().setProperty(prefix + "_number", noteNum, nullptr);
+        }
+        // Write CC mappings
+        for (const auto& [ccNum, quality] : bpq->ccs) {
+            int qualityIdx = static_cast<int>(quality);
+            auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[qualityIdx];
+            magicState.getValueTree().setProperty(prefix + "_type", "cc", nullptr);
+            magicState.getValueTree().setProperty(prefix + "_number", ccNum, nullptr);
+        }
+    }
 }
 
 void OmnifyAudioProcessor::loadSettingsFromValueTree() {

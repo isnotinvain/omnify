@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <mutex>
 
 #include <foleys_gui_magic/foleys_gui_magic.h>
@@ -45,10 +46,23 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor,
     juce::Value midiDeviceNameValue;
     juce::Value chordChannelValue;
     juce::Value strumChannelValue;
-    juce::Value strumPlateCcValue;
     juce::Value chordVoicingStyleValue;
     juce::Value strumVoicingStyleValue;
     juce::Value chordVoicingFilePathValue;
+
+    // MidiLearn values (type is "note" or "cc", number is the midi note/cc number)
+    juce::Value latchToggleButtonTypeValue;
+    juce::Value latchToggleButtonNumberValue;
+    juce::Value latchIsToggleValue;
+    juce::Value stopButtonTypeValue;
+    juce::Value stopButtonNumberValue;
+    juce::Value strumPlateCcTypeValue;
+    juce::Value strumPlateCcNumberValue;
+
+    // Chord quality selector values (9 qualities, each with type and number)
+    static constexpr size_t NUM_CHORD_QUALITIES = 9;
+    std::array<juce::Value, NUM_CHORD_QUALITIES> chordQualityTypeValues;
+    std::array<juce::Value, NUM_CHORD_QUALITIES> chordQualityNumberValues;
 
     void valueChanged(juce::Value& value) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;

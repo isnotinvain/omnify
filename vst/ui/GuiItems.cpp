@@ -8,6 +8,24 @@ const juce::Identifier MidiLearnItem::pAspectRatio{"aspect-ratio"};
 MidiLearnItem::MidiLearnItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node)
     : foleys::GuiItem(builder, node) {
     addAndMakeVisible(midiLearnComponent);
+
+    // Set up callback for when user learns a new value
+    midiLearnComponent.onValueChanged = [this](MidiLearnedValue val) {
+        // Update ValueTree properties (this will trigger valueChanged and propagate to processor)
+        if (val.type == MidiLearnedType::Note) {
+            typeValue.setValue("note");
+        } else if (val.type == MidiLearnedType::CC) {
+            typeValue.setValue("cc");
+        } else {
+            typeValue.setValue("");
+        }
+        numberValue.setValue(val.value);
+    };
+}
+
+MidiLearnItem::~MidiLearnItem() {
+    typeValue.removeListener(this);
+    numberValue.removeListener(this);
 }
 
 void MidiLearnItem::update() {
@@ -23,6 +41,56 @@ void MidiLearnItem::update() {
     auto aspectRatioVar = magicBuilder.getStyleProperty(pAspectRatio, configNode);
     float aspectRatio = aspectRatioVar.isVoid() ? 0.0F : static_cast<float>(aspectRatioVar);
     midiLearnComponent.setAspectRatio(aspectRatio);
+
+    // Bind to ValueTree based on our id
+    bindToValueTree();
+}
+
+void MidiLearnItem::bindToValueTree() {
+    auto myId = configNode.getProperty(foleys::IDs::id, "").toString();
+    if (myId.isEmpty()) {
+        return;
+    }
+
+    auto& state = dynamic_cast<foleys::MagicProcessorState&>(magicBuilder.getMagicState());
+
+    // Remove old listeners before rebinding
+    typeValue.removeListener(this);
+    numberValue.removeListener(this);
+
+    // Bind to properties named after our id: e.g., "latch_toggle_button_type" and "latch_toggle_button_number"
+    typeValue.referTo(state.getValueTree().getPropertyAsValue(myId + "_type", nullptr));
+    numberValue.referTo(state.getValueTree().getPropertyAsValue(myId + "_number", nullptr));
+
+    typeValue.addListener(this);
+    numberValue.addListener(this);
+
+    // Load initial value from ValueTree
+    updateComponentFromValues();
+}
+
+void MidiLearnItem::valueChanged(juce::Value& /*value*/) {
+    // ValueTree changed (e.g., from loading state) - update component
+    updateComponentFromValues();
+}
+
+void MidiLearnItem::updateComponentFromValues() {
+    auto typeStr = typeValue.getValue().toString();
+    int number = static_cast<int>(numberValue.getValue());
+
+    MidiLearnedValue val;
+    if (typeStr == "note") {
+        val.type = MidiLearnedType::Note;
+        val.value = number;
+    } else if (typeStr == "cc") {
+        val.type = MidiLearnedType::CC;
+        val.value = number;
+    } else {
+        val.type = MidiLearnedType::None;
+        val.value = -1;
+    }
+
+    midiLearnComponent.setLearnedValue(val);
 }
 
 juce::Component* MidiLearnItem::getWrappedComponent() { return &midiLearnComponent; }

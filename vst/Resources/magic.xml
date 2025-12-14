@@ -39,7 +39,7 @@
             <View flex-direction="column">
               <OmnifyMidiLearn id="latch_toggle_button" caption="Latch On / Off" accept-mode="Both"
                                caption-placement="centred-top"/>
-              <ToggleButton id="latch_is_toggle" caption="Toggle Mode" caption-placement="centred-left"/>
+              <ToggleButton id="latch_is_toggle" caption="Toggle Mode" caption-placement="centred-left" property="latch_is_toggle"/>
             </View>
             <OmnifyMidiLearn id="stop_button" accept-mode="Both" caption="Stop Chords"/>
           </View>
@@ -57,7 +57,7 @@
             <View tab-caption="Omnichord"/>
           </VariantSelector>
           <View max-height="50">
-            <OmnifyMidiLearn caption="Strum CC" max-height="50" caption-placement="centred-left"
+            <OmnifyMidiLearn id="strum_plate_cc" caption="Strum CC" max-height="50" caption-placement="centred-left"
                              accept-mode="CCs Only" flex-align-self="stretch"/>
             <View max-height="0"/>
           </View>
@@ -97,8 +97,7 @@
                padding="0"/>
         <Slider lookAndFeel="Lcars" min-width="150" min-height="150" max-width="150"
                 max-height="150"/>
-        <ToggleButton lookAndFeel="Lcars" background-color="00000000" caption-color="$lcars-orange"
-                      parameter="latch_toggle_button"/>
+        <ToggleButton lookAndFeel="Lcars" background-color="00000000" caption-color="$lcars-orange"/>
         <TextButton lookAndFeel="Lcars" background-color="00000000" margin="0" padding="0"
                     button-color="$lcars-orange" button-off-text="FF000000" button-on-text="FF000000"/>
         <ComboBox max-height="50" combo-text="$lcars-orange" combo-background="00000000"

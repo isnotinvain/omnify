@@ -19,6 +19,18 @@ ChordQualitySelectorItem::ChordQualitySelectorItem(foleys::MagicGUIBuilder& buil
                           juce::dontSendNotification);
         container.addAndMakeVisible(row.label);
         container.addAndMakeVisible(row.midiLearn);
+
+        // Set up callback for when user learns a new value
+        row.midiLearn.onValueChanged = [this, i](MidiLearnedValue val) {
+            onMidiLearnChanged(i, val);
+        };
+    }
+}
+
+ChordQualitySelectorItem::~ChordQualitySelectorItem() {
+    for (auto& row : rows) {
+        row.typeValue.removeListener(this);
+        row.numberValue.removeListener(this);
     }
 }
 
@@ -44,6 +56,9 @@ void ChordQualitySelectorItem::update() {
         row.label.setColour(juce::Label::textColourId, labelColorVal);
         row.midiLearn.setAspectRatio(aspectRatio);
     }
+
+    // Bind to ValueTree
+    bindToValueTree();
 }
 
 void ChordQualitySelectorItem::resized() {
@@ -99,4 +114,70 @@ void ChordQualitySelectorItem::setOnValueChanged(
     if (qualityIndex < NUM_QUALITIES) {
         rows[qualityIndex].midiLearn.onValueChanged = std::move(callback);
     }
+}
+
+void ChordQualitySelectorItem::bindToValueTree() {
+    auto& state = dynamic_cast<foleys::MagicProcessorState&>(magicBuilder.getMagicState());
+
+    for (size_t i = 0; i < NUM_QUALITIES; ++i) {
+        auto& row = rows[i];
+
+        // Remove old listeners before rebinding
+        row.typeValue.removeListener(this);
+        row.numberValue.removeListener(this);
+
+        // Property names use enum name: chord_quality_MAJOR_type, chord_quality_MINOR_number, etc.
+        auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
+        row.typeValue.referTo(state.getValueTree().getPropertyAsValue(prefix + "_type", nullptr));
+        row.numberValue.referTo(state.getValueTree().getPropertyAsValue(prefix + "_number", nullptr));
+
+        row.typeValue.addListener(this);
+        row.numberValue.addListener(this);
+    }
+
+    // Load initial values from ValueTree
+    updateComponentsFromValues();
+}
+
+void ChordQualitySelectorItem::valueChanged(juce::Value& /*value*/) {
+    // ValueTree changed - update components
+    updateComponentsFromValues();
+}
+
+void ChordQualitySelectorItem::updateComponentsFromValues() {
+    for (size_t i = 0; i < NUM_QUALITIES; ++i) {
+        auto& row = rows[i];
+        auto typeStr = row.typeValue.getValue().toString();
+        int number = static_cast<int>(row.numberValue.getValue());
+
+        MidiLearnedValue val;
+        if (typeStr == "note") {
+            val.type = MidiLearnedType::Note;
+            val.value = number;
+        } else if (typeStr == "cc") {
+            val.type = MidiLearnedType::CC;
+            val.value = number;
+        } else {
+            val.type = MidiLearnedType::None;
+            val.value = -1;
+        }
+
+        row.midiLearn.setLearnedValue(val);
+    }
+}
+
+void ChordQualitySelectorItem::onMidiLearnChanged(size_t qualityIndex, MidiLearnedValue val) {
+    if (qualityIndex >= NUM_QUALITIES) return;
+
+    auto& row = rows[qualityIndex];
+
+    // Update ValueTree properties
+    if (val.type == MidiLearnedType::Note) {
+        row.typeValue.setValue("note");
+    } else if (val.type == MidiLearnedType::CC) {
+        row.typeValue.setValue("cc");
+    } else {
+        row.typeValue.setValue("");
+    }
+    row.numberValue.setValue(val.value);
 }
