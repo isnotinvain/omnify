@@ -3,14 +3,14 @@
 #include <array>
 #include <mutex>
 
-#include <foleys_gui_magic/foleys_gui_magic.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 #include "DaemonManager.h"
 #include "GeneratedSettings.h"
 #include "ui/components/MidiLearnComponent.h"
 
 //==============================================================================
-class OmnifyAudioProcessor : public foleys::MagicProcessor,
+class OmnifyAudioProcessor : public juce::AudioProcessor,
                              private juce::Value::Listener,
                              private juce::AudioProcessorValueTreeState::Listener,
                              private DaemonManager::Listener {
@@ -23,14 +23,40 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor,
     void releaseResources() override;
 
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void initialiseBuilder(foleys::MagicGUIBuilder& builder) override;
 
-    void postSetStateInformation() override;
+    //==============================================================================
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override { return true; }
+
+    //==============================================================================
+    const juce::String getName() const override { return JucePlugin_Name; }
+    bool acceptsMidi() const override { return true; }
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+    double getTailLengthSeconds() const override { return 0.0; }
+
+    //==============================================================================
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram(int) override {}
+    const juce::String getProgramName(int) override { return {}; }
+    void changeProgramName(int, const juce::String&) override {}
+
+    //==============================================================================
+    void getStateInformation(juce::MemoryBlock& destData) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
 
     // Settings access
     const GeneratedSettings::DaemomnifySettings& getSettings() const { return settings; }
 
+    // State tree access for UI
+    juce::ValueTree& getStateTree() { return stateTree; }
+    juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
+
    private:
+    // State tree for UI properties (replaces magicState.getValueTree())
+    juce::ValueTree stateTree{"OmnifyState"};
+
     // Only 2 APVTS params - for DAW automation of realtime controls
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterFloat* strumGateTimeParam = nullptr;

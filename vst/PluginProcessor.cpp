@@ -3,8 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include "BinaryData.h"
-#include "ui/GuiItems.h"
-#include "ui/LcarsLookAndFeel.h"
+#include "PluginEditor.h"
 
 namespace {
 // Create the minimal APVTS layout with just 2 realtime params
@@ -29,29 +28,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(
 
 //==============================================================================
 OmnifyAudioProcessor::OmnifyAudioProcessor()
-    : foleys::MagicProcessor(BusesProperties()
-                                 .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                                 .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+    : AudioProcessor(BusesProperties()
+                         .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "PARAMETERS",
                  createParameterLayout(strumGateTimeParam, strumCooldownParam)),
       settings(GeneratedSettings::DaemomnifySettings::defaults()) {
-    FOLEYS_SET_SOURCE_PATH(__FILE__);
-
-    // Update parameter map after APVTS is created so Foleys can see the parameters
-    magicState.updateParameterMap();
-
-    // Load the GUI layout - from file in debug mode for hot reload, from binary data in release
-#if JUCE_DEBUG
-    auto xmlFile = juce::File(__FILE__).getParentDirectory().getChildFile("Resources/magic.xml");
-    if (xmlFile.existsAsFile()) {
-        magicState.setGuiValueTree(xmlFile);
-    } else {
-        magicState.setGuiValueTree(BinaryData::magic_xml, BinaryData::magic_xmlSize);
-    }
-#else
-    magicState.setGuiValueTree(BinaryData::magic_xml, BinaryData::magic_xmlSize);
-#endif
-
     setupValueListeners();
 
     // Listen for realtime parameter changes
@@ -113,56 +95,66 @@ void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 }
 
 //==============================================================================
-void OmnifyAudioProcessor::initialiseBuilder(foleys::MagicGUIBuilder& builder) {
-    builder.registerJUCEFactories();
-    builder.registerJUCELookAndFeels();
-
-    auto lcarsLookAndFeel = std::make_unique<LcarsLookAndFeel>();
-    lcarsLookAndFeel->setBuilder(&builder);
-    builder.registerLookAndFeel("Lcars", std::move(lcarsLookAndFeel));
-
-    builder.registerFactory("OmnifyMidiLearn", &MidiLearnItem::factory);
-    builder.registerFactory("ChordQualitySelector", &ChordQualitySelectorItem::factory);
-    builder.registerFactory("VariantSelector", &VariantSelectorItem::factory);
-    builder.registerFactory("LcarsSettings", &LcarsSettingsItem::factory);
-    builder.registerFactory("FilePicker", &FilePickerItem::factory);
-    builder.registerFactory("MidiDeviceSelector", &MidiDeviceSelectorItem::factory);
-    builder.registerFactory("IntComboBox", &IntComboBoxItem::factory);
+juce::AudioProcessorEditor* OmnifyAudioProcessor::createEditor() {
+    return new OmnifyAudioProcessorEditor(*this);
 }
 
 //==============================================================================
-void OmnifyAudioProcessor::postSetStateInformation() {
-    loadSettingsFromValueTree();
-    pushVariantIndexesToValueTree();
+void OmnifyAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
+    // Save settings to stateTree
+    saveSettingsToValueTree();
+
+    // Combine APVTS state and our stateTree
+    juce::ValueTree combined{"OmnifyStateV1"};
+    combined.appendChild(parameters.copyState(), nullptr);
+    combined.appendChild(stateTree.createCopy(), nullptr);
+
+    juce::MemoryOutputStream stream(destData, true);
+    combined.writeToStream(stream);
+}
+
+void OmnifyAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
+    auto combined = juce::ValueTree::readFromData(data, static_cast<size_t>(sizeInBytes));
+    if (combined.isValid()) {
+        // Restore APVTS state
+        auto apvtsState = combined.getChildWithName(parameters.state.getType());
+        if (apvtsState.isValid()) {
+            parameters.replaceState(apvtsState);
+        }
+
+        // Restore our stateTree
+        auto savedStateTree = combined.getChildWithName(stateTree.getType());
+        if (savedStateTree.isValid()) {
+            stateTree = savedStateTree.createCopy();
+        }
+
+        // Load settings from the restored tree
+        loadSettingsFromValueTree();
+        pushVariantIndexesToValueTree();
+
+        // Re-setup value listeners since stateTree was replaced
+        setupValueListeners();
+    }
 }
 
 //==============================================================================
 void OmnifyAudioProcessor::setupValueListeners() {
     // Bind to ValueTree properties for non-realtime settings
-    midiDeviceNameValue.referTo(magicState.getPropertyAsValue("midi_device_name"));
-    chordChannelValue.referTo(magicState.getValueTree().getPropertyAsValue("chord_channel", nullptr));
-    strumChannelValue.referTo(magicState.getValueTree().getPropertyAsValue("strum_channel", nullptr));
-    chordVoicingStyleValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("variant_chord_voicing_style", nullptr));
-    strumVoicingStyleValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("variant_strum_voicing_style", nullptr));
-    chordVoicingFilePathValue.referTo(magicState.getPropertyAsValue("chords_json_file"));
+    midiDeviceNameValue.referTo(stateTree.getPropertyAsValue("midi_device_name", nullptr));
+    chordChannelValue.referTo(stateTree.getPropertyAsValue("chord_channel", nullptr));
+    strumChannelValue.referTo(stateTree.getPropertyAsValue("strum_channel", nullptr));
+    chordVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_chord_voicing_style", nullptr));
+    strumVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_strum_voicing_style", nullptr));
+    chordVoicingFilePathValue.referTo(stateTree.getPropertyAsValue("chord_voicing_file", nullptr));
 
-    // MidiLearn bindings - these match the ids in magic.xml + "_type" / "_number" suffixes
-    latchToggleButtonTypeValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("latch_toggle_button_type", nullptr));
-    latchToggleButtonNumberValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("latch_toggle_button_number", nullptr));
-    latchIsToggleValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("latch_is_toggle", nullptr));
-    stopButtonTypeValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("stop_button_type", nullptr));
-    stopButtonNumberValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("stop_button_number", nullptr));
-    strumPlateCcTypeValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("strum_plate_cc_type", nullptr));
-    strumPlateCcNumberValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("strum_plate_cc_number", nullptr));
+    // MidiLearn bindings
+    latchToggleButtonTypeValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_type", nullptr));
+    latchToggleButtonNumberValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_number", nullptr));
+    latchIsToggleValue.referTo(stateTree.getPropertyAsValue("latch_is_toggle", nullptr));
+    stopButtonTypeValue.referTo(stateTree.getPropertyAsValue("stop_button_type", nullptr));
+    stopButtonNumberValue.referTo(stateTree.getPropertyAsValue("stop_button_number", nullptr));
+    strumPlateCcTypeValue.referTo(stateTree.getPropertyAsValue("strum_plate_cc_type", nullptr));
+    strumPlateCcNumberValue.referTo(stateTree.getPropertyAsValue("strum_plate_cc_number", nullptr));
 
     midiDeviceNameValue.addListener(this);
     chordChannelValue.addListener(this);
@@ -182,25 +174,21 @@ void OmnifyAudioProcessor::setupValueListeners() {
     // Chord quality selector bindings - use enum names for stability
     for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
         auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
-        chordQualityTypeValues[i].referTo(
-            magicState.getValueTree().getPropertyAsValue(prefix + "_type", nullptr));
-        chordQualityNumberValues[i].referTo(
-            magicState.getValueTree().getPropertyAsValue(prefix + "_number", nullptr));
+        chordQualityTypeValues[i].referTo(stateTree.getPropertyAsValue(prefix + "_type", nullptr));
+        chordQualityNumberValues[i].referTo(stateTree.getPropertyAsValue(prefix + "_number", nullptr));
         chordQualityTypeValues[i].addListener(this);
         chordQualityNumberValues[i].addListener(this);
     }
 
     // "One CC for All" chord quality selection (CCRangePerChordQuality)
-    chordQualityCcTypeValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("chord_quality_cc_type", nullptr));
-    chordQualityCcNumberValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("chord_quality_cc_number", nullptr));
+    chordQualityCcTypeValue.referTo(stateTree.getPropertyAsValue("chord_quality_cc_type", nullptr));
+    chordQualityCcNumberValue.referTo(stateTree.getPropertyAsValue("chord_quality_cc_number", nullptr));
     chordQualityCcTypeValue.addListener(this);
     chordQualityCcNumberValue.addListener(this);
 
     // Chord quality selection style variant (0 = ButtonPerChordQuality, 1 = CCRangePerChordQuality)
     chordQualitySelectionStyleValue.referTo(
-        magicState.getValueTree().getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
+        stateTree.getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
     chordQualitySelectionStyleValue.addListener(this);
 }
 
@@ -224,7 +212,7 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
                 break;
             case 1: {
                 GeneratedSettings::FileStyle fs;
-                fs.path = magicState.getPropertyAsValue("chords_json_file").toString().toStdString();
+                fs.path = chordVoicingFilePathValue.getValue().toString().toStdString();
                 settings.chord_voicing_style = fs;
                 break;
             }
@@ -380,60 +368,60 @@ void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, flo
 
 void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
     // Write variant indexes so UI can restore them on rebuild
-    magicState.getValueTree().setProperty("variant_chord_voicing_style",
-                                          static_cast<int>(settings.chord_voicing_style.index()), nullptr);
-    magicState.getValueTree().setProperty("variant_strum_voicing_style",
-                                          static_cast<int>(settings.strum_voicing_style.index()), nullptr);
-    magicState.getValueTree().setProperty("variant_chord_quality_selection_style",
-                                          static_cast<int>(settings.chord_quality_selection_style.index()), nullptr);
+    stateTree.setProperty("variant_chord_voicing_style",
+                          static_cast<int>(settings.chord_voicing_style.index()), nullptr);
+    stateTree.setProperty("variant_strum_voicing_style",
+                          static_cast<int>(settings.strum_voicing_style.index()), nullptr);
+    stateTree.setProperty("variant_chord_quality_selection_style",
+                          static_cast<int>(settings.chord_quality_selection_style.index()), nullptr);
 
     // Write file path from FileStyle if that's the active variant
     if (auto* fileStyle = std::get_if<GeneratedSettings::FileStyle>(&settings.chord_voicing_style)) {
-        magicState.getPropertyAsValue("chords_json_file").setValue(juce::String(fileStyle->path));
+        stateTree.setProperty("chord_voicing_file", juce::String(fileStyle->path), nullptr);
     }
 
     // Write scalar settings to ValueTree properties
-    magicState.getValueTree().setProperty("chord_channel", settings.chord_channel, nullptr);
-    magicState.getValueTree().setProperty("strum_channel", settings.strum_channel, nullptr);
-    magicState.getPropertyAsValue("midi_device_name").setValue(juce::String(settings.midi_device_name));
+    stateTree.setProperty("chord_channel", settings.chord_channel, nullptr);
+    stateTree.setProperty("strum_channel", settings.strum_channel, nullptr);
+    stateTree.setProperty("midi_device_name", juce::String(settings.midi_device_name), nullptr);
 
     // Write MidiLearn values to ValueTree
     // latch_toggle_button
     if (auto* noteBtn =
             std::get_if<GeneratedSettings::MidiNoteButton>(&settings.latch_toggle_button)) {
-        magicState.getValueTree().setProperty("latch_toggle_button_type", "note", nullptr);
-        magicState.getValueTree().setProperty("latch_toggle_button_number", noteBtn->note, nullptr);
-        magicState.getValueTree().setProperty("latch_is_toggle", false, nullptr);
+        stateTree.setProperty("latch_toggle_button_type", "note", nullptr);
+        stateTree.setProperty("latch_toggle_button_number", noteBtn->note, nullptr);
+        stateTree.setProperty("latch_is_toggle", false, nullptr);
     } else if (auto* ccBtn =
                    std::get_if<GeneratedSettings::MidiCCButton>(&settings.latch_toggle_button)) {
-        magicState.getValueTree().setProperty("latch_toggle_button_type", "cc", nullptr);
-        magicState.getValueTree().setProperty("latch_toggle_button_number", ccBtn->cc, nullptr);
-        magicState.getValueTree().setProperty("latch_is_toggle", ccBtn->is_toggle, nullptr);
+        stateTree.setProperty("latch_toggle_button_type", "cc", nullptr);
+        stateTree.setProperty("latch_toggle_button_number", ccBtn->cc, nullptr);
+        stateTree.setProperty("latch_is_toggle", ccBtn->is_toggle, nullptr);
     }
 
     // stop_button
     if (auto* noteBtn = std::get_if<GeneratedSettings::MidiNoteButton>(&settings.stop_button)) {
-        magicState.getValueTree().setProperty("stop_button_type", "note", nullptr);
-        magicState.getValueTree().setProperty("stop_button_number", noteBtn->note, nullptr);
+        stateTree.setProperty("stop_button_type", "note", nullptr);
+        stateTree.setProperty("stop_button_number", noteBtn->note, nullptr);
     } else if (auto* ccBtn = std::get_if<GeneratedSettings::MidiCCButton>(&settings.stop_button)) {
-        magicState.getValueTree().setProperty("stop_button_type", "cc", nullptr);
-        magicState.getValueTree().setProperty("stop_button_number", ccBtn->cc, nullptr);
+        stateTree.setProperty("stop_button_type", "cc", nullptr);
+        stateTree.setProperty("stop_button_number", ccBtn->cc, nullptr);
     }
 
     // strum_plate_cc - just a CC number
-    magicState.getValueTree().setProperty("strum_plate_cc_type", "cc", nullptr);
-    magicState.getValueTree().setProperty("strum_plate_cc_number", settings.strum_plate_cc, nullptr);
+    stateTree.setProperty("strum_plate_cc_type", "cc", nullptr);
+    stateTree.setProperty("strum_plate_cc_number", settings.strum_plate_cc, nullptr);
 
     // Chord quality selector - handle both variants
     // First clear all chord quality properties (use enum names for stability)
     for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
         auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
-        magicState.getValueTree().setProperty(prefix + "_type", "", nullptr);
-        magicState.getValueTree().setProperty(prefix + "_number", -1, nullptr);
+        stateTree.setProperty(prefix + "_type", "", nullptr);
+        stateTree.setProperty(prefix + "_number", -1, nullptr);
     }
     // Clear the "One CC for All" property too
-    magicState.getValueTree().setProperty("chord_quality_cc_type", "", nullptr);
-    magicState.getValueTree().setProperty("chord_quality_cc_number", -1, nullptr);
+    stateTree.setProperty("chord_quality_cc_type", "", nullptr);
+    stateTree.setProperty("chord_quality_cc_number", -1, nullptr);
 
     // Now write the mappings from the settings based on which variant is active
     if (auto* bpq = std::get_if<GeneratedSettings::ButtonPerChordQuality>(
@@ -442,26 +430,26 @@ void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
         for (const auto& [noteNum, quality] : bpq->notes) {
             int qualityIdx = static_cast<int>(quality);
             auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[qualityIdx];
-            magicState.getValueTree().setProperty(prefix + "_type", "note", nullptr);
-            magicState.getValueTree().setProperty(prefix + "_number", noteNum, nullptr);
+            stateTree.setProperty(prefix + "_type", "note", nullptr);
+            stateTree.setProperty(prefix + "_number", noteNum, nullptr);
         }
         // Write CC mappings
         for (const auto& [ccNum, quality] : bpq->ccs) {
             int qualityIdx = static_cast<int>(quality);
             auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[qualityIdx];
-            magicState.getValueTree().setProperty(prefix + "_type", "cc", nullptr);
-            magicState.getValueTree().setProperty(prefix + "_number", ccNum, nullptr);
+            stateTree.setProperty(prefix + "_type", "cc", nullptr);
+            stateTree.setProperty(prefix + "_number", ccNum, nullptr);
         }
     } else if (auto* ccrpq = std::get_if<GeneratedSettings::CCRangePerChordQuality>(
                    &settings.chord_quality_selection_style)) {
         // "One CC for All" mode - just store the single CC number
-        magicState.getValueTree().setProperty("chord_quality_cc_type", "cc", nullptr);
-        magicState.getValueTree().setProperty("chord_quality_cc_number", ccrpq->cc, nullptr);
+        stateTree.setProperty("chord_quality_cc_type", "cc", nullptr);
+        stateTree.setProperty("chord_quality_cc_number", ccrpq->cc, nullptr);
     }
 }
 
 void OmnifyAudioProcessor::loadSettingsFromValueTree() {
-    auto jsonString = magicState.getValueTree().getProperty(SETTINGS_JSON_KEY, "").toString();
+    auto jsonString = stateTree.getProperty(SETTINGS_JSON_KEY, "").toString();
     if (jsonString.isNotEmpty()) {
         try {
             settings = GeneratedSettings::fromJson(jsonString.toStdString());
@@ -483,7 +471,7 @@ void OmnifyAudioProcessor::loadSettingsFromValueTree() {
 
 void OmnifyAudioProcessor::saveSettingsToValueTree() {
     auto jsonString = GeneratedSettings::toJson(settings);
-    magicState.getValueTree().setProperty(SETTINGS_JSON_KEY, juce::String(jsonString), nullptr);
+    stateTree.setProperty(SETTINGS_JSON_KEY, juce::String(jsonString), nullptr);
 }
 
 void OmnifyAudioProcessor::loadDefaultSettings() {

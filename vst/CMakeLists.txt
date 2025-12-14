@@ -14,9 +14,6 @@ set(CMAKE_OSX_ARCHITECTURES "arm64")
 # Add JUCE as a subdirectory. Assumes JUCE is in a 'JUCE' folder at the root.
 add_subdirectory(JUCE)
 
-# Add Foleys GUI Magic module
-juce_add_module(foleys_gui_magic/modules/foleys_gui_magic)
-
 juce_add_plugin(Omnify
     COMPANY_NAME "alexlevenson"
     PRODUCT_NAME "Omnify"
@@ -31,21 +28,21 @@ juce_add_plugin(Omnify
     PLUGIN_CODE "Omni"
     FORMATS VST3 Standalone)
 
-# Collect all source files (excluding submodules JUCE and foleys_gui_magic)
+# Collect all source files
 file(GLOB OMNIFY_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ui/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ui/components/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui/panels/*.cpp"
 )
 
 target_sources(Omnify
     PRIVATE
         ${OMNIFY_SOURCES})
 
-# Add binary resources (magic.xml for GUI, fonts, default settings)
+# Add binary resources (fonts, default settings)
 juce_add_binary_data(OmnifyBinaryData
     SOURCES
-        Resources/magic.xml
         Resources/Orbitron-Regular.ttf
         Resources/default_settings.json)
 
@@ -55,7 +52,6 @@ target_link_libraries(Omnify
         juce::juce_audio_utils
         juce::juce_audio_devices
         juce::juce_osc
-        foleys_gui_magic
         OmnifyBinaryData
     PUBLIC
         juce::juce_recommended_config_flags

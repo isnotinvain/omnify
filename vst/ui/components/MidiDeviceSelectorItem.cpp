@@ -1,7 +1,5 @@
 #include "MidiDeviceSelectorItem.h"
 
-#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
-
 //==============================================================================
 // MidiDeviceSelectorComponent
 //==============================================================================
@@ -82,24 +80,10 @@ void MidiDeviceSelectorComponent::setCaption(const juce::String& text) {
 void MidiDeviceSelectorComponent::timerCallback() { refreshDeviceList(); }
 
 void MidiDeviceSelectorComponent::enableMidiDeviceInStandalone(const juce::String& deviceName) {
-    auto* holder = juce::StandalonePluginHolder::getInstance();
-    if (holder == nullptr)
-        return;  // Not running standalone (e.g., in a DAW)
-
-    auto& deviceManager = holder->deviceManager;
-
-    // Disable all MIDI inputs first
-    for (const auto& device : juce::MidiInput::getAvailableDevices()) {
-        deviceManager.setMidiInputDeviceEnabled(device.identifier, false);
-    }
-
-    // Find and enable the selected device by name
-    for (const auto& device : juce::MidiInput::getAvailableDevices()) {
-        if (device.name == deviceName) {
-            deviceManager.setMidiInputDeviceEnabled(device.identifier, true);
-            break;
-        }
-    }
+    // In standalone mode, the StandaloneFilterWindow handles MIDI device management.
+    // We store the selected device name in the ValueTree, and the standalone app
+    // can read it from there. This component is display-only for plugin mode.
+    juce::ignoreUnused(deviceName);
 }
 
 void MidiDeviceSelectorComponent::updateComboBoxFromValue() {
@@ -118,36 +102,4 @@ void MidiDeviceSelectorComponent::updateComboBoxFromValue() {
             comboBox.setText(selectedName + " (not found)", juce::dontSendNotification);
         }
     }
-}
-
-//==============================================================================
-// MidiDeviceSelectorItem
-//==============================================================================
-
-MidiDeviceSelectorItem::MidiDeviceSelectorItem(foleys::MagicGUIBuilder& builder,
-                                               const juce::ValueTree& node)
-    : foleys::GuiItem(builder, node) {
-    addAndMakeVisible(selectorComponent);
-
-    // Bind to the midi_device_name property in state
-    auto& state = dynamic_cast<foleys::MagicProcessorState&>(builder.getMagicState());
-    midiDeviceNameValue.referTo(state.getPropertyAsValue("midi_device_name"));
-    selectorComponent.bindToValue(midiDeviceNameValue);
-}
-
-void MidiDeviceSelectorItem::update() {
-    auto captionText =
-        magicBuilder.getStyleProperty(foleys::IDs::caption, configNode).toString();
-    if (captionText.isNotEmpty()) {
-        selectorComponent.setCaption(captionText);
-    }
-}
-
-juce::Component* MidiDeviceSelectorItem::getWrappedComponent() { return &selectorComponent; }
-
-std::vector<foleys::SettableProperty> MidiDeviceSelectorItem::getSettableProperties() const {
-    std::vector<foleys::SettableProperty> props;
-    props.push_back(
-        {configNode, foleys::IDs::caption, foleys::SettableProperty::Text, "MIDI Device", {}});
-    return props;
 }

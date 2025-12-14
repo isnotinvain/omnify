@@ -1,27 +1,22 @@
 #pragma once
 
-#include <foleys_gui_magic/foleys_gui_magic.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 
-// A self-contained file picker with its own Label and TextButton.
-// Does NOT use Foleys' Label - manages the juce::Label directly.
-class FilePickerItem : public foleys::GuiItem {
+#include "../LcarsColors.h"
+
+// A file picker with a label showing the path and a browse button.
+// Path is truncated from the left if too long.
+class FilePicker : public juce::Component, private juce::Value::Listener {
    public:
-    FOLEYS_DECLARE_GUI_FACTORY(FilePickerItem)
+    FilePicker();
+    ~FilePicker() override;
 
-    static const juce::Identifier pFileFilter;
+    void setFileFilter(const juce::String& filter);
+    void bindToValue(juce::Value& value);
 
-    FilePickerItem(foleys::MagicGUIBuilder& builder, const juce::ValueTree& node);
-    ~FilePickerItem() override = default;
-
-    void update() override;
     void resized() override;
-    juce::Component* getWrappedComponent() override;
-    std::vector<foleys::SettableProperty> getSettableProperties() const override;
 
    private:
-    void openFileChooser();
-    void updateLabelFromState();
-
     // Simple label with rounded border and path truncation from the left
     class RoundedLabel : public juce::Label {
        public:
@@ -60,12 +55,14 @@ class FilePickerItem : public foleys::GuiItem {
         }
     };
 
-    // Our own components - not managed by Foleys
-    juce::Component container;
+    void openFileChooser();
+    void valueChanged(juce::Value& value) override;
+
     RoundedLabel pathLabel;
     juce::TextButton browseButton{"Browse"};
-
     std::unique_ptr<juce::FileChooser> fileChooser;
+    juce::String fileFilter = "*";
+    juce::Value boundValue;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilePickerItem)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilePicker)
 };
