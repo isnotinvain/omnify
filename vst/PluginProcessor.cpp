@@ -189,6 +189,19 @@ void OmnifyAudioProcessor::setupValueListeners() {
         chordQualityTypeValues[i].addListener(this);
         chordQualityNumberValues[i].addListener(this);
     }
+
+    // "One CC for All" chord quality selection (CCRangePerChordQuality)
+    chordQualityCcTypeValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("chord_quality_cc_type", nullptr));
+    chordQualityCcNumberValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("chord_quality_cc_number", nullptr));
+    chordQualityCcTypeValue.addListener(this);
+    chordQualityCcNumberValue.addListener(this);
+
+    // Chord quality selection style variant (0 = ButtonPerChordQuality, 1 = CCRangePerChordQuality)
+    chordQualitySelectionStyleValue.referTo(
+        magicState.getValueTree().getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
+    chordQualitySelectionStyleValue.addListener(this);
 }
 
 void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
@@ -272,31 +285,74 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
             settings.strum_plate_cc = number;
             settingsChanged = true;
         }
-    } else {
-        // Check if it's a chord quality value
-        for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
-            if (value.refersToSameSourceAs(chordQualityTypeValues[i]) ||
-                value.refersToSameSourceAs(chordQualityNumberValues[i])) {
-                // Rebuild the entire ButtonPerChordQuality from current values
-                GeneratedSettings::ButtonPerChordQuality bpq;
-
-                for (size_t j = 0; j < NUM_CHORD_QUALITIES; ++j) {
-                    auto typeStr = chordQualityTypeValues[j].getValue().toString();
-                    int number = static_cast<int>(chordQualityNumberValues[j].getValue());
-
-                    if (number > 0) {
-                        auto quality = static_cast<GeneratedSettings::ChordQuality>(j);
-                        if (typeStr == "note") {
-                            bpq.notes[number] = quality;
-                        } else if (typeStr == "cc") {
-                            bpq.ccs[number] = quality;
-                        }
+    } else if (value.refersToSameSourceAs(chordQualitySelectionStyleValue)) {
+        // Variant selector changed - rebuild the appropriate variant
+        int variantIndex = static_cast<int>(chordQualitySelectionStyleValue.getValue());
+        if (variantIndex == 0) {
+            // ButtonPerChordQuality - rebuild from per-quality values
+            GeneratedSettings::ButtonPerChordQuality bpq;
+            for (size_t j = 0; j < NUM_CHORD_QUALITIES; ++j) {
+                auto typeStr = chordQualityTypeValues[j].getValue().toString();
+                int number = static_cast<int>(chordQualityNumberValues[j].getValue());
+                if (number > 0) {
+                    auto quality = static_cast<GeneratedSettings::ChordQuality>(j);
+                    if (typeStr == "note") {
+                        bpq.notes[number] = quality;
+                    } else if (typeStr == "cc") {
+                        bpq.ccs[number] = quality;
                     }
                 }
-
-                settings.chord_quality_selection_style = bpq;
+            }
+            settings.chord_quality_selection_style = bpq;
+        } else if (variantIndex == 1) {
+            // CCRangePerChordQuality - use the single CC value
+            int ccNumber = static_cast<int>(chordQualityCcNumberValue.getValue());
+            GeneratedSettings::CCRangePerChordQuality ccrpq;
+            ccrpq.cc = ccNumber > 0 ? ccNumber : 1;  // Default to CC 1 if not set
+            settings.chord_quality_selection_style = ccrpq;
+        }
+        settingsChanged = true;
+    } else if (value.refersToSameSourceAs(chordQualityCcTypeValue) ||
+               value.refersToSameSourceAs(chordQualityCcNumberValue)) {
+        // "One CC for All" value changed - only apply if that variant is active
+        int variantIndex = static_cast<int>(chordQualitySelectionStyleValue.getValue());
+        if (variantIndex == 1) {
+            int ccNumber = static_cast<int>(chordQualityCcNumberValue.getValue());
+            if (ccNumber > 0) {
+                GeneratedSettings::CCRangePerChordQuality ccrpq;
+                ccrpq.cc = ccNumber;
+                settings.chord_quality_selection_style = ccrpq;
                 settingsChanged = true;
-                break;
+            }
+        }
+    } else {
+        // Check if it's a chord quality per-button value
+        int variantIndex = static_cast<int>(chordQualitySelectionStyleValue.getValue());
+        if (variantIndex == 0) {  // Only apply if ButtonPerChordQuality is active
+            for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
+                if (value.refersToSameSourceAs(chordQualityTypeValues[i]) ||
+                    value.refersToSameSourceAs(chordQualityNumberValues[i])) {
+                    // Rebuild the entire ButtonPerChordQuality from current values
+                    GeneratedSettings::ButtonPerChordQuality bpq;
+
+                    for (size_t j = 0; j < NUM_CHORD_QUALITIES; ++j) {
+                        auto typeStr = chordQualityTypeValues[j].getValue().toString();
+                        int number = static_cast<int>(chordQualityNumberValues[j].getValue());
+
+                        if (number > 0) {
+                            auto quality = static_cast<GeneratedSettings::ChordQuality>(j);
+                            if (typeStr == "note") {
+                                bpq.notes[number] = quality;
+                            } else if (typeStr == "cc") {
+                                bpq.ccs[number] = quality;
+                            }
+                        }
+                    }
+
+                    settings.chord_quality_selection_style = bpq;
+                    settingsChanged = true;
+                    break;
+                }
             }
         }
     }
@@ -328,6 +384,8 @@ void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
                                           static_cast<int>(settings.chord_voicing_style.index()), nullptr);
     magicState.getValueTree().setProperty("variant_strum_voicing_style",
                                           static_cast<int>(settings.strum_voicing_style.index()), nullptr);
+    magicState.getValueTree().setProperty("variant_chord_quality_selection_style",
+                                          static_cast<int>(settings.chord_quality_selection_style.index()), nullptr);
 
     // Write file path from FileStyle if that's the active variant
     if (auto* fileStyle = std::get_if<GeneratedSettings::FileStyle>(&settings.chord_voicing_style)) {
@@ -366,15 +424,18 @@ void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
     magicState.getValueTree().setProperty("strum_plate_cc_type", "cc", nullptr);
     magicState.getValueTree().setProperty("strum_plate_cc_number", settings.strum_plate_cc, nullptr);
 
-    // Chord quality selector - write from ButtonPerChordQuality
+    // Chord quality selector - handle both variants
     // First clear all chord quality properties (use enum names for stability)
     for (size_t i = 0; i < NUM_CHORD_QUALITIES; ++i) {
         auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
         magicState.getValueTree().setProperty(prefix + "_type", "", nullptr);
         magicState.getValueTree().setProperty(prefix + "_number", -1, nullptr);
     }
+    // Clear the "One CC for All" property too
+    magicState.getValueTree().setProperty("chord_quality_cc_type", "", nullptr);
+    magicState.getValueTree().setProperty("chord_quality_cc_number", -1, nullptr);
 
-    // Now write the mappings from the settings
+    // Now write the mappings from the settings based on which variant is active
     if (auto* bpq = std::get_if<GeneratedSettings::ButtonPerChordQuality>(
             &settings.chord_quality_selection_style)) {
         // Write note mappings
@@ -391,6 +452,11 @@ void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
             magicState.getValueTree().setProperty(prefix + "_type", "cc", nullptr);
             magicState.getValueTree().setProperty(prefix + "_number", ccNum, nullptr);
         }
+    } else if (auto* ccrpq = std::get_if<GeneratedSettings::CCRangePerChordQuality>(
+                   &settings.chord_quality_selection_style)) {
+        // "One CC for All" mode - just store the single CC number
+        magicState.getValueTree().setProperty("chord_quality_cc_type", "cc", nullptr);
+        magicState.getValueTree().setProperty("chord_quality_cc_number", ccrpq->cc, nullptr);
     }
 }
 

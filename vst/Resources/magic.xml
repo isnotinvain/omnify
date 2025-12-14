@@ -69,10 +69,10 @@
           </View>
         </View>
       </View>
-      <View display="tabbed" caption="Chord Quality Selection" caption-placement="top-left"
-            border="2" border-color="$lcars-orange" caption-size="30">
-        <View caption-color="$lcars-orange" tab-color="$lcars-africanViolet"
-              margin="0" padding="0" border="0" radius="0" tab-caption="One Button Each">
+      <VariantSelector id="chord_quality_selection_style" border="2" border-color="$lcars-orange"
+                        flex-direction="column">
+        <ComboBox/>
+        <View tab-caption="One Button Each">
           <ChordQualitySelector id="chord_quality_selector" border-color="$lcars-orange" margin="0"
                                 padding="0" font-size="30" background-color="FF000000" label-color="$lcars-orange"
                                 midi-learn-aspect-ratio="2"/>
@@ -80,7 +80,7 @@
         <View tab-caption="One CC for All">
           <OmnifyMidiLearn id="chord_quality_cc" accept-mode="CCs Only"/>
         </View>
-      </View>
+      </VariantSelector>
     </View>
   </View>
   <Styles>

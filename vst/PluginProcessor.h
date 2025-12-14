@@ -64,6 +64,13 @@ class OmnifyAudioProcessor : public foleys::MagicProcessor,
     std::array<juce::Value, NUM_CHORD_QUALITIES> chordQualityTypeValues;
     std::array<juce::Value, NUM_CHORD_QUALITIES> chordQualityNumberValues;
 
+    // "One CC for All" chord quality selection (CCRangePerChordQuality variant)
+    juce::Value chordQualityCcTypeValue;
+    juce::Value chordQualityCcNumberValue;
+
+    // Chord quality selection style variant index (0 = ButtonPerChordQuality, 1 = CCRangePerChordQuality)
+    juce::Value chordQualitySelectionStyleValue;
+
     void valueChanged(juce::Value& value) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
     void setupValueListeners();
