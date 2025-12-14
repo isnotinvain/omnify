@@ -6,6 +6,8 @@
 xcuserdata/
 project.xcworkspace/
 
+# Claude
+.claude/settings.local.json
 
 # =============================================================================
 # C++ / JUCE (VST plugin)
