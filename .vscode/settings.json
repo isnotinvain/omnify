@@ -3,7 +3,8 @@
     "**/__pycache__": true,
     "**/.venv": true,
     "**/.ruff_cache": true,
-    "vst/build": true
+    "vst/build": true,
+    "**/JUCE/**": true
   },
   "files.associations": {
     "__bit_reference": "cpp",
