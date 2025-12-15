@@ -38,6 +38,20 @@ def _get_ready_file_path(port: int, temp_dir: str | None = None) -> Path:
     return base_dir / f"daemomnify-{port}.ready"
 
 
+def _get_log_file_path(port: int, temp_dir: str | None = None) -> Path:
+    """Get the path to the log file for this port."""
+    base_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir())
+    return base_dir / f"daemomnify-{port}.log"
+
+
+def _setup_logging(port: int, temp_dir: str | None = None):
+    """Redirect stdout/stderr to log file for this daemon instance."""
+    log_path = _get_log_file_path(port, temp_dir)
+    log_file = open(log_path, "a", buffering=1)  # Line-buffered
+    sys.stdout = log_file
+    sys.stderr = log_file
+
+
 def _handle_quit(address, *args):
     """OSC handler for /quit - signals graceful shutdown."""
     print("Received /quit OSC message, shutting down...")
@@ -134,6 +148,11 @@ def run_message_loop(device_name, event_dispatcher, scheduler, virtual_output):
 
 def main(osc_port: int | None = None, temp_dir: str | None = None):
     global _received_settings
+
+    # Redirect stdout/stderr to log file when running with VST (OSC mode)
+    if osc_port:
+        _setup_logging(osc_port, temp_dir)
+
     print("=== Welcome to Daemomnify. Let's Omnify some instruments! ===")
 
     # Start OSC server if port specified (for VST control)

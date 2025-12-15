@@ -2,6 +2,8 @@
 
 #include <juce_core/juce_core.h>
 
+#include "OmnifyLogger.h"
+
 // Socket headers still needed for findFreePort()
 #if JUCE_MAC || JUCE_LINUX
 #include <netinet/in.h>
@@ -12,8 +14,11 @@
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-#if (JUCE_MAC || JUCE_LINUX) && !JUCE_DEBUG
+#if JUCE_MAC || JUCE_LINUX
+#if !JUCE_DEBUG
 #include <dlfcn.h>
+#endif
+#include <cstdlib>  // for confstr on macOS
 #endif
 
 DaemonManager::DaemonManager() : juce::Thread("DaemonOutputReader"), process(std::make_unique<juce::ChildProcess>()) {}
@@ -75,7 +80,7 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
     // Use launcher script to redirect stdout/stderr to log file
     // This avoids pipe buffer blocking issues with ChildProcess
     juce::StringArray args;
-    auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory).getFullPathName();
+    auto tempDir = OmnifyLogger::getTempDir().getFullPathName();
 
 #if JUCE_DEBUG
     // Development: use uv run from project root
@@ -97,29 +102,26 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
     return {launcherScript.getFullPathName(), args};
 #else
     // Release: use bundled executable
-    // Debug log for release builds
-    auto debugLog = juce::File("/tmp/omnify-daemon-debug.log");
-
     // Use dladdr to find the path to our own shared library (the VST3 plugin)
     Dl_info dlInfo;
     juce::File pluginBundle;
     // Use address of this function (converted via reinterpret_cast for dladdr compatibility)
     static int dummy = 0;
     if (dladdr(&dummy, &dlInfo) && dlInfo.dli_fname) {
-        debugLog.appendText("dladdr succeeded, dli_fname: " + juce::String(dlInfo.dli_fname) + "\n");
+        OmnifyLogger::log("dladdr succeeded, dli_fname: " + juce::String(dlInfo.dli_fname));
         // dli_fname gives us the path to the .so/.dylib inside MacOS/
         // Go up to Contents, then to the bundle root
         pluginBundle = juce::File(dlInfo.dli_fname).getParentDirectory().getParentDirectory().getParentDirectory();
-        debugLog.appendText("pluginBundle: " + pluginBundle.getFullPathName() + "\n");
+        OmnifyLogger::log("pluginBundle: " + pluginBundle.getFullPathName());
     } else {
-        debugLog.appendText("dladdr FAILED\n");
+        OmnifyLogger::log("dladdr FAILED");
     }
     auto resourcesDir = pluginBundle.getChildFile("Contents/Resources");
     auto launcherScript = resourcesDir.getChildFile("launch_daemon.sh");
     auto daemonExe = resourcesDir.getChildFile("daemomnify");
-    debugLog.appendText("resourcesDir: " + resourcesDir.getFullPathName() + "\n");
-    debugLog.appendText("launcherScript exists: " + juce::String(launcherScript.existsAsFile() ? "yes" : "no") + "\n");
-    debugLog.appendText("daemonExe exists: " + juce::String(daemonExe.existsAsFile() ? "yes" : "no") + "\n");
+    OmnifyLogger::log("resourcesDir: " + resourcesDir.getFullPathName());
+    OmnifyLogger::log("launcherScript exists: " + juce::String(launcherScript.existsAsFile() ? "yes" : "no"));
+    OmnifyLogger::log("daemonExe exists: " + juce::String(daemonExe.existsAsFile() ? "yes" : "no"));
 
     args.add(tempDir);
     args.add(juce::String(oscPort));
@@ -134,25 +136,21 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
 }
 
 bool DaemonManager::start() {
-    // Debug log file for release builds
-    auto debugLog = juce::File("/tmp/omnify-daemon-debug.log");
-    debugLog.appendText("DaemonManager::start() called\n");
+    OmnifyLogger::log("DaemonManager::start() called");
 
     if (isRunning()) {
-        debugLog.appendText("Already running, returning\n");
+        OmnifyLogger::log("Already running, returning");
         return true;
     }
 
     // Find a free port for OSC
     oscPort = findFreePort();
     if (oscPort == 0) {
-        debugLog.appendText("Failed to find free port\n");
-        DBG("DaemonManager: Failed to find free port");
+        OmnifyLogger::log("Failed to find free port");
         return false;
     }
 
-    debugLog.appendText("Found port: " + juce::String(oscPort) + "\n");
-    DBG("DaemonManager: Starting daemon on OSC port " << oscPort);
+    OmnifyLogger::log("Found port: " + juce::String(oscPort));
 
     // Delete any stale ready file before starting
     getReadyFile().deleteFile();
@@ -166,35 +164,30 @@ bool DaemonManager::start() {
         fullCommand += " " + arg;
     }
 
-    debugLog.appendText("Command: " + fullCommand + "\n");
-    DBG("DaemonManager: Running: " << fullCommand);
-
-    debugLog.appendText("About to call process->start()...\n");
+    OmnifyLogger::log("Command: " + fullCommand);
+    OmnifyLogger::log("About to call process->start()...");
 
     // Don't capture stdout/stderr - launcher script redirects to log file
     if (!process->start(fullCommand, 0)) {
-        debugLog.appendText("process->start() returned false\n");
-        DBG("DaemonManager: Failed to start process");
+        OmnifyLogger::log("process->start() returned false");
         return false;
     }
 
-    debugLog.appendText("process->start() returned true\n");
-    debugLog.appendText("process->isRunning(): " + juce::String(process->isRunning() ? "yes" : "no") + "\n");
+    OmnifyLogger::log("process->start() returned true");
+    OmnifyLogger::log("process->isRunning(): " + juce::String(process->isRunning() ? "yes" : "no"));
 
     // Start the output reader thread
     startThread();
-    debugLog.appendText("Started output reader thread\n");
+    OmnifyLogger::log("Started output reader thread");
 
     // Connect OSC sender to the daemon
     if (!oscSender.connect("127.0.0.1", oscPort)) {
-        debugLog.appendText("OSC connect failed\n");
-        DBG("DaemonManager: Failed to connect OSC sender");
+        OmnifyLogger::log("OSC connect failed");
     } else {
-        debugLog.appendText("OSC connected to port " + juce::String(oscPort) + "\n");
+        OmnifyLogger::log("OSC connected to port " + juce::String(oscPort));
     }
 
-    debugLog.appendText("DaemonManager::start() completed successfully\n");
-    DBG("DaemonManager: Daemon started successfully");
+    OmnifyLogger::log("DaemonManager::start() completed successfully");
     return true;
 }
 
@@ -226,8 +219,7 @@ void DaemonManager::sendOscQuit() {
 }
 
 juce::File DaemonManager::getReadyFile() const {
-    return juce::File::getSpecialLocation(juce::File::tempDirectory)
-        .getChildFile("daemomnify-" + juce::String(oscPort) + ".ready");
+    return OmnifyLogger::getTempDir().getChildFile("daemomnify-" + juce::String(oscPort) + ".ready");
 }
 
 void DaemonManager::stop() {
