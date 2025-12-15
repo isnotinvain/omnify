@@ -12,6 +12,10 @@
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
+#if (JUCE_MAC || JUCE_LINUX) && !JUCE_DEBUG
+#include <dlfcn.h>
+#endif
+
 DaemonManager::DaemonManager() : juce::Thread("DaemonOutputReader"), process(std::make_unique<juce::ChildProcess>()) {}
 
 void DaemonManager::setListener(Listener* l) { listener = l; }
@@ -93,10 +97,29 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
     return {launcherScript.getFullPathName(), args};
 #else
     // Release: use bundled executable
-    auto pluginFile = juce::File::getSpecialLocation(juce::File::currentExecutableFile);
-    auto resourcesDir = pluginFile.getParentDirectory().getParentDirectory().getChildFile("Resources");
+    // Debug log for release builds
+    auto debugLog = juce::File("/tmp/omnify-daemon-debug.log");
+
+    // Use dladdr to find the path to our own shared library (the VST3 plugin)
+    Dl_info dlInfo;
+    juce::File pluginBundle;
+    // Use address of this function (converted via reinterpret_cast for dladdr compatibility)
+    static int dummy = 0;
+    if (dladdr(&dummy, &dlInfo) && dlInfo.dli_fname) {
+        debugLog.appendText("dladdr succeeded, dli_fname: " + juce::String(dlInfo.dli_fname) + "\n");
+        // dli_fname gives us the path to the .so/.dylib inside MacOS/
+        // Go up to Contents, then to the bundle root
+        pluginBundle = juce::File(dlInfo.dli_fname).getParentDirectory().getParentDirectory().getParentDirectory();
+        debugLog.appendText("pluginBundle: " + pluginBundle.getFullPathName() + "\n");
+    } else {
+        debugLog.appendText("dladdr FAILED\n");
+    }
+    auto resourcesDir = pluginBundle.getChildFile("Contents/Resources");
     auto launcherScript = resourcesDir.getChildFile("launch_daemon.sh");
     auto daemonExe = resourcesDir.getChildFile("daemomnify");
+    debugLog.appendText("resourcesDir: " + resourcesDir.getFullPathName() + "\n");
+    debugLog.appendText("launcherScript exists: " + juce::String(launcherScript.existsAsFile() ? "yes" : "no") + "\n");
+    debugLog.appendText("daemonExe exists: " + juce::String(daemonExe.existsAsFile() ? "yes" : "no") + "\n");
 
     args.add(tempDir);
     args.add(juce::String(oscPort));
@@ -111,17 +134,24 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
 }
 
 bool DaemonManager::start() {
+    // Debug log file for release builds
+    auto debugLog = juce::File("/tmp/omnify-daemon-debug.log");
+    debugLog.appendText("DaemonManager::start() called\n");
+
     if (isRunning()) {
+        debugLog.appendText("Already running, returning\n");
         return true;
     }
 
     // Find a free port for OSC
     oscPort = findFreePort();
     if (oscPort == 0) {
+        debugLog.appendText("Failed to find free port\n");
         DBG("DaemonManager: Failed to find free port");
         return false;
     }
 
+    debugLog.appendText("Found port: " + juce::String(oscPort) + "\n");
     DBG("DaemonManager: Starting daemon on OSC port " << oscPort);
 
     // Delete any stale ready file before starting
@@ -136,22 +166,34 @@ bool DaemonManager::start() {
         fullCommand += " " + arg;
     }
 
+    debugLog.appendText("Command: " + fullCommand + "\n");
     DBG("DaemonManager: Running: " << fullCommand);
+
+    debugLog.appendText("About to call process->start()...\n");
 
     // Don't capture stdout/stderr - launcher script redirects to log file
     if (!process->start(fullCommand, 0)) {
+        debugLog.appendText("process->start() returned false\n");
         DBG("DaemonManager: Failed to start process");
         return false;
     }
 
+    debugLog.appendText("process->start() returned true\n");
+    debugLog.appendText("process->isRunning(): " + juce::String(process->isRunning() ? "yes" : "no") + "\n");
+
     // Start the output reader thread
     startThread();
+    debugLog.appendText("Started output reader thread\n");
 
     // Connect OSC sender to the daemon
     if (!oscSender.connect("127.0.0.1", oscPort)) {
+        debugLog.appendText("OSC connect failed\n");
         DBG("DaemonManager: Failed to connect OSC sender");
+    } else {
+        debugLog.appendText("OSC connected to port " + juce::String(oscPort) + "\n");
     }
 
+    debugLog.appendText("DaemonManager::start() completed successfully\n");
     DBG("DaemonManager: Daemon started successfully");
     return true;
 }

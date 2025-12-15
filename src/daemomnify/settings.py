@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 from daemomnify import chord_quality
+from daemomnify.chord_voicings.bundled_file_style import BundledFileStyle
 from daemomnify.chord_voicings.file_style import FileStyle
 from daemomnify.chord_voicings.omni84_style import Omni84Style
 from daemomnify.chord_voicings.omnichord_strum_style import OmnichordStrumStyle
@@ -81,7 +82,7 @@ MidiButton = Annotated[
 
 
 ChordStyleConfig = Annotated[
-    RootPositionStyle | FileStyle | Omni84Style,
+    RootPositionStyle | BundledFileStyle | FileStyle | Omni84Style,
     Field(discriminator="type"),
 ]
 StrumStyleConfig = Annotated[

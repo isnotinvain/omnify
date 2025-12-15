@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import multiprocessing
 import time
-from multiprocessing import Process
 
 from daemomnify.daemomnify import EXIT_CODE_QUIT, main
 
@@ -13,7 +13,7 @@ def run_forever(osc_port: int | None = None, temp_dir: str | None = None):
     window_seconds = 60
 
     while True:
-        p = Process(target=main, args=(osc_port, temp_dir))
+        p = multiprocessing.Process(target=main, args=(osc_port, temp_dir))
         p.start()
         try:
             p.join()
@@ -42,6 +42,9 @@ def run_forever(osc_port: int | None = None, temp_dir: str | None = None):
 
 
 if __name__ == "__main__":
+    # Required for PyInstaller-bundled executables to handle multiprocessing correctly
+    multiprocessing.freeze_support()
+
     parser = argparse.ArgumentParser(description="Daemomnify - Transform MIDI instruments into omnichords")
     parser.add_argument("--osc-port", type=int, default=None, help="OSC port to listen on for settings from VST")
     parser.add_argument("--temp-dir", type=str, default=None, help="Temp directory for ready file (must match VST)")

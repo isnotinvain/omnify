@@ -206,19 +206,23 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
         settingsChanged = true;
     } else if (value.refersToSameSourceAs(chordVoicingStyleValue)) {
         int index = static_cast<int>(chordVoicingStyleValue.getValue());
-        switch (index) {
-            case 0:
-                settings.chord_voicing_style = GeneratedSettings::RootPositionStyle{};
-                break;
-            case 1: {
-                GeneratedSettings::FileStyle fs;
-                fs.path = chordVoicingFilePathValue.getValue().toString().toStdString();
-                settings.chord_voicing_style = fs;
-                break;
-            }
-            case 2:
-                settings.chord_voicing_style = GeneratedSettings::Omni84Style{};
-                break;
+        constexpr int numBundled = GeneratedSettings::BundledChordVoicings::NUM_BUNDLED;
+        constexpr int fileStyleIndex = 1 + numBundled;
+        constexpr int omni84Index = 2 + numBundled;
+
+        if (index == 0) {
+            settings.chord_voicing_style = GeneratedSettings::RootPositionStyle{};
+        } else if (index >= 1 && index <= numBundled) {
+            // Bundled voicing (index 1 = first bundled file, etc.)
+            GeneratedSettings::BundledFileStyle bfs;
+            bfs.filename = GeneratedSettings::BundledChordVoicings::FILENAMES[index - 1];
+            settings.chord_voicing_style = bfs;
+        } else if (index == fileStyleIndex) {
+            GeneratedSettings::FileStyle fs;
+            fs.path = chordVoicingFilePathValue.getValue().toString().toStdString();
+            settings.chord_voicing_style = fs;
+        } else if (index == omni84Index) {
+            settings.chord_voicing_style = GeneratedSettings::Omni84Style{};
         }
         settingsChanged = true;
     } else if (value.refersToSameSourceAs(strumVoicingStyleValue)) {
@@ -367,9 +371,29 @@ void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, flo
 }
 
 void OmnifyAudioProcessor::pushVariantIndexesToValueTree() {
-    // Write variant indexes so UI can restore them on rebuild
-    stateTree.setProperty("variant_chord_voicing_style",
-                          static_cast<int>(settings.chord_voicing_style.index()), nullptr);
+    // Calculate UI dropdown index for chord voicing style
+    // UI order: RootPosition (0), BundledFiles (1..N), FileStyle (N+1), Omni84 (N+2)
+    constexpr int numBundled = GeneratedSettings::BundledChordVoicings::NUM_BUNDLED;
+    int chordVoicingUiIndex = 0;
+
+    if (std::holds_alternative<GeneratedSettings::RootPositionStyle>(settings.chord_voicing_style)) {
+        chordVoicingUiIndex = 0;
+    } else if (auto* bundledStyle =
+                   std::get_if<GeneratedSettings::BundledFileStyle>(&settings.chord_voicing_style)) {
+        // Find which bundled file this is
+        for (int i = 0; i < numBundled; ++i) {
+            if (bundledStyle->filename == GeneratedSettings::BundledChordVoicings::FILENAMES[i]) {
+                chordVoicingUiIndex = 1 + i;
+                break;
+            }
+        }
+    } else if (std::holds_alternative<GeneratedSettings::FileStyle>(settings.chord_voicing_style)) {
+        chordVoicingUiIndex = 1 + numBundled;
+    } else if (std::holds_alternative<GeneratedSettings::Omni84Style>(settings.chord_voicing_style)) {
+        chordVoicingUiIndex = 2 + numBundled;
+    }
+
+    stateTree.setProperty("variant_chord_voicing_style", chordVoicingUiIndex, nullptr);
     stateTree.setProperty("variant_strum_voicing_style",
                           static_cast<int>(settings.strum_voicing_style.index()), nullptr);
     stateTree.setProperty("variant_chord_quality_selection_style",

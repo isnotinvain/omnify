@@ -30,11 +30,12 @@ Transforms any MIDI instrument into an omnichord (autoharp-style instrument). Tw
 - Regenerate VST params after changing settings.py: `uv run python vst/generate_vst_params.py`
 - Python: use `uv run`
 - Install python packages: `/install`
-- Compile VST: `./vst/compile.sh -d` (drop `-d` for release)
-- For long commands or commands that output a lot of tokens (e.g. compiling):
-  - Use: `.claude/hooks/run-with-log.sh <command>`
-  - Example: `.claude/hooks/run-with-log.sh ./vst/compile.sh -d`
-  - This `tee`s the output to a file and to stdout. You can head/tail the stdout.
-  - If you need more than what you got from head/tail, you can inspect the log file instead or re-running.
+- You have available to you a helper script for running commands that output a lot.
+  - it is: .claude/hooks/run-with-log.sh <log_file> <command>
+  - It will `tee` the <command>'s stdout to <log_file> and back to you
+  - You can use | head or | tail on it 
+  - If you don't get enough from that, don't re-run <command> -- inspect the <log_file>
+  - see "Compile VST" below for an example  
+- Compile VST: `.claude/hooks/run-with-log.sh /tmp/vst-compile.log ./vst/compile.sh -d` (drop `-d` for release)
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
 - If you explain multiple ways something could be done, ask me which one I want before proceding with Edits

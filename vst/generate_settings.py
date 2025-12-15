@@ -14,6 +14,7 @@ from typing import Annotated, Union, get_args, get_origin
 from pydantic import BaseModel
 
 from daemomnify.chord_quality import ChordQuality
+from daemomnify.chord_voicings.bundled_file_style import get_bundled_file_info
 from daemomnify.settings import DaemomnifySettings
 
 
@@ -195,6 +196,18 @@ def generate_settings_header(settings_class: type[BaseModel]) -> str:
     enum_names_str = ", ".join(f'"{name}"' for name in enum_names)
     lines.append(f"inline const char* ENUM_NAMES[NUM_QUALITIES] = {{{enum_names_str}}};")
     lines.append("}  // namespace ChordQualities")
+    lines.append("")
+
+    # BundledChordVoicings helper namespace (for UI components)
+    bundled_files = get_bundled_file_info()
+    lines.append("// BundledChordVoicings helper namespace for UI")
+    lines.append("namespace BundledChordVoicings {")
+    lines.append(f"inline constexpr int NUM_BUNDLED = {len(bundled_files)};")
+    filenames_str = ", ".join(f'"{filename}"' for filename, _ in bundled_files)
+    lines.append(f"inline const char* FILENAMES[NUM_BUNDLED] = {{{filenames_str}}};")
+    display_names_str = ", ".join(f'"{display_name}"' for _, display_name in bundled_files)
+    lines.append(f"inline const char* DISPLAY_NAMES[NUM_BUNDLED] = {{{display_names_str}}};")
+    lines.append("}  // namespace BundledChordVoicings")
     lines.append("")
 
     # Collect all variant types from DaemomnifySettings

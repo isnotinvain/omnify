@@ -1,5 +1,6 @@
 #include "ChordSettingsPanel.h"
 
+#include "../../GeneratedSettings.h"
 #include "../../PluginProcessor.h"
 #include "../LcarsLookAndFeel.h"
 
@@ -21,6 +22,14 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Note: addVariantNotOwned adds components as children of the VariantSelector,
     // so we don't addAndMakeVisible them separately
     voicingStyleSelector.addVariantNotOwned("Root Position", &rootPositionView);
+
+    // Add bundled voicing options (from generated code)
+    for (int i = 0; i < GeneratedSettings::BundledChordVoicings::NUM_BUNDLED; ++i) {
+        auto view = std::make_unique<juce::Component>();
+        voicingStyleSelector.addVariantNotOwned(GeneratedSettings::BundledChordVoicings::DISPLAY_NAMES[i], view.get());
+        bundledVoicingViews.push_back(std::move(view));
+    }
+
     voicingStyleSelector.addVariantNotOwned("From File", &filePicker);
     voicingStyleSelector.addVariantNotOwned("Omni-84", &omni84View);
     addAndMakeVisible(voicingStyleSelector);

@@ -6,8 +6,8 @@
   "strum_gate_time_secs": 0.5,
   "strum_plate_cc": 1,
   "chord_voicing_style": {
-    "type": "FileStyle",
-    "path": "src/daemomnify/chord_voicings/chord_voicing_files/om_108_chord_voicing_offsets.json"
+    "type": "BundledFileStyle",
+    "filename": "om_108_chord_voicing_offsets.json"
   },
   "strum_voicing_style": {
     "type": "OmnichordStrumStyle"

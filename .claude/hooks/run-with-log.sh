@@ -1,9 +1,5 @@
 #!/bin/bash
-# Runs a command, logging output to a temp file while also showing stdout
-# Usage: run-with-log.sh <command> [args...]
-
-tmpfile=$(mktemp /tmp/claude-cmd-XXXXXX)
-mv "$tmpfile" "$tmpfile.log"
-tmpfile="$tmpfile.log"
-echo "Log: $tmpfile"
-"$@" 2>&1 | tee "$tmpfile"
+# Runs a command with unbuffered output and logs to a file
+# Usage: run-with-log.sh <logfile> <command...>
+LOG="$1"; shift
+"$@" 2>&1 | sed -l '' | tee "$LOG"
