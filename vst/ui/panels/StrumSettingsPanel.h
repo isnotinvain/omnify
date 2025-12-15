@@ -45,8 +45,7 @@ class StrumSettingsPanel : public juce::Component {
 
     // Gate and Cooldown sliders
     juce::Slider gateSlider{juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow};
-    juce::Slider cooldownSlider{juce::Slider::RotaryHorizontalVerticalDrag,
-                                juce::Slider::TextBoxBelow};
+    juce::Slider cooldownSlider{juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow};
     juce::Label gateLabel{"", "Gate"};
     juce::Label cooldownLabel{"", "Cooldown"};
 

@@ -26,11 +26,7 @@ class PlainAscending : public VoicingStyle<VoicingFor::Strum> {
         return res;
     }
 
-    void to_json(nlohmann::json& j) const override {
-        j = nlohmann::json{{"type", "PlainAscending"}};
-    }
+    void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "PlainAscending"}}; }
 
-    static std::shared_ptr<VoicingStyle<VoicingFor::Strum>> from_json(const nlohmann::json&) {
-        return std::make_shared<PlainAscending>();
-    }
+    static std::shared_ptr<VoicingStyle<VoicingFor::Strum>> from_json(const nlohmann::json&) { return std::make_shared<PlainAscending>(); }
 };

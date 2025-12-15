@@ -39,8 +39,7 @@ class VoicingStyleRegistry {
    public:
     VoicingStyleRegistry() = default;
 
-    void registerStyle(const std::string& typeName, std::shared_ptr<VoicingStyle<T>> style,
-                       VoicingStyleFactory<T> factory) {
+    void registerStyle(const std::string& typeName, std::shared_ptr<VoicingStyle<T>> style, VoicingStyleFactory<T> factory) {
         registry[typeName] = VoicingStyleEntry<T>{std::move(style), std::move(factory)};
     }
 

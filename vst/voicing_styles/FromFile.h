@@ -56,9 +56,7 @@ class FromFile : public VoicingStyle<T> {
         return offsetsOrNotes;
     }
 
-    void to_json(nlohmann::json& j) const override {
-        j = nlohmann::json{{"type", "FromFile"}, {"path", path}};
-    }
+    void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "FromFile"}, {"path", path}}; }
 
     static std::shared_ptr<VoicingStyle<T>> from_json(const nlohmann::json& j) {
         return std::make_shared<FromFile<T>>(j.at("path").get<std::string>());

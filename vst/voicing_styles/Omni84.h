@@ -27,7 +27,5 @@ class Omni84 : public VoicingStyle<VoicingFor::Chord> {
 
     void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "Omni84"}}; }
 
-    static std::shared_ptr<VoicingStyle<VoicingFor::Chord>> from_json(const nlohmann::json&) {
-        return std::make_shared<Omni84>();
-    }
+    static std::shared_ptr<VoicingStyle<VoicingFor::Chord>> from_json(const nlohmann::json&) { return std::make_shared<Omni84>(); }
 };

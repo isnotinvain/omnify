@@ -16,18 +16,15 @@ enum class ChordQuality { MAJOR, MINOR, DOM_7, MAJOR_7, MINOR_7, DIM_7, AUGMENTE
 // ChordQualities helper namespace for UI
 namespace ChordQualities {
 inline constexpr int NUM_QUALITIES = 9;
-inline const char* NAMES[NUM_QUALITIES] = {"Major",     "Minor",         "Dominant 7th",
-                                           "Major 7th", "Minor 7th",     "Diminished 7th",
-                                           "Augmented", "Suspended 4th", "Add 9"};
-inline const char* ENUM_NAMES[NUM_QUALITIES] = {"MAJOR", "MINOR",     "DOM_7", "MAJOR_7", "MINOR_7",
-                                                "DIM_7", "AUGMENTED", "SUS_4", "ADD_9"};
+inline const char* NAMES[NUM_QUALITIES] = {"Major",          "Minor",     "Dominant 7th",  "Major 7th", "Minor 7th",
+                                           "Diminished 7th", "Augmented", "Suspended 4th", "Add 9"};
+inline const char* ENUM_NAMES[NUM_QUALITIES] = {"MAJOR", "MINOR", "DOM_7", "MAJOR_7", "MINOR_7", "DIM_7", "AUGMENTED", "SUS_4", "ADD_9"};
 }  // namespace ChordQualities
 
 // BundledChordVoicings helper namespace for UI
 namespace BundledChordVoicings {
 inline constexpr int NUM_BUNDLED = 2;
-inline const char* FILENAMES[NUM_BUNDLED] = {"om_108_chord_voicing_offsets.json",
-                                             "om_108_chord_voicings.json"};
+inline const char* FILENAMES[NUM_BUNDLED] = {"om_108_chord_voicing_offsets.json", "om_108_chord_voicings.json"};
 inline const char* DISPLAY_NAMES[NUM_BUNDLED] = {"OmniChord: Relative", "OmniChord: Fixed"};
 }  // namespace BundledChordVoicings
 

@@ -61,15 +61,11 @@ void ChordSettingsPanel::setupValueBindings() {
 
     // MIDI Channel
     chordChannelValue.referTo(stateTree.getPropertyAsValue("chord_channel", nullptr));
-    channelComboBox.setSelectedId(static_cast<int>(chordChannelValue.getValue()),
-                                  juce::dontSendNotification);
-    channelComboBox.onChange = [this]() {
-        chordChannelValue.setValue(channelComboBox.getSelectedId());
-    };
+    channelComboBox.setSelectedId(static_cast<int>(chordChannelValue.getValue()), juce::dontSendNotification);
+    channelComboBox.onChange = [this]() { chordChannelValue.setValue(channelComboBox.getSelectedId()); };
 
     // Voicing Style
-    chordVoicingStyleValue.referTo(
-        stateTree.getPropertyAsValue("variant_chord_voicing_style", nullptr));
+    chordVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_chord_voicing_style", nullptr));
     voicingStyleSelector.bindToValue(chordVoicingStyleValue);
 
     // File path for "From File" variant
@@ -78,8 +74,7 @@ void ChordSettingsPanel::setupValueBindings() {
 
     // Latch toggle MIDI learn
     latchToggleTypeValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_type", nullptr));
-    latchToggleNumberValue.referTo(
-        stateTree.getPropertyAsValue("latch_toggle_button_number", nullptr));
+    latchToggleNumberValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_number", nullptr));
 
     auto updateLatchFromValues = [this]() {
         auto typeStr = latchToggleTypeValue.getValue().toString();
@@ -109,11 +104,8 @@ void ChordSettingsPanel::setupValueBindings() {
 
     // Latch is toggle
     latchIsToggleValue.referTo(stateTree.getPropertyAsValue("latch_is_toggle", nullptr));
-    latchIsToggle.setToggleState(static_cast<bool>(latchIsToggleValue.getValue()),
-                                 juce::dontSendNotification);
-    latchIsToggle.onClick = [this]() {
-        latchIsToggleValue.setValue(latchIsToggle.getToggleState());
-    };
+    latchIsToggle.setToggleState(static_cast<bool>(latchIsToggleValue.getValue()), juce::dontSendNotification);
+    latchIsToggle.onClick = [this]() { latchIsToggleValue.setValue(latchIsToggle.getToggleState()); };
 
     // Stop button MIDI learn
     stopButtonTypeValue.referTo(stateTree.getPropertyAsValue("stop_button_type", nullptr));
@@ -170,9 +162,7 @@ void ChordSettingsPanel::resized() {
     fb.items.add(juce::FlexItem(voicingStyleSelector).withHeight(80.0F).withMargin(4));
 
     // Latch controls
-    fb.items.add(juce::FlexItem(latchLabel)
-                     .withHeight(20.0F)
-                     .withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
+    fb.items.add(juce::FlexItem(latchLabel).withHeight(20.0F).withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
 
     juce::FlexBox latchRow;
     latchRow.flexDirection = juce::FlexBox::Direction::row;
@@ -181,8 +171,7 @@ void ChordSettingsPanel::resized() {
     fb.items.add(juce::FlexItem().withHeight(40.0F).withMargin(4));
 
     // Stop button
-    fb.items.add(
-        juce::FlexItem(stopLabel).withHeight(20.0F).withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
+    fb.items.add(juce::FlexItem(stopLabel).withHeight(20.0F).withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
     fb.items.add(juce::FlexItem(stopButtonLearn).withHeight(40.0F).withMargin(4));
 
     fb.performLayout(getLocalBounds().reduced(6));

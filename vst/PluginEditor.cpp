@@ -1,11 +1,7 @@
 #include "PluginEditor.h"
 
 OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
-    : AudioProcessorEditor(&p),
-      omnifyProcessor(p),
-      chordSettings(p),
-      strumSettings(p),
-      chordQualityPanel(p) {
+    : AudioProcessorEditor(&p), omnifyProcessor(p), chordSettings(p), strumSettings(p), chordQualityPanel(p) {
     // Apply look and feel to this editor and all children
     setLookAndFeel(&lcarsLookAndFeel);
 
@@ -15,8 +11,7 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
 
     // MIDI Device Selector
     midiDeviceSelector.setCaption("MIDI Device");
-    midiDeviceValue =
-        omnifyProcessor.getStateTree().getPropertyAsValue("midi_device_name", nullptr);
+    midiDeviceValue = omnifyProcessor.getStateTree().getPropertyAsValue("midi_device_name", nullptr);
     midiDeviceSelector.bindToValue(midiDeviceValue);
     addAndMakeVisible(midiDeviceSelector);
 

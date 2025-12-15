@@ -13,8 +13,7 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
     static constexpr float fontSizeLarge = 24.0F;
 
     LcarsLookAndFeel() {
-        orbitronTypeface = juce::Typeface::createSystemTypefaceFor(
-            BinaryData::OrbitronRegular_ttf, BinaryData::OrbitronRegular_ttfSize);
+        orbitronTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::OrbitronRegular_ttf, BinaryData::OrbitronRegular_ttfSize);
 
         // Tab colors
         setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colours::black);
@@ -34,9 +33,7 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
     }
 
     // Public font getter for components that need to set fonts directly
-    juce::Font getOrbitronFont(float height) const {
-        return juce::Font(juce::FontOptions(orbitronTypeface).withHeight(height));
-    }
+    juce::Font getOrbitronFont(float height) const { return juce::Font(juce::FontOptions(orbitronTypeface).withHeight(height)); }
 
    private:
     juce::Typeface::Ptr orbitronTypeface;
@@ -48,18 +45,14 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
     static constexpr float popupMenuBorderSize = 2.0F;
     static constexpr float buttonBorderThickness = 2.0F;
 
-    juce::Font getLabelFont(juce::Label& label) override {
-        return getOrbitronFont(label.getFont().getHeight());
-    }
+    juce::Font getLabelFont(juce::Label& label) override { return getOrbitronFont(label.getFont().getHeight()); }
 
     juce::Font getComboBoxFont(juce::ComboBox&) override { return getOrbitronFont(fontSizeSmall); }
 
     juce::Font getPopupMenuFont() override { return getOrbitronFont(fontSizeSmall); }
 
-    void getIdealPopupMenuItemSizeWithOptions(const juce::String& text, bool isSeparator,
-                                              int standardMenuItemHeight, int& idealWidth,
-                                              int& idealHeight,
-                                              const juce::PopupMenu::Options&) override {
+    void getIdealPopupMenuItemSizeWithOptions(const juce::String& text, bool isSeparator, int standardMenuItemHeight, int& idealWidth,
+                                              int& idealHeight, const juce::PopupMenu::Options&) override {
         if (isSeparator) {
             idealWidth = 50;
             idealHeight = standardMenuItemHeight > 0 ? standardMenuItemHeight / 10 : 10;
@@ -68,13 +61,11 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
             auto font = getOrbitronFont(fontSizeSmall);
             juce::GlyphArrangement glyphs;
             glyphs.addLineOfText(font, text, 0, 0);
-            idealWidth =
-                static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth()) + idealHeight * 2;
+            idealWidth = static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth()) + idealHeight * 2;
         }
     }
 
-    void drawComboBox(juce::Graphics& g, int width, int height, bool, int, int, int, int,
-                      juce::ComboBox& box) override {
+    void drawComboBox(juce::Graphics& g, int width, int height, bool, int, int, int, int, juce::ComboBox& box) override {
         auto bounds = juce::Rectangle<int>(0, 0, width, height);
 
         // Draw background
@@ -95,8 +86,7 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
                          arrowY - comboboxArrowSize * 0.5F,           // top right
                          arrowX, arrowY + comboboxArrowSize * 0.5F);  // bottom center
 
-        g.setColour(
-            box.findColour(juce::ComboBox::arrowColourId).withAlpha(box.isEnabled() ? 0.9F : 0.2F));
+        g.setColour(box.findColour(juce::ComboBox::arrowColourId).withAlpha(box.isEnabled() ? 0.9F : 0.2F));
         g.fillPath(path);
     }
 
@@ -124,25 +114,21 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         int width = static_cast<int>(glyphs.getBoundingBox(0, -1, false).getWidth()) + tabDepth;
 
         if (auto* extraComponent = button.getExtraComponent()) {
-            width += button.getTabbedButtonBar().isVertical() ? extraComponent->getHeight()
-                                                              : extraComponent->getWidth();
+            width += button.getTabbedButtonBar().isVertical() ? extraComponent->getHeight() : extraComponent->getWidth();
         }
 
         return juce::jmax(tabDepth * 2, width);
     }
 
-    void drawTabAreaBehindFrontButton(juce::TabbedButtonBar&, juce::Graphics& g, int w,
-                                      int h) override {
+    void drawTabAreaBehindFrontButton(juce::TabbedButtonBar&, juce::Graphics& g, int w, int h) override {
         g.setColour(LcarsColors::africanViolet);
         juce::Path line;
         line.startNewSubPath(1.0F, static_cast<float>(h) - 1.0F);
         line.lineTo(static_cast<float>(w) - 1.0F, static_cast<float>(h) - 1.0F);
-        g.strokePath(line, juce::PathStrokeType(2.0F, juce::PathStrokeType::curved,
-                                                juce::PathStrokeType::rounded));
+        g.strokePath(line, juce::PathStrokeType(2.0F, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 
-    void drawButtonBackground(juce::Graphics& g, juce::Button& button, const juce::Colour&,
-                              bool shouldDrawButtonAsHighlighted,
+    void drawButtonBackground(juce::Graphics& g, juce::Button& button, const juce::Colour&, bool shouldDrawButtonAsHighlighted,
                               bool shouldDrawButtonAsDown) override {
         auto bounds = button.getLocalBounds().toFloat();
 
@@ -156,9 +142,7 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         } else if (shouldDrawButtonAsHighlighted) {
             bgColour = LcarsColors::moonlitViolet;
         } else {
-            bgColour =
-                button.findColour(button.getToggleState() ? juce::TextButton::buttonOnColourId
-                                                          : juce::TextButton::buttonColourId);
+            bgColour = button.findColour(button.getToggleState() ? juce::TextButton::buttonOnColourId : juce::TextButton::buttonColourId);
         }
 
         juce::Colour borderColour = LcarsColors::orange;
@@ -167,24 +151,19 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         g.fillRoundedRectangle(bounds.reduced(buttonBorderThickness * 0.5F), radius);
 
         g.setColour(borderColour);
-        g.drawRoundedRectangle(bounds.reduced(buttonBorderThickness * 0.5F), radius,
-                               buttonBorderThickness);
+        g.drawRoundedRectangle(bounds.reduced(buttonBorderThickness * 0.5F), radius, buttonBorderThickness);
     }
 
     void drawButtonText(juce::Graphics& g, juce::TextButton& button, bool, bool) override {
         g.setFont(getOrbitronFont(fontSizeSmall));
 
-        juce::Colour textColour =
-            button.findColour(button.getToggleState() ? juce::TextButton::textColourOnId
-                                                      : juce::TextButton::textColourOffId);
+        juce::Colour textColour = button.findColour(button.getToggleState() ? juce::TextButton::textColourOnId : juce::TextButton::textColourOffId);
         g.setColour(textColour);
 
-        g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred,
-                   false);
+        g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, false);
     }
 
-    void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button,
-                          bool /*shouldDrawButtonAsHighlighted*/,
+    void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool /*shouldDrawButtonAsHighlighted*/,
                           bool /*shouldDrawButtonAsDown*/) override {
         auto bounds = button.getLocalBounds().toFloat();
         auto tickBounds = bounds.removeFromLeft(bounds.getHeight()).reduced(4);

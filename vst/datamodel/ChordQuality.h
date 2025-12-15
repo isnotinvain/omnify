@@ -15,10 +15,9 @@ struct ChordQualityData {
     std::vector<int> triad_offsets;
 };
 
-inline constexpr std::array<ChordQuality, 9> ALL_CHORD_QUALITIES = {
-    ChordQuality::MAJOR,     ChordQuality::MINOR,   ChordQuality::DOM_7,
-    ChordQuality::MAJOR_7,   ChordQuality::MINOR_7, ChordQuality::DIM_7,
-    ChordQuality::AUGMENTED, ChordQuality::SUS_4,   ChordQuality::ADD_9};
+inline constexpr std::array<ChordQuality, 9> ALL_CHORD_QUALITIES = {ChordQuality::MAJOR,     ChordQuality::MINOR,   ChordQuality::DOM_7,
+                                                                    ChordQuality::MAJOR_7,   ChordQuality::MINOR_7, ChordQuality::DIM_7,
+                                                                    ChordQuality::AUGMENTED, ChordQuality::SUS_4,   ChordQuality::ADD_9};
 
 // Get data for a specific quality
 const ChordQualityData& getChordQualityData(ChordQuality q);

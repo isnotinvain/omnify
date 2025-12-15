@@ -37,8 +37,7 @@ void ChordQualityPanel::setupValueBindings() {
     auto& stateTree = processor.getStateTree();
 
     // Selection style variant
-    chordQualitySelectionStyleValue.referTo(
-        stateTree.getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
+    chordQualitySelectionStyleValue.referTo(stateTree.getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
     styleSelector.bindToValue(chordQualitySelectionStyleValue);
 
     // Quality grid bindings

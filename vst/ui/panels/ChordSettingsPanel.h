@@ -34,11 +34,10 @@ class ChordSettingsPanel : public juce::Component {
 
     // Voicing Style
     VariantSelector voicingStyleSelector;
-    juce::Component rootPositionView;  // Empty placeholder for RootPositionStyle
-    std::vector<std::unique_ptr<juce::Component>>
-        bundledVoicingViews;     // Placeholders for BundledFileStyle
-    FilePicker filePicker;       // For "From File" (FileStyle) variant
-    juce::Component omni84View;  // Empty placeholder for Omni84Style
+    juce::Component rootPositionView;                                   // Empty placeholder for RootPositionStyle
+    std::vector<std::unique_ptr<juce::Component>> bundledVoicingViews;  // Placeholders for BundledFileStyle
+    FilePicker filePicker;                                              // For "From File" (FileStyle) variant
+    juce::Component omni84View;                                         // Empty placeholder for Omni84Style
     juce::Value chordVoicingStyleValue;
     juce::Value chordVoicingFilePathValue;
     juce::Value bundledVoicingFilenameValue;

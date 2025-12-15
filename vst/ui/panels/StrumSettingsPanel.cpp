@@ -64,15 +64,11 @@ void StrumSettingsPanel::setupValueBindings() {
 
     // MIDI Channel
     strumChannelValue.referTo(stateTree.getPropertyAsValue("strum_channel", nullptr));
-    channelComboBox.setSelectedId(static_cast<int>(strumChannelValue.getValue()),
-                                  juce::dontSendNotification);
-    channelComboBox.onChange = [this]() {
-        strumChannelValue.setValue(channelComboBox.getSelectedId());
-    };
+    channelComboBox.setSelectedId(static_cast<int>(strumChannelValue.getValue()), juce::dontSendNotification);
+    channelComboBox.onChange = [this]() { strumChannelValue.setValue(channelComboBox.getSelectedId()); };
 
     // Voicing Style
-    strumVoicingStyleValue.referTo(
-        stateTree.getPropertyAsValue("variant_strum_voicing_style", nullptr));
+    strumVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_strum_voicing_style", nullptr));
     voicingStyleSelector.bindToValue(strumVoicingStyleValue);
 
     // Strum Plate CC MIDI learn
@@ -101,10 +97,8 @@ void StrumSettingsPanel::setupValueBindings() {
     };
 
     // APVTS slider attachments
-    gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-        apvts, "strum_gate_time_secs", gateSlider);
-    cooldownAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-        apvts, "strum_cooldown_secs", cooldownSlider);
+    gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "strum_gate_time_secs", gateSlider);
+    cooldownAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "strum_cooldown_secs", cooldownSlider);
 }
 
 void StrumSettingsPanel::paint(juce::Graphics& g) {

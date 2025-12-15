@@ -73,9 +73,7 @@ void MidiDeviceSelectorComponent::refreshDeviceList() {
     }
 }
 
-void MidiDeviceSelectorComponent::setCaption(const juce::String& text) {
-    captionLabel.setText(text, juce::dontSendNotification);
-}
+void MidiDeviceSelectorComponent::setCaption(const juce::String& text) { captionLabel.setText(text, juce::dontSendNotification); }
 
 void MidiDeviceSelectorComponent::timerCallback() { refreshDeviceList(); }
 

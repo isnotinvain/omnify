@@ -19,9 +19,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(ChordQuality, {
                                            })
 // NOLINTEND(modernize-avoid-c-arrays,modernize-type-traits)
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const RootPositionStyle& s) {
-    j["type"] = RootPositionStyle::TYPE;
-}
+void to_json(nlohmann::json& j, [[maybe_unused]] const RootPositionStyle& s) { j["type"] = RootPositionStyle::TYPE; }
 
 void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] RootPositionStyle& s) {}
 
@@ -30,9 +28,7 @@ void to_json(nlohmann::json& j, const BundledFileStyle& s) {
     j["filename"] = s.filename;
 }
 
-void from_json(const nlohmann::json& j, BundledFileStyle& s) {
-    j.at("filename").get_to(s.filename);
-}
+void from_json(const nlohmann::json& j, BundledFileStyle& s) { j.at("filename").get_to(s.filename); }
 
 void to_json(nlohmann::json& j, const FileStyle& s) {
     j["type"] = FileStyle::TYPE;
@@ -41,22 +37,15 @@ void to_json(nlohmann::json& j, const FileStyle& s) {
 
 void from_json(const nlohmann::json& j, FileStyle& s) { j.at("path").get_to(s.path); }
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const Omni84Style& s) {
-    j["type"] = Omni84Style::TYPE;
-}
+void to_json(nlohmann::json& j, [[maybe_unused]] const Omni84Style& s) { j["type"] = Omni84Style::TYPE; }
 
 void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] Omni84Style& s) {}
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const PlainAscendingStrumStyle& s) {
-    j["type"] = PlainAscendingStrumStyle::TYPE;
-}
+void to_json(nlohmann::json& j, [[maybe_unused]] const PlainAscendingStrumStyle& s) { j["type"] = PlainAscendingStrumStyle::TYPE; }
 
-void from_json([[maybe_unused]] const nlohmann::json& j,
-               [[maybe_unused]] PlainAscendingStrumStyle& s) {}
+void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] PlainAscendingStrumStyle& s) {}
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const OmnichordStrumStyle& s) {
-    j["type"] = OmnichordStrumStyle::TYPE;
-}
+void to_json(nlohmann::json& j, [[maybe_unused]] const OmnichordStrumStyle& s) { j["type"] = OmnichordStrumStyle::TYPE; }
 
 void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] OmnichordStrumStyle& s) {}
 

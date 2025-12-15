@@ -15,9 +15,7 @@ ChordQualitySelector::ChordQualitySelector() {
         row.midiLearn.setAspectRatio(midiLearnAspectRatio);
 
         // Set up callback for when user learns a new value
-        row.midiLearn.onValueChanged = [this, i](MidiLearnedValue val) {
-            onMidiLearnChanged(i, val);
-        };
+        row.midiLearn.onValueChanged = [this, i](MidiLearnedValue val) { onMidiLearnChanged(i, val); };
     }
 }
 
@@ -37,8 +35,7 @@ void ChordQualitySelector::bindToValueTree(juce::ValueTree& tree) {
         row.numberValue.removeListener(this);
 
         // Property names use enum name: chord_quality_MAJOR_type, chord_quality_MINOR_number, etc.
-        auto prefix =
-            juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
+        auto prefix = juce::String("chord_quality_") + GeneratedSettings::ChordQualities::ENUM_NAMES[i];
         row.typeValue.referTo(tree.getPropertyAsValue(prefix + "_type", nullptr));
         row.numberValue.referTo(tree.getPropertyAsValue(prefix + "_number", nullptr));
 

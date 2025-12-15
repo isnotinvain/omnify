@@ -21,8 +21,7 @@
 #include <cstdlib>  // for confstr on macOS
 #endif
 
-DaemonManager::DaemonManager()
-    : juce::Thread("DaemonOutputReader"), process(std::make_unique<juce::ChildProcess>()) {}
+DaemonManager::DaemonManager() : juce::Thread("DaemonOutputReader"), process(std::make_unique<juce::ChildProcess>()) {}
 
 void DaemonManager::setListener(Listener* l) { listener = l; }
 
@@ -112,10 +111,7 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
         OmnifyLogger::log("dladdr succeeded, dli_fname: " + juce::String(dlInfo.dli_fname));
         // dli_fname gives us the path to the .so/.dylib inside MacOS/
         // Go up to Contents, then to the bundle root
-        pluginBundle = juce::File(dlInfo.dli_fname)
-                           .getParentDirectory()
-                           .getParentDirectory()
-                           .getParentDirectory();
+        pluginBundle = juce::File(dlInfo.dli_fname).getParentDirectory().getParentDirectory().getParentDirectory();
         OmnifyLogger::log("pluginBundle: " + pluginBundle.getFullPathName());
     } else {
         OmnifyLogger::log("dladdr FAILED");
@@ -124,8 +120,7 @@ std::pair<juce::String, juce::StringArray> DaemonManager::getLaunchCommand() con
     auto launcherScript = resourcesDir.getChildFile("launch_daemon.sh");
     auto daemonExe = resourcesDir.getChildFile("daemomnify");
     OmnifyLogger::log("resourcesDir: " + resourcesDir.getFullPathName());
-    OmnifyLogger::log("launcherScript exists: " +
-                      juce::String(launcherScript.existsAsFile() ? "yes" : "no"));
+    OmnifyLogger::log("launcherScript exists: " + juce::String(launcherScript.existsAsFile() ? "yes" : "no"));
     OmnifyLogger::log("daemonExe exists: " + juce::String(daemonExe.existsAsFile() ? "yes" : "no"));
 
     args.add(tempDir);
@@ -221,10 +216,7 @@ void DaemonManager::run() {
 
 void DaemonManager::sendOscQuit() { oscSender.send("/quit"); }
 
-juce::File DaemonManager::getReadyFile() const {
-    return OmnifyLogger::getTempDir().getChildFile("daemomnify-" + juce::String(oscPort) +
-                                                   ".ready");
-}
+juce::File DaemonManager::getReadyFile() const { return OmnifyLogger::getTempDir().getChildFile("daemomnify-" + juce::String(oscPort) + ".ready"); }
 
 void DaemonManager::stop() {
     if (!process || !process->isRunning()) {

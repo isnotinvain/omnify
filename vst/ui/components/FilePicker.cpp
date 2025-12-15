@@ -18,9 +18,7 @@ FilePicker::FilePicker() {
 
 FilePicker::~FilePicker() = default;
 
-void FilePicker::setFileFilter(const juce::String& filter) {
-    fileFilter = filter.isEmpty() ? "*" : filter;
-}
+void FilePicker::setFileFilter(const juce::String& filter) { fileFilter = filter.isEmpty() ? "*" : filter; }
 
 void FilePicker::bindToValue(juce::Value& value) {
     boundValue.referTo(value);
@@ -44,20 +42,17 @@ void FilePicker::resized() {
 
 void FilePicker::openFileChooser() {
     auto currentPath = boundValue.toString();
-    auto startDir = currentPath.isNotEmpty()
-                        ? juce::File(currentPath).getParentDirectory()
-                        : juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
+    auto startDir =
+        currentPath.isNotEmpty() ? juce::File(currentPath).getParentDirectory() : juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
 
     fileChooser = std::make_unique<juce::FileChooser>("Select a file", startDir, fileFilter);
 
-    fileChooser->launchAsync(
-        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [this](const juce::FileChooser& fc) {
-            auto result = fc.getResult();
-            if (result.existsAsFile()) {
-                const auto& newPath = result.getFullPathName();
-                boundValue.setValue(newPath);
-                pathLabel.setText(newPath, juce::dontSendNotification);
-            }
-        });
+    fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& fc) {
+        auto result = fc.getResult();
+        if (result.existsAsFile()) {
+            const auto& newPath = result.getFullPathName();
+            boundValue.setValue(newPath);
+            pathLabel.setText(newPath, juce::dontSendNotification);
+        }
+    });
 }

@@ -24,9 +24,7 @@ void MidiLearnComponent::setLearnedValue(MidiLearnedValue val) {
     repaint();
 }
 
-MidiLearnedValue MidiLearnComponent::getLearnedValue() const {
-    return {learnedType.load(), learnedValue.load()};
-}
+MidiLearnedValue MidiLearnComponent::getLearnedValue() const { return {learnedType.load(), learnedValue.load()}; }
 
 void MidiLearnComponent::setAcceptMode(MidiAcceptMode mode) { acceptMode = mode; }
 
@@ -37,8 +35,7 @@ void MidiLearnComponent::processNextMidiBuffer(const juce::MidiBuffer& buffer) {
         return;
     }
 
-    bool acceptNotes =
-        acceptMode == MidiAcceptMode::NotesOnly || acceptMode == MidiAcceptMode::Both;
+    bool acceptNotes = acceptMode == MidiAcceptMode::NotesOnly || acceptMode == MidiAcceptMode::Both;
     bool acceptCCs = acceptMode == MidiAcceptMode::CCsOnly || acceptMode == MidiAcceptMode::Both;
 
     for (const auto& metadata : buffer) {
@@ -173,8 +170,7 @@ juce::String MidiLearnComponent::noteNumberToName(int noteNumber) {
         return {};
     }
 
-    static const char* noteNames[] = {"C",  "C#", "D",  "D#", "E",  "F",
-                                      "F#", "G",  "G#", "A",  "A#", "B"};
+    static const char* noteNames[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     int octave = (noteNumber / 12) - 1;
     int noteIndex = noteNumber % 12;
 

@@ -139,8 +139,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     std::unique_ptr<juce::MidiInput> midiLearnInput;
     void openMidiLearnInput(const juce::String& deviceName);
     void closeMidiLearnInput();
-    void handleIncomingMidiMessage(juce::MidiInput* source,
-                                   const juce::MidiMessage& message) override;
+    void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OmnifyAudioProcessor)
 };

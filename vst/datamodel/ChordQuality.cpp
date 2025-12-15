@@ -20,9 +20,7 @@ const std::vector<ChordQualityData> CHORD_QUALITY_TABLE = {
 
 }  // namespace
 
-const ChordQualityData& getChordQualityData(ChordQuality q) {
-    return CHORD_QUALITY_TABLE[static_cast<size_t>(q)];
-}
+const ChordQualityData& getChordQualityData(ChordQuality q) { return CHORD_QUALITY_TABLE[static_cast<size_t>(q)]; }
 
 ChordQuality chordQualityFromName(std::string_view name) {
     for (size_t i = 0; i < ALL_CHORD_QUALITIES.size(); ++i) {
@@ -35,6 +33,4 @@ ChordQuality chordQualityFromName(std::string_view name) {
 
 void to_json(nlohmann::json& j, ChordQuality q) { j = getChordQualityData(q).name; }
 
-void from_json(const nlohmann::json& j, ChordQuality& q) {
-    q = chordQualityFromName(j.get<std::string_view>());
-}
+void from_json(const nlohmann::json& j, ChordQuality& q) { q = chordQualityFromName(j.get<std::string_view>()); }
