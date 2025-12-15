@@ -7,47 +7,63 @@ namespace GeneratedSettings {
 // ChordQuality JSON conversion
 // NOLINTBEGIN(modernize-avoid-c-arrays,modernize-type-traits)
 NLOHMANN_JSON_SERIALIZE_ENUM(ChordQuality, {
-                                               {ChordQuality::MAJOR, "MAJOR"},
-                                               {ChordQuality::MINOR, "MINOR"},
-                                               {ChordQuality::DOM_7, "DOM_7"},
-                                               {ChordQuality::MAJOR_7, "MAJOR_7"},
-                                               {ChordQuality::MINOR_7, "MINOR_7"},
-                                               {ChordQuality::DIM_7, "DIM_7"},
-                                               {ChordQuality::AUGMENTED, "AUGMENTED"},
-                                               {ChordQuality::SUS_4, "SUS_4"},
-                                               {ChordQuality::ADD_9, "ADD_9"},
-                                           })
+    {ChordQuality::MAJOR, "MAJOR"},
+    {ChordQuality::MINOR, "MINOR"},
+    {ChordQuality::DOM_7, "DOM_7"},
+    {ChordQuality::MAJOR_7, "MAJOR_7"},
+    {ChordQuality::MINOR_7, "MINOR_7"},
+    {ChordQuality::DIM_7, "DIM_7"},
+    {ChordQuality::AUGMENTED, "AUGMENTED"},
+    {ChordQuality::SUS_4, "SUS_4"},
+    {ChordQuality::ADD_9, "ADD_9"},
+})
 // NOLINTEND(modernize-avoid-c-arrays,modernize-type-traits)
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const RootPositionStyle& s) { j["type"] = RootPositionStyle::TYPE; }
+void to_json(nlohmann::json& j, [[maybe_unused]] const RootPositionStyle& s) {
+    j["type"] = RootPositionStyle::TYPE;
+}
 
-void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] RootPositionStyle& s) {}
+void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] RootPositionStyle& s) {
+}
 
 void to_json(nlohmann::json& j, const BundledFileStyle& s) {
     j["type"] = BundledFileStyle::TYPE;
     j["filename"] = s.filename;
 }
 
-void from_json(const nlohmann::json& j, BundledFileStyle& s) { j.at("filename").get_to(s.filename); }
+void from_json(const nlohmann::json& j, BundledFileStyle& s) {
+    j.at("filename").get_to(s.filename);
+}
 
 void to_json(nlohmann::json& j, const FileStyle& s) {
     j["type"] = FileStyle::TYPE;
     j["path"] = s.path;
 }
 
-void from_json(const nlohmann::json& j, FileStyle& s) { j.at("path").get_to(s.path); }
+void from_json(const nlohmann::json& j, FileStyle& s) {
+    j.at("path").get_to(s.path);
+}
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const Omni84Style& s) { j["type"] = Omni84Style::TYPE; }
+void to_json(nlohmann::json& j, [[maybe_unused]] const Omni84Style& s) {
+    j["type"] = Omni84Style::TYPE;
+}
 
-void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] Omni84Style& s) {}
+void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] Omni84Style& s) {
+}
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const PlainAscendingStrumStyle& s) { j["type"] = PlainAscendingStrumStyle::TYPE; }
+void to_json(nlohmann::json& j, [[maybe_unused]] const PlainAscendingStrumStyle& s) {
+    j["type"] = PlainAscendingStrumStyle::TYPE;
+}
 
-void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] PlainAscendingStrumStyle& s) {}
+void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] PlainAscendingStrumStyle& s) {
+}
 
-void to_json(nlohmann::json& j, [[maybe_unused]] const OmnichordStrumStyle& s) { j["type"] = OmnichordStrumStyle::TYPE; }
+void to_json(nlohmann::json& j, [[maybe_unused]] const OmnichordStrumStyle& s) {
+    j["type"] = OmnichordStrumStyle::TYPE;
+}
 
-void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] OmnichordStrumStyle& s) {}
+void from_json([[maybe_unused]] const nlohmann::json& j, [[maybe_unused]] OmnichordStrumStyle& s) {
+}
 
 void to_json(nlohmann::json& j, const ButtonPerChordQuality& s) {
     j["type"] = ButtonPerChordQuality::TYPE;
@@ -75,14 +91,18 @@ void to_json(nlohmann::json& j, const CCRangePerChordQuality& s) {
     j["cc"] = s.cc;
 }
 
-void from_json(const nlohmann::json& j, CCRangePerChordQuality& s) { j.at("cc").get_to(s.cc); }
+void from_json(const nlohmann::json& j, CCRangePerChordQuality& s) {
+    j.at("cc").get_to(s.cc);
+}
 
 void to_json(nlohmann::json& j, const MidiNoteButton& s) {
     j["type"] = MidiNoteButton::TYPE;
     j["note"] = s.note;
 }
 
-void from_json(const nlohmann::json& j, MidiNoteButton& s) { j.at("note").get_to(s.note); }
+void from_json(const nlohmann::json& j, MidiNoteButton& s) {
+    j.at("note").get_to(s.note);
+}
 
 void to_json(nlohmann::json& j, const MidiCCButton& s) {
     j["type"] = MidiCCButton::TYPE;
@@ -96,7 +116,9 @@ void from_json(const nlohmann::json& j, MidiCCButton& s) {
 }
 
 void to_json(nlohmann::json& j, const ChordVoicingStyle& v) {
-    std::visit([&j](const auto& val) { j = val; }, v);
+    std::visit([&j](const auto& val) {
+        j = val;
+    }, v);
 }
 
 void from_json(const nlohmann::json& j, ChordVoicingStyle& v) {
@@ -115,7 +137,9 @@ void from_json(const nlohmann::json& j, ChordVoicingStyle& v) {
 }
 
 void to_json(nlohmann::json& j, const StrumVoicingStyle& v) {
-    std::visit([&j](const auto& val) { j = val; }, v);
+    std::visit([&j](const auto& val) {
+        j = val;
+    }, v);
 }
 
 void from_json(const nlohmann::json& j, StrumVoicingStyle& v) {
@@ -130,7 +154,9 @@ void from_json(const nlohmann::json& j, StrumVoicingStyle& v) {
 }
 
 void to_json(nlohmann::json& j, const ChordQualitySelectionStyle& v) {
-    std::visit([&j](const auto& val) { j = val; }, v);
+    std::visit([&j](const auto& val) {
+        j = val;
+    }, v);
 }
 
 void from_json(const nlohmann::json& j, ChordQualitySelectionStyle& v) {
@@ -145,7 +171,9 @@ void from_json(const nlohmann::json& j, ChordQualitySelectionStyle& v) {
 }
 
 void to_json(nlohmann::json& j, const LatchToggleButton& v) {
-    std::visit([&j](const auto& val) { j = val; }, v);
+    std::visit([&j](const auto& val) {
+        j = val;
+    }, v);
 }
 
 void from_json(const nlohmann::json& j, LatchToggleButton& v) {
@@ -216,24 +244,9 @@ DaemomnifySettings DaemomnifySettings::defaults() {
     s.strum_plate_cc = 1;
     s.chord_voicing_style = RootPositionStyle{};
     s.strum_voicing_style = PlainAscendingStrumStyle{};
-    s.chord_quality_selection_style = []() {
-        ButtonPerChordQuality x;
-        x.notes = {{0, ChordQuality::MAJOR}, {1, ChordQuality::MINOR}, {2, ChordQuality::DOM_7}};
-        x.ccs = {};
-        return x;
-    }();
-    s.latch_toggle_button = []() {
-        MidiCCButton x;
-        x.cc = 102;
-        x.is_toggle = true;
-        return x;
-    }();
-    s.stop_button = []() {
-        MidiCCButton x;
-        x.cc = 103;
-        x.is_toggle = false;
-        return x;
-    }();
+    s.chord_quality_selection_style = []() { ButtonPerChordQuality x; x.notes = {{0, ChordQuality::MAJOR}, {1, ChordQuality::MINOR}, {2, ChordQuality::DOM_7}}; x.ccs = {}; return x; }();
+    s.latch_toggle_button = []() { MidiCCButton x; x.cc = 102; x.is_toggle = true; return x; }();
+    s.stop_button = []() { MidiCCButton x; x.cc = 103; x.is_toggle = false; return x; }();
     return s;
 }
 

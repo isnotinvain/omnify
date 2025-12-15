@@ -36,16 +36,16 @@ inline void from_json(const nlohmann::json& j, ChordFile& cf) {
 template <VoicingFor T>
 class FromFile : public VoicingStyle<T> {
    public:
-    explicit FromFile(std::string path) : path(std::move(path)) {}
+    explicit FromFile(std::string filePath) : path(std::move(filePath)) {}
 
     std::string displayName() const override { return "File"; }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
-        const ChordFile& data = getData();
+        const ChordFile& chordData = getData();
         int noteClass = root % 12;
-        const auto& offsetsOrNotes = data.chords.at(quality).at(noteClass);
+        const auto& offsetsOrNotes = chordData.chords.at(quality).at(noteClass);
 
-        if (data.isOffsetFile) {
+        if (chordData.isOffsetFile) {
             std::vector<int> notes;
             notes.reserve(offsetsOrNotes.size());
             for (int offset : offsetsOrNotes) {

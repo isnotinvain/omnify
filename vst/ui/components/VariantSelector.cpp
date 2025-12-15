@@ -83,9 +83,9 @@ void VariantSelector::resized() {
 }
 
 void VariantSelector::updateVisibility() {
-    int selectedIndex = comboBox.getSelectedItemIndex();
+    auto selectedIndex = static_cast<size_t>(comboBox.getSelectedItemIndex());
 
-    for (int i = 0; i < static_cast<int>(variants.size()); ++i) {
+    for (size_t i = 0; i < variants.size(); ++i) {
         variants[i]->setVisible(i == selectedIndex);
     }
 }

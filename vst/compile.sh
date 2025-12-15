@@ -36,9 +36,10 @@ echo "Generating settings code..."
 uv run python "$SCRIPT_DIR/generate_settings.py"
 
 # Format all C++ files (if requested)
+# Only iterate over .h files - format-cpp.sh will run clang-tidy on the corresponding .cpp if it exists
 if [ "$FORMAT" = true ]; then
     echo "Formatting C++ files..."
-    find "$SCRIPT_DIR" -type f \( -name "*.cpp" -o -name "*.h" \) ! -path "*/JUCE/*" ! -path "*/build/*" ! -path "*/nlohmann/*" | while read -r file; do
+    find "$SCRIPT_DIR" -type f -name "*.h" ! -path "*/JUCE/*" ! -path "*/build/*" ! -path "*/nlohmann/*" | while read -r file; do
         "$(dirname "$SCRIPT_DIR")/.claude/hooks/format-cpp.sh" "$file"
     done
 fi

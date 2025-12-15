@@ -230,6 +230,8 @@ void OmnifyAudioProcessor::valueChanged(juce::Value& value) {
             case 1:
                 settings.strum_voicing_style = GeneratedSettings::OmnichordStrumStyle{};
                 break;
+            default:
+                break;
         }
         settingsChanged = true;
     } else if (value.refersToSameSourceAs(chordVoicingFilePathValue)) {
