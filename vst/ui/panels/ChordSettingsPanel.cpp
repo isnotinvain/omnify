@@ -32,6 +32,7 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
                         fromFile->setPath(newPath);
                     }
                 });
+                fromFileChordView->setPath(newPath);
             };
             fromFileChordView = fromFileView.get();
             view = std::move(fromFileView);

@@ -15,6 +15,7 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     midiDeviceSelector.setCaption("MIDI Device");
     midiDeviceSelector.onDeviceSelected = [this](const juce::String& deviceName) {
         omnifyProcessor.modifySettings([deviceName](OmnifySettings& s) { s.midiDeviceName = deviceName.toStdString(); });
+        omnifyProcessor.setMidiInputDevice(deviceName);
     };
     addAndMakeVisible(midiDeviceSelector);
 

@@ -51,6 +51,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
 
     std::shared_ptr<OmnifySettings> getSettings() const { return std::atomic_load(&omnifySettings); }
     void modifySettings(std::function<void(OmnifySettings&)> mutator);
+    void setMidiInputDevice(const juce::String& deviceName);
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
     juce::ValueTree& getStateTree() { return stateTree; }  // TODO: remove once UI uses callbacks

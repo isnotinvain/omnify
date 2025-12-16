@@ -63,9 +63,13 @@ void MidiThread::run() {
             midiCollector.removeNextBlockOfMessages(buffer, INT_MAX);
 
             for (const auto metadata : buffer) {
-                auto toSend = omnify.handle(metadata.getMessage());
-                for (const auto& m : toSend) {
-                    midiOutput->sendMessageNow(m);
+                try {
+                    auto toSend = omnify.handle(metadata.getMessage());
+                    for (const auto& m : toSend) {
+                        midiOutput->sendMessageNow(m);
+                    }
+                } catch (const std::exception& e) {
+                    DBG("MidiThread: exception in handle(): " << e.what());
                 }
             }
         }

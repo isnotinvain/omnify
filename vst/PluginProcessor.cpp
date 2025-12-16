@@ -7,6 +7,7 @@
 #include "PluginEditor.h"
 #include "voicing_styles/FromFile.h"
 #include "voicing_styles/Omni84.h"
+#include "voicing_styles/OmnichordChords.h"
 #include "voicing_styles/OmnichordStrum.h"
 #include "voicing_styles/PlainAscending.h"
 #include "voicing_styles/RootPosition.h"
@@ -33,6 +34,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(juce::
 void OmnifyAudioProcessor::initVoicingRegistries() {
     chordVoicingRegistry.registerStyle("RootPosition", std::make_shared<RootPosition>(), RootPosition::from_json);
     chordVoicingRegistry.registerStyle("FromFile", std::make_shared<FromFile<VoicingFor::Chord>>(""), FromFile<VoicingFor::Chord>::from_json);
+    chordVoicingRegistry.registerStyle("Omnichord", std::make_shared<OmnichordChords>(true), OmnichordChords::from_json);
+
     chordVoicingRegistry.registerStyle("Omni84", std::make_shared<Omni84>(), Omni84::from_json);
 
     strumVoicingRegistry.registerStyle("PlainAscending", std::make_shared<PlainAscending>(), PlainAscending::from_json);
@@ -52,11 +55,11 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     realtimeParams = std::make_shared<RealtimeParams>();
     omnifySettings = std::make_shared<OmnifySettings>();
 
-    loadDefaultSettings();
-
     omnify = std::make_unique<Omnify>(*midiScheduler, omnifySettings, realtimeParams);
     midiThread = std::make_unique<MidiThread>(*omnify, *midiScheduler, "Daemomnify");
     midiThread->start();
+
+    loadDefaultSettings();
 }
 
 OmnifyAudioProcessor::~OmnifyAudioProcessor() {
@@ -70,9 +73,7 @@ OmnifyAudioProcessor::~OmnifyAudioProcessor() {
 }
 
 //==============================================================================
-void OmnifyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-    juce::ignoreUnused(sampleRate, samplesPerBlock);
-}
+void OmnifyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) { juce::ignoreUnused(sampleRate, samplesPerBlock); }
 
 void OmnifyAudioProcessor::releaseResources() {}
 
@@ -144,20 +145,19 @@ void OmnifyAudioProcessor::loadSettingsFromValueTree() {
 
     try {
         auto j = nlohmann::json::parse(jsonString.toStdString());
-        auto newSettings = std::make_shared<OmnifySettings>(
-            OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
+        auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
 
         omnify->updateSettings(newSettings);
         std::atomic_store(&omnifySettings, newSettings);
 
         if (strumGateTimeParam) {
-            strumGateTimeParam->setValueNotifyingHost(
-                strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs) / 1000.0f));
+            strumGateTimeParam->setValueNotifyingHost(strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs) / 1000.0f));
         }
         if (strumCooldownParam) {
-            strumCooldownParam->setValueNotifyingHost(
-                strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs) / 1000.0f));
+            strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs) / 1000.0f));
         }
+
+        setMidiInputDevice(juce::String(newSettings->midiDeviceName));
     } catch (const std::exception& e) {
         DBG("Failed to load settings from ValueTree: " << e.what());
     }
@@ -173,25 +173,41 @@ void OmnifyAudioProcessor::loadDefaultSettings() {
     try {
         juce::String jsonStr(BinaryData::default_settings_json, BinaryData::default_settings_jsonSize);
         auto j = nlohmann::json::parse(jsonStr.toStdString());
-        auto newSettings = std::make_shared<OmnifySettings>(
-            OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
+        auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
 
         std::atomic_store(&omnifySettings, newSettings);
 
         if (strumGateTimeParam) {
-            strumGateTimeParam->setValueNotifyingHost(
-                strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs) / 1000.0f));
+            strumGateTimeParam->setValueNotifyingHost(strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs) / 1000.0f));
         }
         if (strumCooldownParam) {
-            strumCooldownParam->setValueNotifyingHost(
-                strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs) / 1000.0f));
+            strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs) / 1000.0f));
         }
 
+        setMidiInputDevice(juce::String(newSettings->midiDeviceName));
         saveSettingsToValueTree();
         DBG("Loaded default settings from bundled JSON");
     } catch (const std::exception& e) {
         DBG("Failed to load default settings: " << e.what());
     }
+}
+
+//==============================================================================
+void OmnifyAudioProcessor::setMidiInputDevice(const juce::String& deviceName) {
+    if (deviceName.isEmpty()) {
+        midiThread->setInputDevice(std::nullopt);
+        return;
+    }
+
+    auto devices = juce::MidiInput::getAvailableDevices();
+    for (const auto& device : devices) {
+        if (device.name == deviceName) {
+            midiThread->setInputDevice(device.identifier);
+            return;
+        }
+    }
+
+    midiThread->setInputDevice(std::nullopt);
 }
 
 //==============================================================================
