@@ -39,3 +39,6 @@ Transforms any MIDI instrument into an omnichord (autoharp-style instrument). Tw
 - Compile VST: `.claude/hooks/run-with-log.sh /tmp/vst-compile.log ./vst/compile.sh -d` (drop `-d` for release)
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
 - If you explain multiple ways something could be done, ask me which one I want before proceding with Edits
+
+## Coding Style
+- Don't add comments that are pretty obvious from the code they are commenting, or from the function signature and name. If the code is clear, if the variable names are clear, and if the function signatures are clear, skip the comments entirely. Do add comments for gotchas / bug fixes / workarounds, methods with important rules / constraints that aren't immediately obvious, or complicated algorithms.
