@@ -3,7 +3,6 @@
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_core/juce_core.h>
 
-#include <atomic>
 #include <mutex>
 #include <optional>
 
@@ -20,7 +19,7 @@ class MidiThread : private juce::Thread {
 
     void start();
     void stop();
-    bool isRunning() const { return running.load(); }
+    bool isRunning() const { return isThreadRunning(); }
 
     void setInputDevice(std::optional<juce::String> deviceId);
 
@@ -34,16 +33,16 @@ class MidiThread : private juce::Thread {
     Omnify& omnify;
     MidiMessageScheduler& scheduler;
 
-    std::atomic<bool> running{false};
-
     std::unique_ptr<juce::MidiInput> midiInput;
     std::unique_ptr<juce::MidiOutput> midiOutput;
     juce::MidiMessageCollector midiCollector;
 
     std::optional<juce::String> deviceId;
     mutable std::mutex deviceMutex;
+    double lastInputOpenAttemptMs = 0;
 
     juce::String outputPortName;
 
     static constexpr int POLL_INTERVAL_MS = 1;
+    static constexpr int RETRY_INTERVAL_MS = 500;
 };
