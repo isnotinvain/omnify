@@ -1,11 +1,11 @@
 #include "ChordSettingsPanel.h"
 
-#include <json.hpp>
-
 #include "../../PluginProcessor.h"
 #include "../../datamodel/MidiButton.h"
 #include "../../datamodel/OmnifySettings.h"
+#include "../../voicing_styles/FromFile.h"
 #include "../LcarsLookAndFeel.h"
+#include "../components/FromFileView.h"
 
 ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Title - font will be set in resized() after LookAndFeel is available
@@ -23,7 +23,21 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
 
     // Voicing Style Selector - iterate registry to build options
     for (const auto& [typeName, entry] : processor.getChordVoicingRegistry().getRegistry()) {
-        auto view = std::make_unique<juce::Component>();
+        std::unique_ptr<juce::Component> view;
+        if (typeName == "FromFile") {
+            auto fromFileView = std::make_unique<FromFileView>();
+            fromFileView->onPathChanged = [this](const std::string& newPath) {
+                processor.modifySettings([newPath](OmnifySettings& s) {
+                    if (auto* fromFile = dynamic_cast<FromFile<VoicingFor::Chord>*>(s.chordVoicingStyle.get())) {
+                        fromFile->setPath(newPath);
+                    }
+                });
+            };
+            fromFileChordView = fromFileView.get();
+            view = std::move(fromFileView);
+        } else {
+            view = std::make_unique<juce::Component>();
+        }
         voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get());
         voicingStyleViews.push_back(std::move(view));
         voicingStyleTypeNames.push_back(typeName);
@@ -136,16 +150,21 @@ void ChordSettingsPanel::refreshFromSettings() {
     }
     stopButtonLearn.setLearnedValue(stopVal);
 
-    // Voicing style selector - find matching index by serializing current style
+    // Voicing style selector - find matching index via registry lookup
     if (settings->chordVoicingStyle) {
-        nlohmann::json j;
-        settings->chordVoicingStyle->to_json(j);
-        if (j.contains("type")) {
-            std::string currentType = j["type"].get<std::string>();
+        auto currentType = processor.getChordVoicingRegistry().getTypeName(settings->chordVoicingStyle.get());
+        if (currentType) {
             for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
-                if (voicingStyleTypeNames[i] == currentType) {
+                if (voicingStyleTypeNames[i] == *currentType) {
                     voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
                     break;
+                }
+            }
+
+            // Update FromFile view with current path
+            if (*currentType == "FromFile" && fromFileChordView) {
+                if (auto* fromFile = dynamic_cast<FromFile<VoicingFor::Chord>*>(settings->chordVoicingStyle.get())) {
+                    fromFileChordView->setPath(fromFile->getPath());
                 }
             }
         }

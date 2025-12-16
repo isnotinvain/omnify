@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,17 +34,19 @@ class VoicingStyle {
     virtual void to_json(nlohmann::json& j) const = 0;
 };
 
-// Registry of available voicing styles - one per plugin instance
+// Registry of available voicing styles - one per plugin instance.
+// Styles are registered once at startup and never modified after.
 template <VoicingFor T>
 class VoicingStyleRegistry {
    public:
     VoicingStyleRegistry() = default;
 
     void registerStyle(const std::string& typeName, std::shared_ptr<VoicingStyle<T>> style, VoicingStyleFactory<T> factory) {
+        styleToTypeName[style.get()] = typeName;
         registry[typeName] = VoicingStyleEntry<T>{std::move(style), std::move(factory)};
     }
 
-    std::shared_ptr<VoicingStyle<T>> from_json(const nlohmann::json& j) const {
+    std::shared_ptr<VoicingStyle<T>> from_json(const nlohmann::json& j) {
         if (!j.contains("type")) {
             throw std::runtime_error("VoicingStyle JSON missing 'type' field");
         }
@@ -54,7 +57,20 @@ class VoicingStyleRegistry {
             throw std::runtime_error("Unknown VoicingStyle type: " + typeName);
         }
 
-        return it->second.from_json(j);
+        // Replace canonical instance with loaded one
+        auto loaded = it->second.from_json(j);
+        styleToTypeName.erase(it->second.style.get());
+        it->second.style = loaded;
+        styleToTypeName[loaded.get()] = typeName;
+        return loaded;
+    }
+
+    std::optional<std::string> getTypeName(const VoicingStyle<T>* style) const {
+        auto it = styleToTypeName.find(style);
+        if (it != styleToTypeName.end()) {
+            return it->second;
+        }
+        return std::nullopt;
     }
 
     std::map<std::string, VoicingStyleEntry<T>>& getRegistry() { return registry; }
@@ -62,4 +78,5 @@ class VoicingStyleRegistry {
 
    private:
     std::map<std::string, VoicingStyleEntry<T>> registry;
+    std::map<const VoicingStyle<T>*, std::string> styleToTypeName;
 };

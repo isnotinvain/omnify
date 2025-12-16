@@ -24,8 +24,8 @@ nlohmann::json OmnifySettings::to_json() const {
 }
 
 OmnifySettings OmnifySettings::from_json(const nlohmann::json& j,
-                                         const VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
-                                         const VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry) {
+                                         VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
+                                         VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry) {
     OmnifySettings settings;
 
     settings.midiDeviceName = j.at("midiDeviceName").get<std::string>();

@@ -14,12 +14,8 @@
   },
   "chordQualitySelectionStyle": {
     "type": "ButtonPerChordQuality",
-    "notes": {},
-    "ccs": {
-      "105": "MAJOR",
-      "106": "MINOR",
-      "107": "DOM_7"
-    }
+    "notes": [],
+    "ccs": [[105, "MAJOR"], [106, "MINOR"], [107, "DOM_7"]]
   },
   "latchButton": {
     "note": -1,

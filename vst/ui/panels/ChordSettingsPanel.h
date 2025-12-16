@@ -4,6 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../LcarsColors.h"
+#include "../components/FromFileView.h"
 #include "../components/MidiLearnComponent.h"
 #include "../components/VariantSelector.h"
 
@@ -35,6 +36,7 @@ class ChordSettingsPanel : public juce::Component {
     VariantSelector voicingStyleSelector;
     std::vector<std::unique_ptr<juce::Component>> voicingStyleViews;
     std::vector<std::string> voicingStyleTypeNames;  // Maps UI index to registry type name
+    FromFileView* fromFileChordView = nullptr;       // Non-owning pointer for updating path
 
     // Latch controls
     juce::Label latchLabel{"", "Latch On / Off"};

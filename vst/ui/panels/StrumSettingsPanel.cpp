@@ -1,7 +1,5 @@
 #include "StrumSettingsPanel.h"
 
-#include <json.hpp>
-
 #include "../../PluginProcessor.h"
 #include "../../datamodel/OmnifySettings.h"
 #include "../LcarsLookAndFeel.h"
@@ -113,14 +111,12 @@ void StrumSettingsPanel::refreshFromSettings() {
     }
     strumPlateCcLearn.setLearnedValue(strumVal);
 
-    // Voicing style selector - find matching index by serializing current style
+    // Voicing style selector - find matching index via registry lookup
     if (settings->strumVoicingStyle) {
-        nlohmann::json j;
-        settings->strumVoicingStyle->to_json(j);
-        if (j.contains("type")) {
-            std::string currentType = j["type"].get<std::string>();
+        auto currentType = processor.getStrumVoicingRegistry().getTypeName(settings->strumVoicingStyle.get());
+        if (currentType) {
             for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
-                if (voicingStyleTypeNames[i] == currentType) {
+                if (voicingStyleTypeNames[i] == *currentType) {
                     voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
                     break;
                 }

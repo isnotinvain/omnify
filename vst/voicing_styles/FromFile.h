@@ -62,6 +62,13 @@ class FromFile : public VoicingStyle<T> {
         return std::make_shared<FromFile<T>>(j.at("path").get<std::string>());
     }
 
+    const std::string& getPath() const { return path; }
+
+    void setPath(const std::string& newPath) {
+        path = newPath;
+        data.reset();  // Clear cached data so it reloads
+    }
+
    private:
     std::string path;
     mutable std::optional<ChordFile> data;

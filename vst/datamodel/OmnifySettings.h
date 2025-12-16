@@ -28,6 +28,6 @@ class OmnifySettings {
     OmnifySettings() = default;
 
     nlohmann::json to_json() const;
-    static OmnifySettings from_json(const nlohmann::json& j, const VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
-                                    const VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry);
+    static OmnifySettings from_json(const nlohmann::json& j, VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
+                                    VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry);
 };
