@@ -1,6 +1,9 @@
 #include "StrumSettingsPanel.h"
 
+#include <json.hpp>
+
 #include "../../PluginProcessor.h"
+#include "../../datamodel/OmnifySettings.h"
 #include "../LcarsLookAndFeel.h"
 
 StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
@@ -17,11 +20,13 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     }
     addAndMakeVisible(channelComboBox);
 
-    // Voicing Style Selector
-    // Note: addVariantNotOwned adds components as children of the VariantSelector,
-    // so we don't addAndMakeVisible them separately
-    voicingStyleSelector.addVariantNotOwned("Plain Ascending", &plainAscendingView);
-    voicingStyleSelector.addVariantNotOwned("Omnichord", &omnichordView);
+    // Voicing Style Selector - iterate registry to build options
+    for (const auto& [typeName, entry] : processor.getStrumVoicingRegistry().getRegistry()) {
+        auto view = std::make_unique<juce::Component>();
+        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get());
+        voicingStyleViews.push_back(std::move(view));
+        voicingStyleTypeNames.push_back(typeName);
+    }
     addAndMakeVisible(voicingStyleSelector);
 
     // Strum Plate CC
@@ -52,51 +57,44 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     cooldownSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
     addAndMakeVisible(cooldownSlider);
 
-    // Set up value bindings
-    setupValueBindings();
+    setupCallbacks();
+    refreshFromSettings();
 }
 
 StrumSettingsPanel::~StrumSettingsPanel() = default;
 
-void StrumSettingsPanel::setupValueBindings() {
-    auto& stateTree = processor.getStateTree();
+void StrumSettingsPanel::setupCallbacks() {
     auto& apvts = processor.getAPVTS();
 
     // MIDI Channel
-    strumChannelValue.referTo(stateTree.getPropertyAsValue("strum_channel", nullptr));
-    channelComboBox.setSelectedId(static_cast<int>(strumChannelValue.getValue()), juce::dontSendNotification);
-    channelComboBox.onChange = [this]() { strumChannelValue.setValue(channelComboBox.getSelectedId()); };
+    channelComboBox.onChange = [this]() {
+        processor.modifySettings([channel = channelComboBox.getSelectedId()](OmnifySettings& s) { s.strumChannel = channel; });
+    };
 
-    // Voicing Style
-    strumVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_strum_voicing_style", nullptr));
-    voicingStyleSelector.bindToValue(strumVoicingStyleValue);
+    // Voicing Style selector
+    voicingStyleSelector.onSelectionChanged = [this](int index) {
+        if (index >= 0 && index < static_cast<int>(voicingStyleTypeNames.size())) {
+            const auto& typeName = voicingStyleTypeNames[static_cast<size_t>(index)];
+            const auto& registry = processor.getStrumVoicingRegistry().getRegistry();
+            auto it = registry.find(typeName);
+            if (it != registry.end()) {
+                processor.modifySettings([style = it->second.style](OmnifySettings& s) { s.strumVoicingStyle = style; });
+            }
+        }
+    };
 
     // Strum Plate CC MIDI learn
-    strumPlateCcTypeValue.referTo(stateTree.getPropertyAsValue("strum_plate_cc_type", nullptr));
-    strumPlateCcNumberValue.referTo(stateTree.getPropertyAsValue("strum_plate_cc_number", nullptr));
-
-    auto updateStrumPlateFromValues = [this]() {
-        auto typeStr = strumPlateCcTypeValue.getValue().toString();
-        int number = static_cast<int>(strumPlateCcNumberValue.getValue());
-        MidiLearnedValue val;
-        if (typeStr == "cc") {
-            val.type = MidiLearnedType::CC;
-            val.value = number;
-        }
-        strumPlateCcLearn.setLearnedValue(val);
-    };
-    updateStrumPlateFromValues();
-
     strumPlateCcLearn.onValueChanged = [this](MidiLearnedValue val) {
-        if (val.type == MidiLearnedType::CC) {
-            strumPlateCcTypeValue.setValue("cc");
-        } else {
-            strumPlateCcTypeValue.setValue("");
-        }
-        strumPlateCcNumberValue.setValue(val.value);
+        processor.modifySettings([val](OmnifySettings& s) {
+            if (val.type == MidiLearnedType::CC) {
+                s.strumPlateCC = val.value;
+            } else {
+                s.strumPlateCC = -1;
+            }
+        });
     };
 
-    // APVTS slider attachments
+    // APVTS slider attachments (these remain as APVTS for real-time automation)
     gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "strum_gate_time_secs", gateSlider);
     cooldownAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "strum_cooldown_secs", cooldownSlider);
 }
@@ -115,7 +113,20 @@ void StrumSettingsPanel::refreshFromSettings() {
     }
     strumPlateCcLearn.setLearnedValue(strumVal);
 
-    // TODO: voicing style selector
+    // Voicing style selector - find matching index by serializing current style
+    if (settings->strumVoicingStyle) {
+        nlohmann::json j;
+        settings->strumVoicingStyle->to_json(j);
+        if (j.contains("type")) {
+            std::string currentType = j["type"].get<std::string>();
+            for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
+                if (voicingStyleTypeNames[i] == currentType) {
+                    voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void StrumSettingsPanel::paint(juce::Graphics& g) {

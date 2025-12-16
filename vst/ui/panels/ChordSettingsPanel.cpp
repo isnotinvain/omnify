@@ -1,7 +1,10 @@
 #include "ChordSettingsPanel.h"
 
-#include "../../GeneratedSettings.h"
+#include <json.hpp>
+
 #include "../../PluginProcessor.h"
+#include "../../datamodel/MidiButton.h"
+#include "../../datamodel/OmnifySettings.h"
 #include "../LcarsLookAndFeel.h"
 
 ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
@@ -18,23 +21,14 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     }
     addAndMakeVisible(channelComboBox);
 
-    // Voicing Style Selector
-    // Note: addVariantNotOwned adds components as children of the VariantSelector,
-    // so we don't addAndMakeVisible them separately
-    voicingStyleSelector.addVariantNotOwned("Root Position", &rootPositionView);
-
-    // Add bundled voicing options (from generated code)
-    for (auto& i : GeneratedSettings::BundledChordVoicings::DISPLAY_NAMES) {
+    // Voicing Style Selector - iterate registry to build options
+    for (const auto& [typeName, entry] : processor.getChordVoicingRegistry().getRegistry()) {
         auto view = std::make_unique<juce::Component>();
-        voicingStyleSelector.addVariantNotOwned(i, view.get());
-        bundledVoicingViews.push_back(std::move(view));
+        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get());
+        voicingStyleViews.push_back(std::move(view));
+        voicingStyleTypeNames.push_back(typeName);
     }
-
-    voicingStyleSelector.addVariantNotOwned("From File", &filePicker);
-    voicingStyleSelector.addVariantNotOwned("Omni-84", &omni84View);
     addAndMakeVisible(voicingStyleSelector);
-
-    filePicker.setFileFilter("*.json");
 
     // Latch controls
     latchLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
@@ -50,91 +44,59 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     addAndMakeVisible(stopLabel);
     addAndMakeVisible(stopButtonLearn);
 
-    // Set up value bindings
-    setupValueBindings();
+    setupCallbacks();
+    refreshFromSettings();
 }
 
 ChordSettingsPanel::~ChordSettingsPanel() = default;
 
-void ChordSettingsPanel::setupValueBindings() {
-    auto& stateTree = processor.getStateTree();
-
+void ChordSettingsPanel::setupCallbacks() {
     // MIDI Channel
-    chordChannelValue.referTo(stateTree.getPropertyAsValue("chord_channel", nullptr));
-    channelComboBox.setSelectedId(static_cast<int>(chordChannelValue.getValue()), juce::dontSendNotification);
-    channelComboBox.onChange = [this]() { chordChannelValue.setValue(channelComboBox.getSelectedId()); };
-
-    // Voicing Style
-    chordVoicingStyleValue.referTo(stateTree.getPropertyAsValue("variant_chord_voicing_style", nullptr));
-    voicingStyleSelector.bindToValue(chordVoicingStyleValue);
-
-    // File path for "From File" variant
-    chordVoicingFilePathValue.referTo(stateTree.getPropertyAsValue("chord_voicing_file", nullptr));
-    filePicker.bindToValue(chordVoicingFilePathValue);
-
-    // Latch toggle MIDI learn
-    latchToggleTypeValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_type", nullptr));
-    latchToggleNumberValue.referTo(stateTree.getPropertyAsValue("latch_toggle_button_number", nullptr));
-
-    auto updateLatchFromValues = [this]() {
-        auto typeStr = latchToggleTypeValue.getValue().toString();
-        int number = static_cast<int>(latchToggleNumberValue.getValue());
-        MidiLearnedValue val;
-        if (typeStr == "note") {
-            val.type = MidiLearnedType::Note;
-            val.value = number;
-        } else if (typeStr == "cc") {
-            val.type = MidiLearnedType::CC;
-            val.value = number;
-        }
-        latchToggleLearn.setLearnedValue(val);
+    channelComboBox.onChange = [this]() {
+        processor.modifySettings([channel = channelComboBox.getSelectedId()](OmnifySettings& s) { s.chordChannel = channel; });
     };
-    updateLatchFromValues();
 
+    // Voicing Style selector
+    voicingStyleSelector.onSelectionChanged = [this](int index) {
+        if (index >= 0 && index < static_cast<int>(voicingStyleTypeNames.size())) {
+            const auto& typeName = voicingStyleTypeNames[static_cast<size_t>(index)];
+            const auto& registry = processor.getChordVoicingRegistry().getRegistry();
+            auto it = registry.find(typeName);
+            if (it != registry.end()) {
+                processor.modifySettings([style = it->second.style](OmnifySettings& s) { s.chordVoicingStyle = style; });
+            }
+        }
+    };
+
+    // Latch button MIDI learn
     latchToggleLearn.onValueChanged = [this](MidiLearnedValue val) {
-        if (val.type == MidiLearnedType::Note) {
-            latchToggleTypeValue.setValue("note");
-        } else if (val.type == MidiLearnedType::CC) {
-            latchToggleTypeValue.setValue("cc");
-        } else {
-            latchToggleTypeValue.setValue("");
-        }
-        latchToggleNumberValue.setValue(val.value);
+        processor.modifySettings([val, isToggle = latchIsToggle.getToggleState()](OmnifySettings& s) {
+            if (val.type == MidiLearnedType::Note) {
+                s.latchButton = MidiButton::fromNote(val.value);
+            } else if (val.type == MidiLearnedType::CC) {
+                s.latchButton = MidiButton::fromCC(val.value, isToggle);
+            } else {
+                s.latchButton = MidiButton{};
+            }
+        });
     };
 
-    // Latch is toggle
-    latchIsToggleValue.referTo(stateTree.getPropertyAsValue("latch_is_toggle", nullptr));
-    latchIsToggle.setToggleState(static_cast<bool>(latchIsToggleValue.getValue()), juce::dontSendNotification);
-    latchIsToggle.onClick = [this]() { latchIsToggleValue.setValue(latchIsToggle.getToggleState()); };
+    // Latch toggle mode
+    latchIsToggle.onClick = [this]() {
+        processor.modifySettings([isToggle = latchIsToggle.getToggleState()](OmnifySettings& s) { s.latchButton.ccIsToggle = isToggle; });
+    };
 
     // Stop button MIDI learn
-    stopButtonTypeValue.referTo(stateTree.getPropertyAsValue("stop_button_type", nullptr));
-    stopButtonNumberValue.referTo(stateTree.getPropertyAsValue("stop_button_number", nullptr));
-
-    auto updateStopFromValues = [this]() {
-        auto typeStr = stopButtonTypeValue.getValue().toString();
-        int number = static_cast<int>(stopButtonNumberValue.getValue());
-        MidiLearnedValue val;
-        if (typeStr == "note") {
-            val.type = MidiLearnedType::Note;
-            val.value = number;
-        } else if (typeStr == "cc") {
-            val.type = MidiLearnedType::CC;
-            val.value = number;
-        }
-        stopButtonLearn.setLearnedValue(val);
-    };
-    updateStopFromValues();
-
     stopButtonLearn.onValueChanged = [this](MidiLearnedValue val) {
-        if (val.type == MidiLearnedType::Note) {
-            stopButtonTypeValue.setValue("note");
-        } else if (val.type == MidiLearnedType::CC) {
-            stopButtonTypeValue.setValue("cc");
-        } else {
-            stopButtonTypeValue.setValue("");
-        }
-        stopButtonNumberValue.setValue(val.value);
+        processor.modifySettings([val](OmnifySettings& s) {
+            if (val.type == MidiLearnedType::Note) {
+                s.stopButton = MidiButton::fromNote(val.value);
+            } else if (val.type == MidiLearnedType::CC) {
+                s.stopButton = MidiButton::fromCC(val.value, false);
+            } else {
+                s.stopButton = MidiButton{};
+            }
+        });
     };
 }
 
@@ -174,7 +136,20 @@ void ChordSettingsPanel::refreshFromSettings() {
     }
     stopButtonLearn.setLearnedValue(stopVal);
 
-    // TODO: voicing style selector
+    // Voicing style selector - find matching index by serializing current style
+    if (settings->chordVoicingStyle) {
+        nlohmann::json j;
+        settings->chordVoicingStyle->to_json(j);
+        if (j.contains("type")) {
+            std::string currentType = j["type"].get<std::string>();
+            for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
+                if (voicingStyleTypeNames[i] == currentType) {
+                    voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void ChordSettingsPanel::resized() {

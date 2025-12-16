@@ -24,9 +24,6 @@ class OmnifyAudioProcessorEditor : public juce::AudioProcessorEditor {
 
     LcarsLookAndFeel lcarsLookAndFeel;
 
-    // Value bindings (must outlive components that reference them)
-    juce::Value midiDeviceValue;
-
     // Top-level components
     MidiDeviceSelectorComponent midiDeviceSelector;
     ChordSettingsPanel chordSettings;

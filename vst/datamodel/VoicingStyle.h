@@ -58,6 +58,7 @@ class VoicingStyleRegistry {
     }
 
     std::map<std::string, VoicingStyleEntry<T>>& getRegistry() { return registry; }
+    const std::map<std::string, VoicingStyleEntry<T>>& getRegistry() const { return registry; }
 
    private:
     std::map<std::string, VoicingStyleEntry<T>> registry;

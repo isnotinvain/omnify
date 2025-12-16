@@ -2,6 +2,7 @@
 
 #include "../../PluginProcessor.h"
 #include "../../datamodel/ChordQualitySelectionStyle.h"
+#include "../../datamodel/OmnifySettings.h"
 #include "../LcarsLookAndFeel.h"
 
 ChordQualityPanel::ChordQualityPanel(OmnifyAudioProcessor& p) : processor(p) {
@@ -22,51 +23,58 @@ ChordQualityPanel::ChordQualityPanel(OmnifyAudioProcessor& p) : processor(p) {
     singleCcContainer.addAndMakeVisible(singleCcLearn);
 
     // Style selector (One Button Each vs One CC for All)
-    // Note: addVariantNotOwned adds components as children of the VariantSelector,
-    // so we don't addAndMakeVisible them separately
     styleSelector.addVariantNotOwned("One Button Each", &qualityGrid);
     styleSelector.addVariantNotOwned("One CC for All", &singleCcContainer);
     addAndMakeVisible(styleSelector);
 
-    // Set up value bindings
-    setupValueBindings();
+    setupCallbacks();
+    refreshFromSettings();
 }
 
 ChordQualityPanel::~ChordQualityPanel() = default;
 
-void ChordQualityPanel::setupValueBindings() {
-    auto& stateTree = processor.getStateTree();
-
-    // Selection style variant
-    chordQualitySelectionStyleValue.referTo(stateTree.getPropertyAsValue("variant_chord_quality_selection_style", nullptr));
-    styleSelector.bindToValue(chordQualitySelectionStyleValue);
-
-    // Quality grid bindings
-    qualityGrid.bindToValueTree(stateTree);
-
-    // Single CC MIDI learn bindings
-    singleCcTypeValue.referTo(stateTree.getPropertyAsValue("chord_quality_cc_type", nullptr));
-    singleCcNumberValue.referTo(stateTree.getPropertyAsValue("chord_quality_cc_number", nullptr));
-
-    auto updateSingleCcFromValues = [this]() {
-        auto typeStr = singleCcTypeValue.getValue().toString();
-        int number = static_cast<int>(singleCcNumberValue.getValue());
-        MidiLearnedValue val;
-        if (typeStr == "cc") {
-            val.type = MidiLearnedType::CC;
-            val.value = number;
-        }
-        singleCcLearn.setLearnedValue(val);
-    };
-    updateSingleCcFromValues();
-
+void ChordQualityPanel::setupCallbacks() {
+    // Single CC MIDI learn callback
     singleCcLearn.onValueChanged = [this](MidiLearnedValue val) {
-        if (val.type == MidiLearnedType::CC) {
-            singleCcTypeValue.setValue("cc");
-        } else {
-            singleCcTypeValue.setValue("");
-        }
-        singleCcNumberValue.setValue(val.value);
+        processor.modifySettings([val](OmnifySettings& s) {
+            if (val.type == MidiLearnedType::CC) {
+                s.chordQualitySelectionStyle = CCRangePerChordQuality{val.value};
+            }
+        });
+    };
+
+    // Quality grid callback for ButtonPerChordQuality
+    qualityGrid.onQualityMidiChanged = [this](ChordQuality quality, MidiLearnedValue val) {
+        processor.modifySettings([quality, val](OmnifySettings& s) {
+            // Ensure we're using ButtonPerChordQuality variant
+            if (!std::holds_alternative<ButtonPerChordQuality>(s.chordQualitySelectionStyle.value)) {
+                s.chordQualitySelectionStyle = ButtonPerChordQuality{};
+            }
+            auto& mapping = std::get<ButtonPerChordQuality>(s.chordQualitySelectionStyle.value);
+
+            // Clear any existing mapping for this quality
+            for (auto it = mapping.notes.begin(); it != mapping.notes.end();) {
+                if (it->second == quality) {
+                    it = mapping.notes.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            for (auto it = mapping.ccs.begin(); it != mapping.ccs.end();) {
+                if (it->second == quality) {
+                    it = mapping.ccs.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+
+            // Add new mapping
+            if (val.type == MidiLearnedType::Note) {
+                mapping.notes[val.value] = quality;
+            } else if (val.type == MidiLearnedType::CC) {
+                mapping.ccs[val.value] = quality;
+            }
+        });
     };
 }
 
@@ -79,7 +87,34 @@ void ChordQualityPanel::refreshFromSettings() {
     styleSelector.setSelectedIndex(variantIndex);
 
     if (std::holds_alternative<ButtonPerChordQuality>(style.value)) {
-        // TODO: refresh qualityGrid from ButtonPerChordQuality
+        const auto& mapping = std::get<ButtonPerChordQuality>(style.value);
+
+        // Refresh each quality's MIDI mapping in the grid
+        for (ChordQuality quality : ALL_CHORD_QUALITIES) {
+            MidiLearnedValue val;
+
+            // Check notes map for this quality
+            for (const auto& [noteNum, q] : mapping.notes) {
+                if (q == quality) {
+                    val.type = MidiLearnedType::Note;
+                    val.value = noteNum;
+                    break;
+                }
+            }
+
+            // Check ccs map for this quality (if not found in notes)
+            if (val.type == MidiLearnedType::None) {
+                for (const auto& [ccNum, q] : mapping.ccs) {
+                    if (q == quality) {
+                        val.type = MidiLearnedType::CC;
+                        val.value = ccNum;
+                        break;
+                    }
+                }
+            }
+
+            qualityGrid.setMidiMapping(quality, val);
+        }
     } else if (std::holds_alternative<CCRangePerChordQuality>(style.value)) {
         const auto& ccRange = std::get<CCRangePerChordQuality>(style.value);
         MidiLearnedValue ccVal;

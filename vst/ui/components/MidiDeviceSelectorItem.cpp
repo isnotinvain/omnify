@@ -1,9 +1,5 @@
 #include "MidiDeviceSelectorItem.h"
 
-//==============================================================================
-// MidiDeviceSelectorComponent
-//==============================================================================
-
 MidiDeviceSelectorComponent::MidiDeviceSelectorComponent() {
     addAndMakeVisible(comboBox);
     addAndMakeVisible(captionLabel);
@@ -14,8 +10,11 @@ MidiDeviceSelectorComponent::MidiDeviceSelectorComponent() {
     comboBox.onChange = [this]() {
         int idx = comboBox.getSelectedItemIndex();
         if (idx >= 0 && idx < deviceNames.size()) {
-            boundValue.setValue(deviceNames[idx]);
-            enableMidiDeviceInStandalone(deviceNames[idx]);
+            currentDeviceName = deviceNames[idx];
+            enableMidiDeviceInStandalone(currentDeviceName);
+            if (onDeviceSelected) {
+                onDeviceSelected(currentDeviceName);
+            }
         }
     };
 
@@ -36,14 +35,26 @@ void MidiDeviceSelectorComponent::resized() {
     comboBox.setBounds(bounds);
 }
 
-void MidiDeviceSelectorComponent::bindToValue(juce::Value& value) {
-    boundValue.referTo(value);
-    updateComboBoxFromValue();
+void MidiDeviceSelectorComponent::setSelectedDevice(const juce::String& deviceName) {
+    currentDeviceName = deviceName;
 
-    // Enable the device in standalone mode on startup
-    juce::String selectedName = boundValue.getValue().toString();
-    if (selectedName.isNotEmpty()) {
-        enableMidiDeviceInStandalone(selectedName);
+    int idx = deviceNames.indexOf(deviceName);
+    if (idx >= 0) {
+        comboBox.setSelectedItemIndex(idx, juce::dontSendNotification);
+    } else if (deviceNames.size() > 0) {
+        if (deviceName.isEmpty()) {
+            // No device selected yet - default to first device
+            comboBox.setSelectedItemIndex(0, juce::dontSendNotification);
+            currentDeviceName = deviceNames[0];
+        } else {
+            // Saved device not found - show placeholder
+            comboBox.setSelectedId(0, juce::dontSendNotification);
+            comboBox.setText(deviceName + " (not found)", juce::dontSendNotification);
+        }
+    }
+
+    if (currentDeviceName.isNotEmpty()) {
+        enableMidiDeviceInStandalone(currentDeviceName);
     }
 }
 
@@ -60,7 +71,7 @@ void MidiDeviceSelectorComponent::refreshDeviceList() {
         deviceNames = newNames;
 
         // Remember current selection
-        juce::String currentSelection = boundValue.getValue().toString();
+        juce::String savedSelection = currentDeviceName;
 
         comboBox.clear(juce::dontSendNotification);
         int id = 1;
@@ -69,7 +80,7 @@ void MidiDeviceSelectorComponent::refreshDeviceList() {
         }
 
         // Restore selection
-        updateComboBoxFromValue();
+        setSelectedDevice(savedSelection);
     }
 }
 
@@ -79,25 +90,6 @@ void MidiDeviceSelectorComponent::timerCallback() { refreshDeviceList(); }
 
 void MidiDeviceSelectorComponent::enableMidiDeviceInStandalone(const juce::String& deviceName) {
     // In standalone mode, the StandaloneFilterWindow handles MIDI device management.
-    // We store the selected device name in the ValueTree, and the standalone app
-    // can read it from there. This component is display-only for plugin mode.
+    // This component is display-only for plugin mode.
     juce::ignoreUnused(deviceName);
-}
-
-void MidiDeviceSelectorComponent::updateComboBoxFromValue() {
-    juce::String selectedName = boundValue.getValue().toString();
-    int idx = deviceNames.indexOf(selectedName);
-    if (idx >= 0) {
-        comboBox.setSelectedItemIndex(idx, juce::dontSendNotification);
-    } else if (deviceNames.size() > 0) {
-        if (selectedName.isEmpty()) {
-            // No device selected yet - default to first device
-            comboBox.setSelectedItemIndex(0, juce::dontSendNotification);
-            boundValue.setValue(deviceNames[0]);
-        } else {
-            // Saved device not found - show placeholder
-            comboBox.setSelectedId(0, juce::dontSendNotification);
-            comboBox.setText(selectedName + " (not found)", juce::dontSendNotification);
-        }
-    }
 }

@@ -20,7 +20,7 @@ class StrumSettingsPanel : public juce::Component {
     void refreshFromSettings();
 
    private:
-    void setupValueBindings();
+    void setupCallbacks();
 
     OmnifyAudioProcessor& processor;
 
@@ -30,19 +30,15 @@ class StrumSettingsPanel : public juce::Component {
     // MIDI Channel
     juce::Label channelLabel{"", "MIDI Channel"};
     juce::ComboBox channelComboBox;
-    juce::Value strumChannelValue;
 
     // Voicing Style
     VariantSelector voicingStyleSelector;
-    juce::Component plainAscendingView;  // Empty placeholder
-    juce::Component omnichordView;       // Empty placeholder
-    juce::Value strumVoicingStyleValue;
+    std::vector<std::unique_ptr<juce::Component>> voicingStyleViews;
+    std::vector<std::string> voicingStyleTypeNames;  // Maps UI index to registry type name
 
     // Strum Plate CC
     juce::Label strumPlateLabel{"", "Strum CC"};
     MidiLearnComponent strumPlateCcLearn;
-    juce::Value strumPlateCcTypeValue;
-    juce::Value strumPlateCcNumberValue;
 
     // Gate and Cooldown sliders
     juce::Slider gateSlider{juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow};

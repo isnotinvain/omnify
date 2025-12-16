@@ -31,10 +31,6 @@ done
 
 echo "Starting compilation..."
 
-# Generate settings code from Python settings
-echo "Generating settings code..."
-uv run python "$SCRIPT_DIR/generate_settings.py"
-
 # Format all C++ files (if requested)
 # Only iterate over .h files - format-cpp.sh will run clang-tidy on the corresponding .cpp if it exists
 if [ "$FORMAT" = true ]; then

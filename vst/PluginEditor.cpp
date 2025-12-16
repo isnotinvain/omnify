@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include "datamodel/OmnifySettings.h"
+
 OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     : AudioProcessorEditor(&p), omnifyProcessor(p), chordSettings(p), strumSettings(p), chordQualityPanel(p) {
     // Apply look and feel to this editor and all children
@@ -11,19 +13,28 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
 
     // MIDI Device Selector
     midiDeviceSelector.setCaption("MIDI Device");
-    midiDeviceValue = omnifyProcessor.getStateTree().getPropertyAsValue("midi_device_name", nullptr);
-    midiDeviceSelector.bindToValue(midiDeviceValue);
+    midiDeviceSelector.onDeviceSelected = [this](const juce::String& deviceName) {
+        omnifyProcessor.modifySettings([deviceName](OmnifySettings& s) { s.midiDeviceName = deviceName.toStdString(); });
+    };
     addAndMakeVisible(midiDeviceSelector);
 
     // Panels
     addAndMakeVisible(chordSettings);
     addAndMakeVisible(strumSettings);
     addAndMakeVisible(chordQualityPanel);
+
+    refreshFromSettings();
 }
 
 OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() { setLookAndFeel(nullptr); }
 
 void OmnifyAudioProcessorEditor::refreshFromSettings() {
+    auto settings = omnifyProcessor.getSettings();
+
+    // MIDI Device
+    midiDeviceSelector.setSelectedDevice(juce::String(settings->midiDeviceName));
+
+    // Panels
     chordSettings.refreshFromSettings();
     strumSettings.refreshFromSettings();
     chordQualityPanel.refreshFromSettings();

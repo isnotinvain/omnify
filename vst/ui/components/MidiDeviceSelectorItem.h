@@ -3,9 +3,10 @@
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <functional>
+
 /**
  * A ComboBox that displays available MIDI input devices.
- * Stores the selected device name in a bound juce::Value.
  */
 class MidiDeviceSelectorComponent : public juce::Component, private juce::Timer {
    public:
@@ -14,8 +15,11 @@ class MidiDeviceSelectorComponent : public juce::Component, private juce::Timer 
 
     void resized() override;
 
-    /** Bind to a Value that stores the selected device name. */
-    void bindToValue(juce::Value& value);
+    /** Callback when a device is selected. */
+    std::function<void(const juce::String& deviceName)> onDeviceSelected;
+
+    /** Set the displayed device name. */
+    void setSelectedDevice(const juce::String& deviceName);
 
     /** Refresh the list of available MIDI devices. */
     void refreshDeviceList();
@@ -25,14 +29,13 @@ class MidiDeviceSelectorComponent : public juce::Component, private juce::Timer 
 
    private:
     void timerCallback() override;
-    void updateComboBoxFromValue();
 
     static void enableMidiDeviceInStandalone(const juce::String& deviceName);
 
     juce::ComboBox comboBox;
     juce::Label captionLabel;
-    juce::Value boundValue;
     juce::StringArray deviceNames;
+    juce::String currentDeviceName;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiDeviceSelectorComponent)
 };

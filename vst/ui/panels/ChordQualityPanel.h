@@ -21,7 +21,7 @@ class ChordQualityPanel : public juce::Component {
     void refreshFromSettings();
 
    private:
-    void setupValueBindings();
+    void setupCallbacks();
 
     OmnifyAudioProcessor& processor;
 
@@ -30,7 +30,6 @@ class ChordQualityPanel : public juce::Component {
 
     // Selection style selector
     VariantSelector styleSelector;
-    juce::Value chordQualitySelectionStyleValue;
 
     // Variant 0: Button per chord quality (grid)
     ChordQualitySelector qualityGrid;
@@ -38,8 +37,6 @@ class ChordQualityPanel : public juce::Component {
     // Variant 1: One CC for all
     juce::Label singleCcLabel{"", "CC for All Qualities"};
     MidiLearnComponent singleCcLearn;
-    juce::Value singleCcTypeValue;
-    juce::Value singleCcNumberValue;
 
     // Container for the single CC variant
     juce::Component singleCcContainer;
