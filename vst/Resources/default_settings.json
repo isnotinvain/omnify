@@ -6,8 +6,7 @@
   "strumGateTimeMs": 500,
   "strumPlateCC": 1,
   "chordVoicingStyle": {
-    "type": "FromFile",
-    "path": "om_108_chord_voicing_offsets.json"
+    "type": "Omnichord"
   },
   "strumVoicingStyle": {
     "type": "Omnichord"
@@ -15,7 +14,20 @@
   "chordQualitySelectionStyle": {
     "type": "ButtonPerChordQuality",
     "notes": [],
-    "ccs": [[105, "MAJOR"], [106, "MINOR"], [107, "DOM_7"]]
+    "ccs": [
+      [
+        105,
+        "MAJOR"
+      ],
+      [
+        106,
+        "MINOR"
+      ],
+      [
+        107,
+        "DOM_7"
+      ]
+    ]
   },
   "latchButton": {
     "note": -1,

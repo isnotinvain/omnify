@@ -146,20 +146,21 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOff(const j
         return std::nullopt;
     }
 
-    if (currentRoot && *currentRoot == msg.getNoteNumber()) {
-        if (!latch) {
-            return stopNotesOfCurrentChord();
-        }
+    if (currentRoot == msg.getNoteNumber() && !latch) {
+        return stopNotesOfCurrentChord();
     }
+
     return std::nullopt;
 }
 
 std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::MidiMessage& msg, const OmnifySettings& s) {
-    if (!msg.isController() || msg.getControllerNumber() != s.strumPlateCC) {
+    if (!(msg.isController() && msg.getControllerNumber() == s.strumPlateCC)) {
         return std::nullopt;
     }
 
     if (!currentChordQuality) {
+        // TODO: Should strums be allowed if no chord is playing?
+        // TODO: (use previous chord?)
         return std::vector<juce::MidiMessage>{};
     }
 
@@ -169,15 +170,14 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
     int strumPlateZone = (msg.getControllerValue() * 13) / 128;
 
     if (lastStrumZone != strumPlateZone || cooldownReady) {
-        juce::uint8 velocity = noteOnEventsOfCurrentChord.empty() ? juce::uint8(100) : noteOnEventsOfCurrentChord[0].getVelocity();
+        auto velocity = noteOnEventsOfCurrentChord[0].getVelocity();
 
         auto strumChord = s.strumVoicingStyle->constructChord(*currentChordQuality, *currentRoot);
         int noteToPlay = strumChord[static_cast<size_t>(strumPlateZone)];
 
         auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, velocity);
 
-        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), now,
-                           static_cast<double>(realtimeParams->strumGateTimeMs.load()));
+        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), now, static_cast<double>(realtimeParams->strumGateTimeMs.load()));
 
         lastStrumTimeMs = now;
         lastStrumZone = strumPlateZone;

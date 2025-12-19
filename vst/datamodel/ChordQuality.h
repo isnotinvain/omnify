@@ -8,10 +8,17 @@
 enum class ChordQuality { MAJOR, MINOR, DOM_7, MAJOR_7, MINOR_7, DIM_7, AUGMENTED, SUS_4, ADD_9 };
 
 struct ChordQualityData {
-    std::string name;      // "MAJOR" - for JSON serialization
-    std::string niceName;  // "Major" - for UI display
+    std::string name;      // matches ChordQuality enum names
+    std::string niceName;  // for UI, eg "Diminished 7th"
     std::string suffix;    // "maj" - for chord notation like "Cmaj"
+
+    // delta from the root note of the chord in it's full form (sometimes more than 3 notes)
     std::vector<int> offsets;
+
+    // The omnichord can only play 3 notes at a time. So for larger chords they choose
+    // which notes to drop. It's always the 5th except add9 drops the 3rd instead.
+    // That's represented here for convenience, triadOffsets is the 3 offsets from offsets
+    // above that are used when making a 3 note version of this chord.
     std::vector<int> triadOffsets;
 };
 

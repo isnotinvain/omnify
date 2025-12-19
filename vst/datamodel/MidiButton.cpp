@@ -8,17 +8,15 @@ MidiButton MidiButton::fromCC(int ccNum, bool toggle) { return MidiButton{-1, cc
 
 std::optional<ButtonAction> MidiButton::handle(const juce::MidiMessage& msg) const {
     // velocity == 0 means note off in some devices
-    if (note >= 0 && msg.isNoteOn() && msg.getVelocity() != 0 && msg.getNoteNumber() == note) {
+    if (msg.isNoteOn() && msg.getNoteNumber() == note && msg.getVelocity() != 0) {
         return ButtonAction::FLIP;
     }
 
-    if (cc >= 0 && msg.isController() && msg.getControllerNumber() == cc) {
+    if (msg.isController() && msg.getControllerNumber() == cc) {
         if (ccIsToggle) {
-            if (msg.getControllerValue() > 63) {
-                return ButtonAction::FLIP;
-            }
-        } else {
             return msg.getControllerValue() > 63 ? ButtonAction::ON : ButtonAction::OFF;
+        } else {
+            return ButtonAction::FLIP;
         }
     }
 

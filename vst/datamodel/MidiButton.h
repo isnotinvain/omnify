@@ -5,13 +5,17 @@
 #include <json.hpp>
 #include <optional>
 
+// FLIP means x = !x, ON / OFF ignore prior state
 enum class ButtonAction { FLIP, ON, OFF };
 
-// Unified MIDI button - can be triggered by note or CC
+// Trigger an event based on a midi note or cc signal
 class MidiButton {
    public:
     int note = -1;
     int cc = -1;
+
+    // for cc pads that send a high signal for on and low signal for off
+    // they are nice because the keyboard will often keep them highlighted while "on"
     bool ccIsToggle = false;
 
     MidiButton() = default;
