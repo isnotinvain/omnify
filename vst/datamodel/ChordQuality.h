@@ -35,3 +35,8 @@ ChordQuality chordQualityFromName(std::string_view name);
 // JSON serialization - serializes to/from the enum name string
 void to_json(nlohmann::json& j, ChordQuality q);
 void from_json(const nlohmann::json& j, ChordQuality& q);
+
+struct Chord {
+    ChordQuality quality;
+    int root;
+};

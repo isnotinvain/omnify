@@ -119,11 +119,10 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
 
     auto events = stopNotesOfCurrentChord();
 
-    currentChordQuality = enqueuedChordQuality;
-    currentRoot = msg.getNoteNumber();
+    currentChord = Chord{enqueuedChordQuality, msg.getNoteNumber()};
 
     std::unordered_set<int> clampedNotes;
-    auto chord = s.chordVoicingStyle->constructChord(*currentChordQuality, *currentRoot);
+    auto chord = s.chordVoicingStyle->constructChord(currentChord->quality, currentChord->root);
 
     for (int note : chord) {
         int clamped = clampNote(note);
@@ -146,7 +145,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOff(const j
         return std::nullopt;
     }
 
-    if (currentRoot == msg.getNoteNumber() && !latch) {
+    if (currentChord && currentChord->root == msg.getNoteNumber() && !latch) {
         return stopNotesOfCurrentChord();
     }
 
@@ -158,7 +157,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
         return std::nullopt;
     }
 
-    if (!currentChordQuality) {
+    if (!currentChord) {
         // TODO: Should strums be allowed if no chord is playing?
         // TODO: (use previous chord?)
         return std::vector<juce::MidiMessage>{};
@@ -172,7 +171,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
     if (lastStrumZone != strumPlateZone || cooldownReady) {
         auto velocity = noteOnEventsOfCurrentChord[0].getVelocity();
 
-        auto strumChord = s.strumVoicingStyle->constructChord(*currentChordQuality, *currentRoot);
+        auto strumChord = s.strumVoicingStyle->constructChord(currentChord->quality, currentChord->root);
         int noteToPlay = strumChord[static_cast<size_t>(strumPlateZone)];
 
         auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, velocity);
@@ -189,8 +188,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
 }
 
 std::vector<juce::MidiMessage> Omnify::stopNotesOfCurrentChord() {
-    currentChordQuality = std::nullopt;
-    currentRoot = std::nullopt;
+    currentChord = std::nullopt;
 
     std::vector<juce::MidiMessage> events;
     events.reserve(noteOnEventsOfCurrentChord.size());

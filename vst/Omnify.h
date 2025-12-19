@@ -33,8 +33,7 @@ class Omnify {
 
     // State
     ChordQuality enqueuedChordQuality = ChordQuality::MAJOR;
-    std::optional<ChordQuality> currentChordQuality;
-    std::optional<int> currentRoot;
+    std::optional<Chord> currentChord;
     std::vector<juce::MidiMessage> noteOnEventsOfCurrentChord;
     double lastStrumTimeMs = 0;
     std::optional<int> lastStrumZone;
