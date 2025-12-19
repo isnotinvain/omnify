@@ -17,11 +17,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(juce::
                                                                           juce::AudioParameterFloat*& strumCooldownParam) {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    auto gateParam = std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_gate_time_ms", 1), "Strum Gate Time", 0.0F, 5000.0F, 500.0F);
+    auto gateParam =
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_gate_time_ms", 1), "Strum Gate Time", 0.0F, 5000.0F, 500.0F);
     strumGateTimeParam = gateParam.get();
     layout.add(std::move(gateParam));
 
-    auto cooldownParam = std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_cooldown_ms", 1), "Strum Cooldown", 0.0F, 5000.0F, 300.0F);
+    auto cooldownParam =
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_cooldown_ms", 1), "Strum Cooldown", 0.0F, 5000.0F, 300.0F);
     strumCooldownParam = cooldownParam.get();
     layout.add(std::move(cooldownParam));
 
@@ -29,7 +31,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(juce::
 }
 }  // namespace
 
-//==============================================================================
 void OmnifyAudioProcessor::initVoicingRegistries() {
     chordVoicingRegistry.registerStyle("RootPosition", std::make_shared<RootPosition>(), RootPosition::from_json);
     chordVoicingRegistry.registerStyle("FromFile", std::make_shared<FromFile<VoicingFor::Chord>>(""), FromFile<VoicingFor::Chord>::from_json);
@@ -71,7 +72,6 @@ OmnifyAudioProcessor::~OmnifyAudioProcessor() {
     parameters.removeParameterListener("strum_cooldown_ms", this);
 }
 
-//==============================================================================
 void OmnifyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) { juce::ignoreUnused(sampleRate, samplesPerBlock); }
 
 void OmnifyAudioProcessor::releaseResources() {}
@@ -80,12 +80,14 @@ void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     juce::ignoreUnused(buffer, midiMessages);
 }
 
-//==============================================================================
 juce::AudioProcessorEditor* OmnifyAudioProcessor::createEditor() { return new OmnifyAudioProcessorEditor(*this); }
 
-//==============================================================================
 void OmnifyAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-    // Save settings to stateTree
+    // Sync realtime params back to settings before saving
+    auto settings = std::atomic_load(&omnifySettings);
+    settings->strumGateTimeMs = realtimeParams->strumGateTimeMs.load();
+    settings->strumCooldownMs = realtimeParams->strumCooldownMs.load();
+
     saveSettingsToValueTree();
 
     // Combine APVTS state and our stateTree
@@ -119,7 +121,6 @@ void OmnifyAudioProcessor::setStateInformation(const void* data, int sizeInBytes
     }
 }
 
-//==============================================================================
 void OmnifyAudioProcessor::modifySettings(std::function<void(OmnifySettings&)> mutator) {
     auto newSettings = std::make_shared<OmnifySettings>(*omnifySettings);
     mutator(*newSettings);
@@ -136,6 +137,23 @@ void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, flo
     }
 }
 
+void OmnifyAudioProcessor::applySettingsFromJson(const juce::String& jsonString) {
+    auto j = nlohmann::json::parse(jsonString.toStdString());
+    auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
+
+    omnify->updateSettings(newSettings, true);
+    std::atomic_store(&omnifySettings, newSettings);
+
+    if (strumGateTimeParam) {
+        strumGateTimeParam->setValueNotifyingHost(strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs)));
+    }
+    if (strumCooldownParam) {
+        strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs)));
+    }
+
+    setMidiInputDevice(juce::String(newSettings->midiDeviceName));
+}
+
 void OmnifyAudioProcessor::loadSettingsFromValueTree() {
     auto jsonString = stateTree.getProperty(SETTINGS_JSON_KEY, "").toString();
     if (jsonString.isEmpty()) {
@@ -143,20 +161,7 @@ void OmnifyAudioProcessor::loadSettingsFromValueTree() {
     }
 
     try {
-        auto j = nlohmann::json::parse(jsonString.toStdString());
-        auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
-
-        omnify->updateSettings(newSettings);
-        std::atomic_store(&omnifySettings, newSettings);
-
-        if (strumGateTimeParam) {
-            strumGateTimeParam->setValueNotifyingHost(strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs)));
-        }
-        if (strumCooldownParam) {
-            strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs)));
-        }
-
-        setMidiInputDevice(juce::String(newSettings->midiDeviceName));
+        applySettingsFromJson(jsonString);
     } catch (const std::exception& e) {
         DBG("Failed to load settings from ValueTree: " << e.what());
     }
@@ -171,19 +176,7 @@ void OmnifyAudioProcessor::saveSettingsToValueTree() {
 void OmnifyAudioProcessor::loadDefaultSettings() {
     try {
         juce::String jsonStr(BinaryData::default_settings_json, BinaryData::default_settings_jsonSize);
-        auto j = nlohmann::json::parse(jsonStr.toStdString());
-        auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
-
-        std::atomic_store(&omnifySettings, newSettings);
-
-        if (strumGateTimeParam) {
-            strumGateTimeParam->setValueNotifyingHost(strumGateTimeParam->convertTo0to1(static_cast<float>(newSettings->strumGateTimeMs)));
-        }
-        if (strumCooldownParam) {
-            strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs)));
-        }
-
-        setMidiInputDevice(juce::String(newSettings->midiDeviceName));
+        applySettingsFromJson(jsonStr);
         saveSettingsToValueTree();
         DBG("Loaded default settings from bundled JSON");
     } catch (const std::exception& e) {

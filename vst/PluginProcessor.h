@@ -73,6 +73,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     void initVoicingRegistries();
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void applySettingsFromJson(const juce::String& jsonString);
     void loadSettingsFromValueTree();
     void saveSettingsToValueTree();
     void loadDefaultSettings();
