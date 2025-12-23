@@ -6,7 +6,8 @@
   "strumGateTimeMs": 500,
   "strumPlateCC": 1,
   "chordVoicingStyle": {
-    "type": "Omnichord"
+    "type": "Omnichord",
+    "relative": true
   },
   "strumVoicingStyle": {
     "type": "Omnichord"
