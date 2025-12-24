@@ -1,11 +1,7 @@
 {
   "files.exclude": {
-    "**/__pycache__": true,
-    "**/.venv": true,
-    "**/.ruff_cache": true,
     "src/build": true,
-    "**/JUCE/**": true,
-    ".pytest_cache": true
+    "**/JUCE/**": true
   },
   "files.associations": {
     "__bit_reference": "cpp",
@@ -62,7 +58,7 @@
     "stack": "cpp",
     "streambuf": "cpp"
   },
-  "cmake.sourceDirectory": "/Users/alexlevenson/Documents/code/daemomnify/src",
+  "cmake.sourceDirectory": "${workspaceFolder}/src",
   "editor.formatOnSave": true,
   "files.watcherExclude": {
     "**/JUCE/**": true
