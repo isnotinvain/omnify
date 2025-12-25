@@ -11,6 +11,10 @@ class OmnichordStrum : public VoicingStyle<VoicingFor::Strum> {
     OmnichordStrum() = default;
 
     std::string displayName() const override { return "Omnichord"; }
+    std::string description() const override {
+        return "Behaves like a real Omnichord. Three 'most important' notes of the chord, using the same inversions as the Omnichord, repeated "
+               "across octaves.";
+    }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         const auto& triad = getChordQualityData(quality).triadOffsets;

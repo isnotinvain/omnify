@@ -8,7 +8,7 @@
 class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
    public:
     // Standard font sizes - use these for consistency across the UI
-    static constexpr float fontSizeTiny = 16.0F;
+    static constexpr float fontSizeTiny = 18.0F;
     static constexpr float fontSizeSmall = 22.0F;
     static constexpr float fontSizeMedium = 26.0F;
     static constexpr float fontSizeLarge = 34.0F;

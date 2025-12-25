@@ -39,6 +39,7 @@ class FromFile : public VoicingStyle<T> {
     explicit FromFile(std::string filePath) : path(std::move(filePath)) {}
 
     std::string displayName() const override { return "File"; }
+    std::string description() const override { return "Load chords from a file. See manual for details."; }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         const ChordFile& chordData = getData();

@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "../LcarsLookAndFeel.h"
+
 VariantSelector::VariantSelector() {
     addAndMakeVisible(comboBox);
 
@@ -23,15 +25,16 @@ VariantSelector::VariantSelector() {
 
 VariantSelector::~VariantSelector() = default;
 
-void VariantSelector::addVariant(const juce::String& caption, juce::Component* component) {
+void VariantSelector::addVariant(const juce::String& caption, juce::Component* component, const juce::String& description) {
     ownedVariants.add(component);
-    addVariantNotOwned(caption, component);
+    addVariantNotOwned(caption, component, description);
 }
 
-void VariantSelector::addVariantNotOwned(const juce::String& caption, juce::Component* component) {
+void VariantSelector::addVariantNotOwned(const juce::String& caption, juce::Component* component, const juce::String& description) {
     int itemId = static_cast<int>(variants.size()) + 1;
     comboBox.addItem(caption, itemId);
     variants.push_back(component);
+    descriptions.push_back(description);
     addChildComponent(component);  // Initially hidden
 
     // If this is the first variant, select it
@@ -77,10 +80,55 @@ void VariantSelector::resized() {
 
     // ComboBox at top
     comboBox.setBounds(bounds.removeFromTop(30));
+    bounds.removeFromTop(8);  // Padding between combo box and description
 
-    // Remaining space for the active variant
+    // Calculate description height
+    int descHeight = 0;
+    if (currentDescription.isNotEmpty()) {
+        if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
+            auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny);
+
+            juce::AttributedString attrStr;
+            attrStr.append(currentDescription, font, LcarsColors::africanViolet);
+            attrStr.setWordWrap(juce::AttributedString::WordWrap::byWord);
+
+            juce::TextLayout layout;
+            layout.createLayout(attrStr, static_cast<float>(bounds.getWidth()));
+            descHeight = static_cast<int>(std::ceil(layout.getHeight())) + 4;
+        } else {
+            descHeight = 40;
+        }
+    }
+    descriptionBounds = bounds.removeFromTop(descHeight);
+
+    // Variant component - check for preferred height property, otherwise use default
+    int variantHeight = 40;
+    auto selectedIndex = static_cast<size_t>(comboBox.getSelectedItemIndex());
+    if (selectedIndex < variants.size()) {
+        auto* activeVariant = variants[selectedIndex];
+        if (activeVariant->getProperties().contains("preferredHeight")) {
+            variantHeight = static_cast<int>(activeVariant->getProperties()["preferredHeight"]);
+        }
+    }
+    auto variantBounds = bounds.removeFromTop(variantHeight);
     for (auto* variant : variants) {
-        variant->setBounds(bounds);
+        variant->setBounds(variantBounds);
+    }
+}
+
+void VariantSelector::paint(juce::Graphics& g) {
+    if (currentDescription.isEmpty()) return;
+
+    if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
+        auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny);
+
+        juce::AttributedString attrStr;
+        attrStr.append(currentDescription, font, LcarsColors::africanViolet);
+        attrStr.setWordWrap(juce::AttributedString::WordWrap::byWord);
+
+        juce::TextLayout layout;
+        layout.createLayout(attrStr, static_cast<float>(descriptionBounds.getWidth()));
+        layout.draw(g, descriptionBounds.toFloat());
     }
 }
 
@@ -89,5 +137,11 @@ void VariantSelector::updateVisibility() {
 
     for (size_t i = 0; i < variants.size(); ++i) {
         variants[i]->setVisible(i == selectedIndex);
+    }
+
+    if (selectedIndex < descriptions.size()) {
+        currentDescription = descriptions[selectedIndex];
+        resized();
+        repaint();
     }
 }

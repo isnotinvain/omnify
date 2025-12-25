@@ -30,6 +30,7 @@ class VoicingStyle {
    public:
     virtual ~VoicingStyle() = default;
     virtual std::string displayName() const = 0;
+    virtual std::string description() const = 0;
     virtual std::vector<int> constructChord(ChordQuality quality, int root) const = 0;
     virtual void to_json(nlohmann::json& j) const = 0;
 };

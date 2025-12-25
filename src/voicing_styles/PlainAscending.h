@@ -10,6 +10,9 @@ class PlainAscending : public VoicingStyle<VoicingFor::Strum> {
     PlainAscending() = default;
 
     std::string displayName() const override { return "Plain Ascending"; }
+    std::string description() const override {
+        return "The three 'most important' notes of the chord, in ascending root-position order, repeating up each octave.";
+    }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         const auto& triad = getChordQualityData(quality).triadOffsets;

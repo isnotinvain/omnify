@@ -15,11 +15,15 @@ class FromFileView : public juce::Component {
     std::function<void(const std::string& newPath)> onPathChanged;
 
     void resized() override;
+    void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& event) override;
 
    private:
     juce::Label pathLabel;
-    juce::TextButton browseButton{"Browse..."};
+    juce::Rectangle<int> browseButtonBounds;
     std::unique_ptr<juce::FileChooser> fileChooser;
+
+    void launchFileBrowser();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FromFileView)
 };

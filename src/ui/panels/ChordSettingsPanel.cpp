@@ -43,7 +43,7 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
         } else {
             view = std::make_unique<juce::Component>();
         }
-        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get());
+        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
         voicingStyleViews.push_back(std::move(view));
         voicingStyleTypeNames.push_back(typeName);
     }
@@ -241,9 +241,8 @@ void ChordSettingsPanel::resized() {
 
     voicingLabel.setBounds(bounds.removeFromTop(24));
     bounds.removeFromTop(4);
-    voicingStyleSelector.setBounds(bounds.removeFromTop(80));
 
-    // Bottom section: 3 rows aligned to bottom
+    // Bottom section: 3 rows aligned to bottom (remove these first so selector gets remaining space)
     // Stop row: label on left, midi learn on right
     auto stopRowBounds = bounds.removeFromBottom(40);
     stopButtonLearn.setBounds(stopRowBounds.removeFromRight(130));
@@ -260,4 +259,8 @@ void ChordSettingsPanel::resized() {
     auto latchRowBounds = bounds.removeFromBottom(40);
     latchToggleLearn.setBounds(latchRowBounds.removeFromRight(130));
     latchLabel.setBounds(latchRowBounds);
+    bounds.removeFromBottom(4);
+
+    // Voicing selector gets remaining middle space
+    voicingStyleSelector.setBounds(bounds);
 }

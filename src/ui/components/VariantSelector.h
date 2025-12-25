@@ -9,11 +9,11 @@ class VariantSelector : public juce::Component, private juce::Value::Listener {
     VariantSelector();
     ~VariantSelector() override;
 
-    // Add a variant with a caption. The component will be owned by this selector.
-    void addVariant(const juce::String& caption, juce::Component* component);
+    // Add a variant with a caption and optional description. The component will be owned by this selector.
+    void addVariant(const juce::String& caption, juce::Component* component, const juce::String& description = {});
 
-    // Add a variant with a caption. Caller retains ownership.
-    void addVariantNotOwned(const juce::String& caption, juce::Component* component);
+    // Add a variant with a caption and optional description. Caller retains ownership.
+    void addVariantNotOwned(const juce::String& caption, juce::Component* component, const juce::String& description = {});
 
     int getSelectedIndex() const;
     void setSelectedIndex(int index, juce::NotificationType notification = juce::sendNotification);
@@ -25,11 +25,15 @@ class VariantSelector : public juce::Component, private juce::Value::Listener {
     std::function<void(int)> onSelectionChanged;
 
     void resized() override;
+    void paint(juce::Graphics& g) override;
 
    private:
     juce::ComboBox comboBox;
+    juce::Rectangle<int> descriptionBounds;
+    juce::String currentDescription;
     juce::OwnedArray<juce::Component> ownedVariants;
     std::vector<juce::Component*> variants;  // All variants (owned or not)
+    std::vector<juce::String> descriptions;
     juce::Value boundValue;
 
     void updateVisibility();

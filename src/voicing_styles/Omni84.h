@@ -17,6 +17,9 @@ class Omni84 : public VoicingStyle<VoicingFor::Chord> {
     Omni84() = default;
 
     std::string displayName() const override { return "Omni-84"; }
+    std::string description() const override {
+        return "Outputs only a single root note, octave shifted to match what Omni-84 expects for the current chord quality.";
+    }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         int pitchClass = root % 12;

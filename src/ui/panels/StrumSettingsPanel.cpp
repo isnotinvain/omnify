@@ -25,7 +25,7 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Voicing Style Selector - iterate registry to build options
     for (const auto& [typeName, entry] : processor.getStrumVoicingRegistry().getRegistry()) {
         auto view = std::make_unique<juce::Component>();
-        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get());
+        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
         voicingStyleViews.push_back(std::move(view));
         voicingStyleTypeNames.push_back(typeName);
     }
@@ -151,9 +151,8 @@ void StrumSettingsPanel::resized() {
 
     voicingLabel.setBounds(bounds.removeFromTop(24));
     bounds.removeFromTop(8);
-    voicingStyleSelector.setBounds(bounds.removeFromTop(60));
 
-    // Bottom section: 3 rows aligned to bottom
+    // Bottom section: 3 rows aligned to bottom (remove these first so selector gets remaining space)
     // Cooldown row
     auto cooldownRowBounds = bounds.removeFromBottom(40);
     cooldownSlider.setBounds(cooldownRowBounds.removeFromRight(120));
@@ -170,4 +169,8 @@ void StrumSettingsPanel::resized() {
     auto strumCcRowBounds = bounds.removeFromBottom(40);
     strumPlateCcLearn.setBounds(strumCcRowBounds.removeFromRight(120));
     strumPlateLabel.setBounds(strumCcRowBounds);
+    bounds.removeFromBottom(4);
+
+    // Voicing selector gets remaining middle space
+    voicingStyleSelector.setBounds(bounds);
 }

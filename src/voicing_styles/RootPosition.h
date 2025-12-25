@@ -10,6 +10,7 @@ class RootPosition : public VoicingStyle<VoicingFor::Chord> {
     RootPosition() = default;
 
     std::string displayName() const override { return "Root Position"; }
+    std::string description() const override { return "All notes of the chord, in root position."; }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         const auto& offsets = getChordQualityData(quality).offsets;
