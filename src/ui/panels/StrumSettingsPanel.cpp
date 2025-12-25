@@ -32,31 +32,23 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     addAndMakeVisible(voicingStyleSelector);
 
     // Strum Plate CC
-    strumPlateLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
+    strumPlateLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    strumPlateLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(strumPlateLabel);
 
     strumPlateCcLearn.setAcceptMode(MidiAcceptMode::CCsOnly);
     addAndMakeVisible(strumPlateCcLearn);
 
     // Sliders
-    gateLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
-    gateLabel.setJustificationType(juce::Justification::centred);
+    gateLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    gateLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(gateLabel);
-
-    cooldownLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
-    cooldownLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(cooldownLabel);
-
-    gateSlider.setColour(juce::Slider::thumbColourId, LcarsColors::orange);
-    gateSlider.setColour(juce::Slider::rotarySliderFillColourId, LcarsColors::moonlitViolet);
-    gateSlider.setColour(juce::Slider::rotarySliderOutlineColourId, LcarsColors::africanViolet);
-    gateSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
     addAndMakeVisible(gateSlider);
 
-    cooldownSlider.setColour(juce::Slider::thumbColourId, LcarsColors::orange);
-    cooldownSlider.setColour(juce::Slider::rotarySliderFillColourId, LcarsColors::moonlitViolet);
-    cooldownSlider.setColour(juce::Slider::rotarySliderOutlineColourId, LcarsColors::africanViolet);
-    cooldownSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    cooldownLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    cooldownLabel.setJustificationType(juce::Justification::centredLeft);
+    cooldownLabel.setMinimumHorizontalScale(1.0F);
+    addAndMakeVisible(cooldownLabel);
     addAndMakeVisible(cooldownSlider);
 
     setupCallbacks();
@@ -160,22 +152,22 @@ void StrumSettingsPanel::resized() {
     voicingLabel.setBounds(bounds.removeFromTop(24));
     bounds.removeFromTop(8);
     voicingStyleSelector.setBounds(bounds.removeFromTop(60));
-    bounds.removeFromTop(8);
 
-    strumPlateLabel.setBounds(bounds.removeFromTop(20));
-    bounds.removeFromTop(4);
-    strumPlateCcLearn.setBounds(bounds.removeFromTop(40));
-    bounds.removeFromTop(8);
+    // Bottom section: 3 rows aligned to bottom
+    // Cooldown row
+    auto cooldownRowBounds = bounds.removeFromBottom(40);
+    cooldownSlider.setBounds(cooldownRowBounds.removeFromRight(120));
+    cooldownLabel.setBounds(cooldownRowBounds);
+    bounds.removeFromBottom(4);
 
-    // Sliders side by side
-    auto sliderArea = bounds;
-    int sliderWidth = sliderArea.getWidth() / 2;
+    // Gate row
+    auto gateRowBounds = bounds.removeFromBottom(40);
+    gateSlider.setBounds(gateRowBounds.removeFromRight(120));
+    gateLabel.setBounds(gateRowBounds);
+    bounds.removeFromBottom(4);
 
-    auto gateArea = sliderArea.removeFromLeft(sliderWidth);
-    gateLabel.setBounds(gateArea.removeFromTop(20));
-    gateSlider.setBounds(gateArea);
-
-    auto cooldownArea = sliderArea;
-    cooldownLabel.setBounds(cooldownArea.removeFromTop(20));
-    cooldownSlider.setBounds(cooldownArea);
+    // Strum CC row
+    auto strumCcRowBounds = bounds.removeFromBottom(40);
+    strumPlateCcLearn.setBounds(strumCcRowBounds.removeFromRight(120));
+    strumPlateLabel.setBounds(strumCcRowBounds);
 }

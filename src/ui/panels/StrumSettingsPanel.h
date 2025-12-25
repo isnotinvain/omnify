@@ -42,8 +42,8 @@ class StrumSettingsPanel : public juce::Component {
     MidiLearnComponent strumPlateCcLearn;
 
     // Gate and Cooldown sliders
-    juce::Slider gateSlider{juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow};
-    juce::Slider cooldownSlider{juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow};
+    juce::Slider gateSlider{juce::Slider::LinearBar, juce::Slider::NoTextBox};
+    juce::Slider cooldownSlider{juce::Slider::LinearBar, juce::Slider::NoTextBox};
     juce::Label gateLabel{"", "Gate"};
     juce::Label cooldownLabel{"", "Cooldown"};
 

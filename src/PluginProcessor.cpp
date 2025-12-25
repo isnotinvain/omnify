@@ -18,12 +18,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(juce::
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     auto gateParam =
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_gate_time_ms", 1), "Strum Gate Time", 0.0F, 5000.0F, 500.0F);
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_gate_time_ms", 1), "Strum Gate Time", 0.0F, 2000.0F, 500.0F);
     strumGateTimeParam = gateParam.get();
     layout.add(std::move(gateParam));
 
     auto cooldownParam =
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_cooldown_ms", 1), "Strum Cooldown", 0.0F, 5000.0F, 300.0F);
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("strum_cooldown_ms", 1), "Strum Cooldown", 0.0F, 2000.0F, 300.0F);
     strumCooldownParam = cooldownParam.get();
     layout.add(std::move(cooldownParam));
 

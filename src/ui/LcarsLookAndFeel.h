@@ -8,6 +8,7 @@
 class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
    public:
     // Standard font sizes - use these for consistency across the UI
+    static constexpr float fontSizeTiny = 16.0F;
     static constexpr float fontSizeSmall = 22.0F;
     static constexpr float fontSizeMedium = 26.0F;
     static constexpr float fontSizeLarge = 34.0F;
@@ -22,9 +23,7 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
     // Property ID for custom combo box font size
     static inline const juce::Identifier comboBoxFontSizeId{"LcarsFontSize"};
 
-    static void setComboBoxFontSize(juce::ComboBox& box, float fontSize) {
-        box.getProperties().set(comboBoxFontSizeId, fontSize);
-    }
+    static void setComboBoxFontSize(juce::ComboBox& box, float fontSize) { box.getProperties().set(comboBoxFontSizeId, fontSize); }
 
     LcarsLookAndFeel() {
         orbitronTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::OrbitronRegular_ttf, BinaryData::OrbitronRegular_ttfSize);
@@ -127,8 +126,8 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         g.drawRoundedRectangle(bounds.reduced(0.5F), borderRadius, 1.0F);
     }
 
-    void drawPopupMenuItemWithOptions(juce::Graphics& g, const juce::Rectangle<int>& area, bool isHighlighted,
-                                       const juce::PopupMenu::Item& item, const juce::PopupMenu::Options& options) override {
+    void drawPopupMenuItemWithOptions(juce::Graphics& g, const juce::Rectangle<int>& area, bool isHighlighted, const juce::PopupMenu::Item& item,
+                                      const juce::PopupMenu::Options& options) override {
         if (item.isSeparator) {
             auto r = area.reduced(5, 0).toFloat();
             r.removeFromTop(juce::roundToInt((r.getHeight() * 0.5F) - 0.5F));
@@ -225,6 +224,41 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         g.setColour(textColour);
 
         g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, false);
+    }
+
+    void drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float /*minSliderPos*/, float /*maxSliderPos*/,
+                          juce::Slider::SliderStyle style, juce::Slider& slider) override {
+        if (style != juce::Slider::LinearBar && style != juce::Slider::LinearBarVertical) {
+            LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, 0, 0, style, slider);
+            return;
+        }
+
+        auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y), static_cast<float>(width), static_cast<float>(height));
+        const float radius = bounds.getHeight() * 0.5F;
+        const float borderThickness = 1.0F;
+
+        // Background (red fill for empty space)
+        g.setColour(LcarsColors::orange);
+        g.fillRoundedRectangle(bounds, radius);
+
+        // Fill representing value - use clipping to sweep a rectangular mask across the capsule
+        float fillWidth = sliderPos - static_cast<float>(x);
+        if (fillWidth > 0) {
+            juce::Graphics::ScopedSaveState saveState(g);
+            g.reduceClipRegion(static_cast<int>(bounds.getX()), static_cast<int>(bounds.getY()), static_cast<int>(fillWidth),
+                               static_cast<int>(bounds.getHeight()));
+            g.setColour(LcarsColors::red);
+            g.fillRoundedRectangle(bounds.reduced(borderThickness), radius);
+        }
+
+        // Border (full extent)
+        g.setColour(LcarsColors::orange);
+        g.drawRoundedRectangle(bounds.reduced(borderThickness * 0.5F), radius, borderThickness);
+
+        // Value text centered inside
+        g.setColour(juce::Colours::black);
+        g.setFont(getOrbitronFont(fontSizeSmall));
+        g.drawText(juce::String(juce::roundToInt(slider.getValue())), bounds.toNearestInt(), juce::Justification::centred, false);
     }
 
     void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool /*shouldDrawButtonAsHighlighted*/,
