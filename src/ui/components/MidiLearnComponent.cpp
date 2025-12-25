@@ -80,7 +80,7 @@ juce::String MidiLearnComponent::getDisplayText() const {
     if (type == MidiLearnedType::Note) {
         return noteNumberToName(value);
     }
-    return "CC" + juce::String(value);
+    return "CC " + juce::String(value);
 }
 
 void MidiLearnComponent::paint(juce::Graphics& g) {

@@ -28,7 +28,7 @@ class StrumSettingsPanel : public juce::Component {
     juce::Label titleLabel{"", "Strum"};
 
     // MIDI Channel
-    juce::Label channelLabel{"", "MIDI Channel"};
+    juce::Label channelLabel{"", "Midi Channel"};
     juce::ComboBox channelComboBox;
 
     // Voicing Style

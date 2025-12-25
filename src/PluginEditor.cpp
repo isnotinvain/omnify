@@ -75,7 +75,7 @@ void OmnifyAudioProcessorEditor::resized() {
     juce::FlexBox fb;
     fb.flexDirection = juce::FlexBox::Direction::row;
     fb.items.add(juce::FlexItem(chordSettings).withFlex(1.0F).withMargin(3));
-    fb.items.add(juce::FlexItem(strumSettings).withFlex(1.0F).withMargin(3));
     fb.items.add(juce::FlexItem(chordQualityPanel).withFlex(1.0F).withMargin(3));
+    fb.items.add(juce::FlexItem(strumSettings).withFlex(1.0F).withMargin(3));
     fb.performLayout(bounds);
 }

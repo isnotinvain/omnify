@@ -59,6 +59,8 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     toggleLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(toggleLabel);
     latchIsToggle.setColour(juce::ToggleButton::tickColourId, LcarsColors::orange);
+    latchIsToggle.getProperties().set("onText", "Toggle");
+    latchIsToggle.getProperties().set("offText", "Momentary");
     addAndMakeVisible(latchIsToggle);
 
     // Stop button
@@ -244,18 +246,18 @@ void ChordSettingsPanel::resized() {
     // Bottom section: 3 rows aligned to bottom
     // Stop row: label on left, midi learn on right
     auto stopRowBounds = bounds.removeFromBottom(40);
-    stopButtonLearn.setBounds(stopRowBounds.removeFromRight(120));
+    stopButtonLearn.setBounds(stopRowBounds.removeFromRight(130));
     stopLabel.setBounds(stopRowBounds);
     bounds.removeFromBottom(4);
 
     // Toggle row: label on left, checkbox on right
     auto toggleRowBounds = bounds.removeFromBottom(40);
-    latchIsToggle.setBounds(toggleRowBounds.removeFromRight(120));
+    latchIsToggle.setBounds(toggleRowBounds.removeFromRight(130));
     toggleLabel.setBounds(toggleRowBounds);
     bounds.removeFromBottom(4);
 
     // Latch row: label on left, midi learn on right
     auto latchRowBounds = bounds.removeFromBottom(40);
-    latchToggleLearn.setBounds(latchRowBounds.removeFromRight(120));
+    latchToggleLearn.setBounds(latchRowBounds.removeFromRight(130));
     latchLabel.setBounds(latchRowBounds);
 }

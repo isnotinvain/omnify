@@ -241,9 +241,11 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         g.setColour(button.findColour(juce::ToggleButton::tickColourId));
         g.drawRoundedRectangle(bounds, radius, borderThickness);
 
-        // Text - show On/Off based on state
+        // Text - show on/off text based on state (customizable via properties)
+        auto onText = button.getProperties().getWithDefault("onText", "On").toString();
+        auto offText = button.getProperties().getWithDefault("offText", "Off").toString();
         g.setColour(button.findColour(juce::ToggleButton::tickColourId));
         g.setFont(getOrbitronFont(fontSizeSmall));
-        g.drawText(button.getToggleState() ? "On" : "Off", bounds.toNearestInt(), juce::Justification::centred);
+        g.drawText(button.getToggleState() ? onText : offText, bounds.toNearestInt(), juce::Justification::centred);
     }
 };

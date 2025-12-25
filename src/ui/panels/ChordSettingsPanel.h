@@ -29,7 +29,7 @@ class ChordSettingsPanel : public juce::Component {
     juce::Label titleLabel{"", "Chords"};
 
     // MIDI Channel
-    juce::Label channelLabel{"", "MIDI Channel"};
+    juce::Label channelLabel{"", "Midi Channel"};
     juce::ComboBox channelComboBox;
 
     // Voicing Style
@@ -40,13 +40,13 @@ class ChordSettingsPanel : public juce::Component {
     FromFileView* fromFileChordView = nullptr;       // Non-owning pointer for updating path
 
     // Latch controls
-    juce::Label latchLabel{"", "Latch On / Off"};
+    juce::Label latchLabel{"", "Latch"};
     MidiLearnComponent latchToggleLearn;
-    juce::Label toggleLabel{"", "Toggle Mode"};
+    juce::Label toggleLabel{"", "Latch Mode"};
     juce::ToggleButton latchIsToggle;
 
     // Stop button
-    juce::Label stopLabel{"", "Stop Chords"};
+    juce::Label stopLabel{"", "Stop All"};
     MidiLearnComponent stopButtonLearn;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordSettingsPanel)
