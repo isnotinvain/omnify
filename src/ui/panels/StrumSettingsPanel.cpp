@@ -11,6 +11,7 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
 
     // MIDI Channel
     channelLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    channelLabel.setJustificationType(juce::Justification::bottomLeft);
     addAndMakeVisible(channelLabel);
 
     for (int i = 1; i <= 16; ++i) {
@@ -125,6 +126,10 @@ void StrumSettingsPanel::refreshFromSettings() {
 void StrumSettingsPanel::paint(juce::Graphics& g) {
     g.setColour(LcarsColors::africanViolet);
     g.drawRoundedRectangle(getLocalBounds().toFloat(), LcarsLookAndFeel::borderRadius, 1.0F);
+
+    // Separator line between Midi Channel and Voicing
+    g.setColour(LcarsColors::africanViolet);
+    g.drawHorizontalLine(separatorY, 10.0F, static_cast<float>(getWidth() - 10));
 }
 
 void StrumSettingsPanel::resized() {
@@ -150,8 +155,11 @@ void StrumSettingsPanel::resized() {
     channelComboBox.setBounds(channelRowBounds);
     bounds.removeFromTop(4);
 
+    separatorY = bounds.getY();
+    bounds.removeFromTop(5);
+
     voicingLabel.setBounds(bounds.removeFromTop(24));
-    bounds.removeFromTop(8);
+    bounds.removeFromTop(4);
 
     // Bottom section: 3 rows aligned to bottom (remove these first so selector gets remaining space)
     // Cooldown row

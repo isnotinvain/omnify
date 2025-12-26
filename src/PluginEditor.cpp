@@ -7,7 +7,7 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     : AudioProcessorEditor(&p), omnifyProcessor(p), chordSettings(p), strumSettings(p), chordQualityPanel(p) {
     // Disable resizing
     setResizable(false, false);
-    setSize(900, 600);
+    setSize(900, 610);
 
     // Title
     titleLabel.setText("OMNIFY", juce::dontSendNotification);

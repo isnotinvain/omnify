@@ -14,6 +14,7 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
 
     // MIDI Channel
     channelLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    channelLabel.setJustificationType(juce::Justification::bottomLeft);
     addAndMakeVisible(channelLabel);
 
     for (int i = 1; i <= 16; ++i) {
@@ -129,6 +130,10 @@ void ChordSettingsPanel::setupCallbacks() {
 void ChordSettingsPanel::paint(juce::Graphics& g) {
     g.setColour(LcarsColors::africanViolet);
     g.drawRoundedRectangle(getLocalBounds().toFloat(), LcarsLookAndFeel::borderRadius, 1.0F);
+
+    // Separator line between Midi Channel and Voicing
+    g.setColour(LcarsColors::africanViolet);
+    g.drawHorizontalLine(separatorY, 10.0F, static_cast<float>(getWidth() - 10));
 }
 
 void ChordSettingsPanel::refreshFromSettings() {
@@ -239,6 +244,9 @@ void ChordSettingsPanel::resized() {
     channelLabel.setBounds(channelRowBounds.removeFromLeft(channelRowBounds.getWidth() - 80));
     channelComboBox.setBounds(channelRowBounds);
     bounds.removeFromTop(4);
+
+    separatorY = bounds.getY();
+    bounds.removeFromTop(5);
 
     voicingLabel.setBounds(bounds.removeFromTop(24));
     bounds.removeFromTop(4);

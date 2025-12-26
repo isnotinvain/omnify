@@ -50,5 +50,8 @@ class StrumSettingsPanel : public juce::Component {
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gateAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> cooldownAttachment;
 
+    // Separator line position
+    int separatorY = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StrumSettingsPanel)
 };

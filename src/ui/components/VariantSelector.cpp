@@ -108,7 +108,8 @@ void VariantSelector::resized() {
         auto* activeVariant = variants[selectedIndex];
         if (activeVariant->getProperties().contains("preferredHeight")) {
             int variantHeight = static_cast<int>(activeVariant->getProperties()["preferredHeight"]);
-            variantBounds = bounds.removeFromBottom(variantHeight);
+            bool topAlign = static_cast<bool>(activeVariant->getProperties().getWithDefault("topAlign", false));
+            variantBounds = topAlign ? bounds.removeFromTop(variantHeight) : bounds.removeFromBottom(variantHeight);
         }
     }
     for (auto* variant : variants) {

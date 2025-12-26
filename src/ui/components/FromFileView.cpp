@@ -4,6 +4,7 @@
 
 FromFileView::FromFileView() {
     getProperties().set("preferredHeight", LcarsLookAndFeel::rowHeight);
+    getProperties().set("topAlign", true);
 
     pathLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
     pathLabel.setJustificationType(juce::Justification::centredLeft);

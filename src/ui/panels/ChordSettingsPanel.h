@@ -49,5 +49,8 @@ class ChordSettingsPanel : public juce::Component {
     juce::Label stopLabel{"", "Stop All"};
     MidiLearnComponent stopButtonLearn;
 
+    // Separator line position
+    int separatorY = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordSettingsPanel)
 };
