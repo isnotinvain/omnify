@@ -7,9 +7,11 @@
 #include "voicing_styles/FromFile.h"
 #include "voicing_styles/Omni84.h"
 #include "voicing_styles/OmnichordChords.h"
+#include "voicing_styles/OmnichordSmoothVoiced.h"
 #include "voicing_styles/OmnichordStrum.h"
 #include "voicing_styles/PlainAscending.h"
 #include "voicing_styles/RootPosition.h"
+#include "voicing_styles/SmoothVoiced.h"
 
 namespace {
 // Create the minimal APVTS layout with just 2 realtime params
@@ -37,6 +39,8 @@ void OmnifyAudioProcessor::initVoicingRegistries() {
     chordVoicingRegistry.registerStyle("Omnichord", std::make_shared<OmnichordChords>(), OmnichordChords::from_json);
 
     chordVoicingRegistry.registerStyle("Omni84", std::make_shared<Omni84>(), Omni84::from_json);
+    chordVoicingRegistry.registerStyle("SmoothVoiced", std::make_shared<SmoothVoiced>(), SmoothVoiced::from_json);
+    chordVoicingRegistry.registerStyle("OmnichordSmoothVoiced", std::make_shared<OmnichordSmoothVoiced>(), OmnichordSmoothVoiced::from_json);
 
     strumVoicingRegistry.registerStyle("PlainAscending", std::make_shared<PlainAscending>(), PlainAscending::from_json);
     strumVoicingRegistry.registerStyle("Omnichord", std::make_shared<OmnichordStrum>(), OmnichordStrum::from_json);
