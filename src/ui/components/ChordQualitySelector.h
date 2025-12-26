@@ -25,7 +25,6 @@ class ChordQualitySelector : public juce::Component {
 
     // Styling
     void setLabelColor(juce::Colour color);
-    void setMidiLearnAspectRatio(float ratio);
 
     void resized() override;
 
@@ -37,7 +36,6 @@ class ChordQualitySelector : public juce::Component {
     std::array<Row, NUM_QUALITIES> rows;
 
     juce::Colour labelColor = LcarsColors::orange;
-    float midiLearnAspectRatio = 2.0f;
     int rowSpacing = 2;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordQualitySelector)

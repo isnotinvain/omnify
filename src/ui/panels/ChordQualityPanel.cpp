@@ -13,17 +13,20 @@ ChordQualityPanel::ChordQualityPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Quality grid (configure before adding to selector)
     // Font size will be set in resized() after LookAndFeel is available
     qualityGrid.setLabelColor(LcarsColors::africanViolet);
-    qualityGrid.setMidiLearnAspectRatio(2.0F);
 
     // Single CC container (configure before adding to selector)
     singleCcContainer.label.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
     singleCcContainer.label.setJustificationType(juce::Justification::centredLeft);
     singleCcContainer.midiLearn.setAcceptMode(MidiAcceptMode::CCsOnly);
-    singleCcContainer.getProperties().set("preferredHeight", 40);
+    singleCcContainer.getProperties().set("preferredHeight", LcarsLookAndFeel::rowHeight);
 
     // Style selector (One Button Each vs One CC for All)
-    styleSelector.addVariantNotOwned("One Button Each", &qualityGrid);
-    styleSelector.addVariantNotOwned("One CC for All", &singleCcContainer);
+    styleSelector.addVariantNotOwned("One Button Each", &qualityGrid, "Click the capsules to midi learn a note or cc.");
+    styleSelector.addVariantNotOwned(
+        "One CC for All", &singleCcContainer,
+        "Click the capsule to midi learn a cc.\n\nThis cc will have its range split evenly among the 9 chord "
+        "qualities:\n\nMajor: [ 0 - 14 ]\nMinor: [ 15 - 28 ]\nDom 7: [ 29 - 42 ]\nMajor 7: [ 43 - 56 ]\nMinor 7: [ 57 - 71 ]\n"
+        "Dim 7: [ 72 - 85 ]\nAugmented: [ 86 - 99 ]\nSus 4: [ 100 - 113 ]\nAdd 9: [ 114 - 127 ]");
     addAndMakeVisible(styleSelector);
 
     setupCallbacks();

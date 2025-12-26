@@ -245,20 +245,20 @@ void ChordSettingsPanel::resized() {
 
     // Bottom section: 3 rows aligned to bottom (remove these first so selector gets remaining space)
     // Stop row: label on left, midi learn on right
-    auto stopRowBounds = bounds.removeFromBottom(40);
-    stopButtonLearn.setBounds(stopRowBounds.removeFromRight(130));
+    auto stopRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    stopButtonLearn.setBounds(stopRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     stopLabel.setBounds(stopRowBounds);
     bounds.removeFromBottom(4);
 
     // Toggle row: label on left, checkbox on right
-    auto toggleRowBounds = bounds.removeFromBottom(40);
-    latchIsToggle.setBounds(toggleRowBounds.removeFromRight(130));
+    auto toggleRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    latchIsToggle.setBounds(toggleRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     toggleLabel.setBounds(toggleRowBounds);
     bounds.removeFromBottom(4);
 
     // Latch row: label on left, midi learn on right
-    auto latchRowBounds = bounds.removeFromBottom(40);
-    latchToggleLearn.setBounds(latchRowBounds.removeFromRight(130));
+    auto latchRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    latchToggleLearn.setBounds(latchRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     latchLabel.setBounds(latchRowBounds);
     bounds.removeFromBottom(4);
 

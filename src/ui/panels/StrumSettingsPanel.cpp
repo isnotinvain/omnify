@@ -155,20 +155,20 @@ void StrumSettingsPanel::resized() {
 
     // Bottom section: 3 rows aligned to bottom (remove these first so selector gets remaining space)
     // Cooldown row
-    auto cooldownRowBounds = bounds.removeFromBottom(40);
-    cooldownSlider.setBounds(cooldownRowBounds.removeFromRight(120));
+    auto cooldownRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    cooldownSlider.setBounds(cooldownRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     cooldownLabel.setBounds(cooldownRowBounds);
     bounds.removeFromBottom(4);
 
     // Gate row
-    auto gateRowBounds = bounds.removeFromBottom(40);
-    gateSlider.setBounds(gateRowBounds.removeFromRight(120));
+    auto gateRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    gateSlider.setBounds(gateRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     gateLabel.setBounds(gateRowBounds);
     bounds.removeFromBottom(4);
 
     // Strum CC row
-    auto strumCcRowBounds = bounds.removeFromBottom(40);
-    strumPlateCcLearn.setBounds(strumCcRowBounds.removeFromRight(120));
+    auto strumCcRowBounds = bounds.removeFromBottom(LcarsLookAndFeel::rowHeight);
+    strumPlateCcLearn.setBounds(strumCcRowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
     strumPlateLabel.setBounds(strumCcRowBounds);
     bounds.removeFromBottom(4);
 

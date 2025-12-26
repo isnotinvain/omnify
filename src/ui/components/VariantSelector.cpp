@@ -89,7 +89,7 @@ void VariantSelector::resized() {
             auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny);
 
             juce::AttributedString attrStr;
-            attrStr.append(currentDescription, font, LcarsColors::africanViolet);
+            attrStr.append(currentDescription, font, LcarsColors::red);
             attrStr.setWordWrap(juce::AttributedString::WordWrap::byWord);
 
             juce::TextLayout layout;
@@ -108,7 +108,7 @@ void VariantSelector::resized() {
         auto* activeVariant = variants[selectedIndex];
         if (activeVariant->getProperties().contains("preferredHeight")) {
             int variantHeight = static_cast<int>(activeVariant->getProperties()["preferredHeight"]);
-            variantBounds = bounds.removeFromTop(variantHeight);
+            variantBounds = bounds.removeFromBottom(variantHeight);
         }
     }
     for (auto* variant : variants) {
@@ -123,7 +123,7 @@ void VariantSelector::paint(juce::Graphics& g) {
         auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny);
 
         juce::AttributedString attrStr;
-        attrStr.append(currentDescription, font, LcarsColors::africanViolet);
+        attrStr.append(currentDescription, font, LcarsColors::red);
         attrStr.setWordWrap(juce::AttributedString::WordWrap::byWord);
 
         juce::TextLayout layout;

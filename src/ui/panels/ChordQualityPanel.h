@@ -4,6 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../LcarsColors.h"
+#include "../LcarsLookAndFeel.h"
 #include "../components/ChordQualitySelector.h"
 #include "../components/MidiLearnComponent.h"
 #include "../components/VariantSelector.h"
@@ -47,7 +48,7 @@ class ChordQualityPanel : public juce::Component {
 
         void resized() override {
             auto bounds = getLocalBounds();
-            midiLearn.setBounds(bounds.removeFromRight(130));
+            midiLearn.setBounds(bounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
             label.setBounds(bounds);
         }
 

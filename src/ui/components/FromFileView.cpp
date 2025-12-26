@@ -3,7 +3,7 @@
 #include "../LcarsLookAndFeel.h"
 
 FromFileView::FromFileView() {
-    getProperties().set("preferredHeight", 40);
+    getProperties().set("preferredHeight", LcarsLookAndFeel::rowHeight);
 
     pathLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
     pathLabel.setJustificationType(juce::Justification::centredLeft);
@@ -22,7 +22,7 @@ void FromFileView::setPath(const std::string& path) {
 
 void FromFileView::resized() {
     auto bounds = getLocalBounds();
-    browseButtonBounds = bounds.removeFromRight(100);
+    browseButtonBounds = bounds.removeFromRight(LcarsLookAndFeel::capsuleWidth);
     bounds.removeFromRight(8);
     pathLabel.setBounds(bounds);
 }

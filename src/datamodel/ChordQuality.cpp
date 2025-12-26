@@ -11,9 +11,9 @@ const std::vector<ChordQualityData> CHORD_QUALITY_TABLE = {
     {"DOM_7",     "Dominant 7th",    "7",     std::vector<int>{0, 4, 7, 10},   std::vector<int>{0, 4, 10}},
     {"MAJOR_7",   "Major 7th",       "maj7",  std::vector<int>{0, 4, 7, 11},   std::vector<int>{0, 4, 11}},
     {"MINOR_7",   "Minor 7th",       "m7",    std::vector<int>{0, 3, 7, 10},   std::vector<int>{0, 3, 10}},
-    {"DIM_7",     "Diminished 7th",  "dim7",  std::vector<int>{0, 3, 6, 9},    std::vector<int>{0, 3, 9}},
+    {"DIM_7",     "Dimin. 7th",  "dim7",  std::vector<int>{0, 3, 6, 9},    std::vector<int>{0, 3, 9}},
     {"AUGMENTED", "Augmented",       "aug",   std::vector<int>{0, 4, 8},       std::vector<int>{0, 4, 8}},
-    {"SUS_4",     "Suspended 4th",   "sus4",  std::vector<int>{0, 5, 7},       std::vector<int>{0, 5, 7}},
+    {"SUS_4",     "Sus. 4th",   "sus4",  std::vector<int>{0, 5, 7},       std::vector<int>{0, 5, 7}},
     {"ADD_9",     "Add 9",           "add9",  std::vector<int>{0, 4, 7, 14},   std::vector<int>{0, 7, 14}},
 };
 // clang-format on

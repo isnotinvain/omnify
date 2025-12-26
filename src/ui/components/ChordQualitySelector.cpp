@@ -11,10 +11,9 @@ ChordQualitySelector::ChordQualitySelector() {
 
         row.label.setText(getChordQualityData(quality).niceName, juce::dontSendNotification);
         row.label.setColour(juce::Label::textColourId, labelColor);
+        row.label.setMinimumHorizontalScale(1.0F);
         addAndMakeVisible(row.label);
         addAndMakeVisible(row.midiLearn);
-
-        row.midiLearn.setAspectRatio(midiLearnAspectRatio);
 
         // Set up callback for when user learns a new value
         row.midiLearn.onValueChanged = [this, quality](MidiLearnedValue val) {
@@ -41,34 +40,25 @@ void ChordQualitySelector::setLabelColor(juce::Colour color) {
     }
 }
 
-void ChordQualitySelector::setMidiLearnAspectRatio(float ratio) {
-    midiLearnAspectRatio = ratio;
-    for (auto& row : rows) {
-        row.midiLearn.setAspectRatio(ratio);
-    }
-}
-
 void ChordQualitySelector::resized() {
     // Set fonts from LookAndFeel (must be done after component is added to hierarchy)
     if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
-        auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeMedium);
+        auto font = laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall);
         for (auto& row : rows) {
             row.label.setFont(font);
         }
     }
 
     auto bounds = getLocalBounds();
-    int totalSpacing = rowSpacing * (static_cast<int>(NUM_QUALITIES) - 1);
-    int rowHeight = (bounds.getHeight() - totalSpacing) / static_cast<int>(NUM_QUALITIES);
+
+    // Bottom-align: calculate total height needed and skip the top portion
+    int totalHeight = static_cast<int>(NUM_QUALITIES) * LcarsLookAndFeel::rowHeight +
+                      (static_cast<int>(NUM_QUALITIES) - 1) * rowSpacing;
+    bounds.removeFromTop(bounds.getHeight() - totalHeight);
 
     for (auto& row : rows) {
-        auto rowBounds = bounds.removeFromTop(rowHeight);
-
-        // Calculate MIDI learn width based on aspect ratio
-        int midiLearnWidth = static_cast<int>(static_cast<float>(rowHeight) * midiLearnAspectRatio);
-        midiLearnWidth = std::min(midiLearnWidth, rowBounds.getWidth() / 2);
-
-        row.midiLearn.setBounds(rowBounds.removeFromRight(midiLearnWidth));
+        auto rowBounds = bounds.removeFromTop(LcarsLookAndFeel::rowHeight);
+        row.midiLearn.setBounds(rowBounds.removeFromRight(LcarsLookAndFeel::capsuleWidth));
         row.label.setBounds(rowBounds);
         bounds.removeFromTop(rowSpacing);
     }

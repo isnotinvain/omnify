@@ -8,7 +8,7 @@
 class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
    public:
     // Standard font sizes - use these for consistency across the UI
-    static constexpr float fontSizeTiny = 18.0F;
+    static constexpr float fontSizeTiny = 20.0F;
     static constexpr float fontSizeSmall = 22.0F;
     static constexpr float fontSizeMedium = 26.0F;
     static constexpr float fontSizeLarge = 34.0F;
@@ -19,6 +19,9 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
 
     // Standard combo box row height
     static constexpr int comboBoxRowHeight = 50;
+
+    static constexpr int rowHeight = 40;
+    static constexpr int capsuleWidth = 130;
 
     // Property ID for custom combo box font size
     static inline const juce::Identifier comboBoxFontSizeId{"LcarsFontSize"};
