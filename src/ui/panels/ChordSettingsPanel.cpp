@@ -42,6 +42,7 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
             view = std::move(fromFileView);
         } else {
             view = std::make_unique<juce::Component>();
+            view->getProperties().set("preferredHeight", 0);
         }
         voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
         voicingStyleViews.push_back(std::move(view));

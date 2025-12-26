@@ -3,6 +3,8 @@
 #include "../LcarsLookAndFeel.h"
 
 FromFileView::FromFileView() {
+    getProperties().set("preferredHeight", 40);
+
     pathLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
     pathLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(pathLabel);

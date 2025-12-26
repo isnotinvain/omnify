@@ -16,11 +16,10 @@ ChordQualityPanel::ChordQualityPanel(OmnifyAudioProcessor& p) : processor(p) {
     qualityGrid.setMidiLearnAspectRatio(2.0F);
 
     // Single CC container (configure before adding to selector)
-    singleCcLabel.setColour(juce::Label::textColourId, LcarsColors::orange);
-    singleCcLabel.setJustificationType(juce::Justification::centred);
-    singleCcContainer.addAndMakeVisible(singleCcLabel);
-    singleCcLearn.setAcceptMode(MidiAcceptMode::CCsOnly);
-    singleCcContainer.addAndMakeVisible(singleCcLearn);
+    singleCcContainer.label.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    singleCcContainer.label.setJustificationType(juce::Justification::centredLeft);
+    singleCcContainer.midiLearn.setAcceptMode(MidiAcceptMode::CCsOnly);
+    singleCcContainer.getProperties().set("preferredHeight", 40);
 
     // Style selector (One Button Each vs One CC for All)
     styleSelector.addVariantNotOwned("One Button Each", &qualityGrid);
@@ -35,7 +34,7 @@ ChordQualityPanel::~ChordQualityPanel() = default;
 
 void ChordQualityPanel::setupCallbacks() {
     // Single CC MIDI learn callback
-    singleCcLearn.onValueChanged = [this](MidiLearnedValue val) {
+    singleCcContainer.midiLearn.onValueChanged = [this](MidiLearnedValue val) {
         processor.modifySettings([val](OmnifySettings& s) {
             if (val.type == MidiLearnedType::CC) {
                 s.chordQualitySelectionStyle = CCRangePerChordQuality{val.value};
@@ -122,7 +121,7 @@ void ChordQualityPanel::refreshFromSettings() {
             ccVal.type = MidiLearnedType::CC;
             ccVal.value = ccRange.cc;
         }
-        singleCcLearn.setLearnedValue(ccVal);
+        singleCcContainer.midiLearn.setLearnedValue(ccVal);
     }
 }
 
@@ -135,7 +134,7 @@ void ChordQualityPanel::resized() {
     // Set fonts from LookAndFeel (must be done after component is added to hierarchy)
     if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
         titleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeLarge));
-        singleCcLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
+        singleCcContainer.label.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
     }
 
     auto bounds = getLocalBounds().reduced(10, 2);
@@ -145,10 +144,4 @@ void ChordQualityPanel::resized() {
     bounds.removeFromTop(4);
 
     styleSelector.setBounds(bounds);
-
-    // Layout for single CC container - must be done after styleSelector.setBounds
-    // because VariantSelector::resized() sets the container's bounds
-    auto containerBounds = singleCcContainer.getLocalBounds();
-    singleCcLabel.setBounds(containerBounds.removeFromTop(30));
-    singleCcLearn.setBounds(containerBounds.reduced(20, 10));
 }

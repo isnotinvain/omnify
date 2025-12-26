@@ -101,16 +101,16 @@ void VariantSelector::resized() {
     }
     descriptionBounds = bounds.removeFromTop(descHeight);
 
-    // Variant component - check for preferred height property, otherwise use default
-    int variantHeight = 40;
+    // Variant component - use preferred height if set, otherwise use all remaining space
     auto selectedIndex = static_cast<size_t>(comboBox.getSelectedItemIndex());
+    juce::Rectangle<int> variantBounds = bounds;
     if (selectedIndex < variants.size()) {
         auto* activeVariant = variants[selectedIndex];
         if (activeVariant->getProperties().contains("preferredHeight")) {
-            variantHeight = static_cast<int>(activeVariant->getProperties()["preferredHeight"]);
+            int variantHeight = static_cast<int>(activeVariant->getProperties()["preferredHeight"]);
+            variantBounds = bounds.removeFromTop(variantHeight);
         }
     }
-    auto variantBounds = bounds.removeFromTop(variantHeight);
     for (auto* variant : variants) {
         variant->setBounds(variantBounds);
     }

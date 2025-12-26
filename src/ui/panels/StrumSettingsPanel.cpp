@@ -25,6 +25,7 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Voicing Style Selector - iterate registry to build options
     for (const auto& [typeName, entry] : processor.getStrumVoicingRegistry().getRegistry()) {
         auto view = std::make_unique<juce::Component>();
+        view->getProperties().set("preferredHeight", 0);
         voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
         voicingStyleViews.push_back(std::move(view));
         voicingStyleTypeNames.push_back(typeName);

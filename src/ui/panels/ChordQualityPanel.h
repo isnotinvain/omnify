@@ -34,12 +34,26 @@ class ChordQualityPanel : public juce::Component {
     // Variant 0: Button per chord quality (grid)
     ChordQualitySelector qualityGrid;
 
-    // Variant 1: One CC for all
-    juce::Label singleCcLabel{"", "CC for All Qualities"};
-    MidiLearnComponent singleCcLearn;
+    // Variant 1: One CC for all - custom container that lays out children in resized()
+    class SingleCcContainer : public juce::Component {
+       public:
+        juce::Label label{"", "CC"};
+        MidiLearnComponent midiLearn;
 
-    // Container for the single CC variant
-    juce::Component singleCcContainer;
+        SingleCcContainer() {
+            addAndMakeVisible(label);
+            addAndMakeVisible(midiLearn);
+        }
+
+        void resized() override {
+            auto bounds = getLocalBounds();
+            midiLearn.setBounds(bounds.removeFromRight(130));
+            label.setBounds(bounds);
+        }
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SingleCcContainer)
+    };
+    SingleCcContainer singleCcContainer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordQualityPanel)
 };
