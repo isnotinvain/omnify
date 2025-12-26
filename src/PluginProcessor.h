@@ -16,7 +16,10 @@
 #include "ui/components/MidiLearnComponent.h"
 
 //==============================================================================
-class OmnifyAudioProcessor : public juce::AudioProcessor, private juce::AudioProcessorValueTreeState::Listener, private juce::MidiInputCallback {
+class OmnifyAudioProcessor : public juce::AudioProcessor,
+                             private juce::AudioProcessorValueTreeState::Listener,
+                             private juce::MidiInputCallback,
+                             private juce::Timer {
    public:
     OmnifyAudioProcessor();
     ~OmnifyAudioProcessor() override;
@@ -72,6 +75,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor, private juce::AudioPro
     void initVoicingRegistries();
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void timerCallback() override;
     void applySettingsFromJson(const juce::String& jsonString);
     void loadSettingsFromValueTree();
     void saveSettingsToValueTree();

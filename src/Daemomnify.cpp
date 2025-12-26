@@ -33,54 +33,56 @@ void Daemomnify::setInputDevice(std::optional<juce::String> newDeviceId) {
 
 void Daemomnify::run() {
     while (!threadShouldExit()) {
-        // Ensure output port is open
-        if (!midiOutput) {
-            if (!openMidiOutput()) {
-                wait(RETRY_INTERVAL_MS);
-                continue;
-            }
-        }
-
-        // Check if input device needs to change
-        std::optional<juce::String> desiredDeviceId;
+        // Process incoming MIDI messages
         {
             std::scoped_lock lock(deviceMutex);
-            desiredDeviceId = deviceId;
-        }
+            if (midiInput && midiOutput) {
+                juce::MidiBuffer buffer;
+                midiCollector.removeNextBlockOfMessages(buffer, INT_MAX);
 
-        std::optional<juce::String> currentDeviceId = midiInput ? std::make_optional(midiInput->getIdentifier()) : std::nullopt;
-
-        if (desiredDeviceId != currentDeviceId) {
-            closeMidiInput();
-            if (desiredDeviceId) {
-                openMidiInput(*desiredDeviceId);
-            }
-        }
-
-        // Process incoming MIDI messages
-        if (midiInput && midiOutput) {
-            juce::MidiBuffer buffer;
-            midiCollector.removeNextBlockOfMessages(buffer, INT_MAX);
-
-            for (const auto metadata : buffer) {
-                try {
-                    auto toSend = omnify.handle(metadata.getMessage());
-                    for (const auto& m : toSend) {
-                        midiOutput->sendMessageNow(m);
+                for (const auto metadata : buffer) {
+                    try {
+                        auto toSend = omnify.handle(metadata.getMessage());
+                        for (const auto& m : toSend) {
+                            midiOutput->sendMessageNow(m);
+                        }
+                    } catch (const std::exception& e) {
+                        DBG("Daemomnify: exception in handle(): " << e.what());
                     }
-                } catch (const std::exception& e) {
-                    DBG("Daemomnify: exception in handle(): " << e.what());
                 }
             }
-        }
 
-        // Send any scheduled messages whose time has arrived
-        if (midiOutput) {
-            double now = juce::Time::getMillisecondCounterHiRes();
-            scheduler.sendOverdueMessages(now, *midiOutput);
+            // Send any scheduled messages whose time has arrived
+            if (midiOutput) {
+                double now = juce::Time::getMillisecondCounterHiRes();
+                scheduler.sendOverdueMessages(now, *midiOutput);
+            }
         }
 
         wait(POLL_INTERVAL_MS);
+    }
+}
+
+void Daemomnify::checkDevices() {
+    // Ensure output port is open
+    if (!midiOutput) {
+        openMidiOutput();
+    }
+
+    // Check if input device needs to change
+    std::optional<juce::String> desiredDeviceId;
+    {
+        std::scoped_lock lock(deviceMutex);
+        desiredDeviceId = deviceId;
+    }
+
+    std::optional<juce::String> currentDeviceId = midiInput ? std::make_optional(midiInput->getIdentifier()) : std::nullopt;
+
+    if (desiredDeviceId != currentDeviceId) {
+        closeMidiInput();
+        if (desiredDeviceId) {
+            openMidiInput(*desiredDeviceId);
+        }
     }
 }
 
@@ -91,21 +93,18 @@ bool Daemomnify::openMidiInput(const juce::String& inputDeviceId) {
     }
     lastInputOpenAttemptMs = now;
 
-    auto devices = juce::MidiInput::getAvailableDevices();
-    for (const auto& device : devices) {
-        if (device.identifier == inputDeviceId) {
-            midiInput = juce::MidiInput::openDevice(device.identifier, &midiCollector);
-            if (midiInput) {
-                midiCollector.reset(44100.0);
-                midiInput->start();
-                return true;
-            }
-        }
+    std::scoped_lock lock(deviceMutex);
+    midiInput = juce::MidiInput::openDevice(inputDeviceId, &midiCollector);
+    if (midiInput) {
+        midiCollector.reset(44100.0);
+        midiInput->start();
+        return true;
     }
     return false;
 }
 
 void Daemomnify::closeMidiInput() {
+    std::scoped_lock lock(deviceMutex);
     if (midiInput) {
         midiInput->stop();
         midiInput.reset();
@@ -113,8 +112,12 @@ void Daemomnify::closeMidiInput() {
 }
 
 bool Daemomnify::openMidiOutput() {
+    std::scoped_lock lock(deviceMutex);
     midiOutput = juce::MidiOutput::createNewDevice(outputPortName);
     return midiOutput != nullptr;
 }
 
-void Daemomnify::closeMidiOutput() { midiOutput.reset(); }
+void Daemomnify::closeMidiOutput() {
+    std::scoped_lock lock(deviceMutex);
+    midiOutput.reset();
+}

@@ -23,6 +23,9 @@ class Daemomnify : private juce::Thread {
 
     void setInputDevice(std::optional<juce::String> deviceId);
 
+    // Called from message thread by PluginProcessor timer
+    void checkDevices();
+
    private:
     void run() override;
     bool openMidiInput(const juce::String& deviceId);

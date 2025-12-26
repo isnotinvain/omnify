@@ -59,12 +59,14 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     omnify = std::make_unique<Omnify>(*midiScheduler, omnifySettings, realtimeParams);
     daemomnify = std::make_unique<Daemomnify>(*omnify, *midiScheduler, "Omnify");
     daemomnify->start();
+    startTimer(100);  // Check MIDI devices every 100ms
 
     loadDefaultSettings();
 }
 
 OmnifyAudioProcessor::~OmnifyAudioProcessor() {
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+    stopTimer();
 
     if (daemomnify) {
         daemomnify->stop();
@@ -137,6 +139,12 @@ void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, flo
         realtimeParams->strumGateTimeMs.store(static_cast<int>(newValue));
     } else if (parameterID == "strum_cooldown_ms") {
         realtimeParams->strumCooldownMs.store(static_cast<int>(newValue));
+    }
+}
+
+void OmnifyAudioProcessor::timerCallback() {
+    if (daemomnify) {
+        daemomnify->checkDevices();
     }
 }
 
