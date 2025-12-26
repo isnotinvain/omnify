@@ -199,6 +199,7 @@ void OmnifyAudioProcessor::loadDefaultSettings() {
 void OmnifyAudioProcessor::setMidiInputDevice(const juce::String& deviceName) {
     if (deviceName.isEmpty()) {
         daemomnify->setInputDevice(std::nullopt);
+        closeMidiLearnInput();
         return;
     }
 
@@ -206,11 +207,13 @@ void OmnifyAudioProcessor::setMidiInputDevice(const juce::String& deviceName) {
     for (const auto& device : devices) {
         if (device.name == deviceName) {
             daemomnify->setInputDevice(device.identifier);
+            openMidiLearnInput(deviceName);
             return;
         }
     }
 
     daemomnify->setInputDevice(std::nullopt);
+    closeMidiLearnInput();
 }
 
 void OmnifyAudioProcessor::openMidiLearnInput(const juce::String& deviceName) {
