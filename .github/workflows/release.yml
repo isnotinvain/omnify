@@ -124,6 +124,7 @@ jobs:
             libgl1-mesa-dev \
             libcurl4-openssl-dev \
             libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
             ninja-build
 
       - name: Configure CMake
@@ -131,8 +132,8 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          export CXXFLAGS="$(pkg-config --cflags freetype2 gtk+-3.0)"
-          export CFLAGS="$(pkg-config --cflags freetype2 gtk+-3.0)"
+          export CXXFLAGS="$(pkg-config --cflags freetype2 gtk+-3.0 webkit2gtk-4.0)"
+          export CFLAGS="$(pkg-config --cflags freetype2 gtk+-3.0 webkit2gtk-4.0)"
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
