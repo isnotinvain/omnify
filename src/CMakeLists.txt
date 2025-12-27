@@ -8,8 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Build for arm64 only
-set(CMAKE_OSX_ARCHITECTURES "arm64")
+# Default to arm64 for local development, but allow CI to override for universal builds
+if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+endif()
 
 # Add JUCE as a subdirectory. Assumes JUCE is in a 'JUCE' folder at the root.
 add_subdirectory(JUCE)

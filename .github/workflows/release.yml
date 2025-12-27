@@ -1,0 +1,153 @@
+name: Build Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for artifacts (e.g., v1.0.0-test)'
+        required: true
+        default: 'test'
+
+env:
+  VERSION: ${{ github.event.release.tag_name || github.event.inputs.version }}
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: brew install cmake ninja
+
+      - name: Configure CMake (Universal Binary)
+        working-directory: src
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        working-directory: src/build
+        run: ninja
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp -r src/build/Omnify_artefacts/Release/VST3/Omnify.vst3 release/
+          cp -r src/build/Omnify_artefacts/Release/Standalone/Omnify.app release/
+          ln -s /Library/Audio/Plug-Ins/VST3 release/VST3-Plugins
+          hdiutil create -volname "Omnify" -srcfolder release -ov -format UDZO Omnify-${{ env.VERSION }}-macos.dmg
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Omnify-${{ env.VERSION }}-macos.dmg
+
+      - name: Upload Artifact (for manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Omnify-${{ env.VERSION }}-macos
+          path: Omnify-${{ env.VERSION }}-macos.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        working-directory: src
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: src/build
+        run: cmake --build . --config Release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          mkdir release
+          Copy-Item -Recurse src/build/Omnify_artefacts/Release/VST3/Omnify.vst3 release/
+          Copy-Item -Recurse src/build/Omnify_artefacts/Release/Standalone/Omnify.exe release/
+          Compress-Archive -Path release/* -DestinationPath Omnify-${{ env.VERSION }}-windows.zip
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Omnify-${{ env.VERSION }}-windows.zip
+
+      - name: Upload Artifact (for manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Omnify-${{ env.VERSION }}-windows
+          path: Omnify-${{ env.VERSION }}-windows.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libgl1-mesa-dev \
+            libcurl4-openssl-dev \
+            ninja-build
+
+      - name: Configure CMake
+        working-directory: src
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: src/build
+        run: ninja
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp -r src/build/Omnify_artefacts/Release/VST3/Omnify.vst3 release/
+          cp -r src/build/Omnify_artefacts/Release/Standalone/Omnify release/
+          cd release
+          tar -czvf ../Omnify-${{ env.VERSION }}-linux.tar.gz .
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Omnify-${{ env.VERSION }}-linux.tar.gz
+
+      - name: Upload Artifact (for manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Omnify-${{ env.VERSION }}-linux
+          path: Omnify-${{ env.VERSION }}-linux.tar.gz
