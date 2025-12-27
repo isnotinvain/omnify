@@ -125,11 +125,13 @@ jobs:
 
       - name: Configure CMake
         working-directory: src
+        env:
+          CXXFLAGS: "-I/usr/include/freetype2"
+          CFLAGS: "-I/usr/include/freetype2"
         run: |
           mkdir -p build
           cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_FLAGS="-I/usr/include/freetype2"
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         working-directory: src/build
