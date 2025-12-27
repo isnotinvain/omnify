@@ -70,7 +70,7 @@ target_compile_definitions(Omnify PUBLIC JUCE_VST3_CAN_REPLACE_VST2=0)
 
 if(MSVC)
     target_compile_options(Omnify PRIVATE /W4)
-else()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(Omnify PRIVATE
         -Wall
         -Wstrict-aliasing
@@ -89,4 +89,15 @@ else()
         -Wnullable-to-nonnull-conversion
         -Wno-unused-parameter
         -Wno-shadow-field-in-constructor)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(Omnify PRIVATE
+        -Wall
+        -Wextra
+        -Wstrict-aliasing
+        -Wuninitialized
+        -Wconversion
+        -Wsign-compare
+        -Wunreachable-code
+        -Wcast-align
+        -Wno-unused-parameter)
 endif()
