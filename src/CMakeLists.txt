@@ -28,7 +28,7 @@ juce_add_plugin(Omnify
     COPY_PLUGIN_AFTER_BUILD FALSE
     PLUGIN_MANUFACTURER_CODE "ALEV"
     PLUGIN_CODE "Omni"
-    FORMATS VST3 Standalone)
+    FORMATS AU VST3 Standalone)
 
 # Collect all source files
 file(GLOB OMNIFY_SOURCES

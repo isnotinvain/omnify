@@ -41,8 +41,10 @@ jobs:
       - name: Package
         run: |
           mkdir -p release
+          cp -r src/build/Omnify_artefacts/Release/AU/Omnify.component release/
           cp -r src/build/Omnify_artefacts/Release/VST3/Omnify.vst3 release/
           cp -r src/build/Omnify_artefacts/Release/Standalone/Omnify.app release/
+          ln -s /Library/Audio/Plug-Ins/Components release/AU-Plugins
           ln -s /Library/Audio/Plug-Ins/VST3 release/VST3-Plugins
           hdiutil create -volname "Omnify" -srcfolder release -ov -format UDZO Omnify-${{ env.VERSION }}-macos.dmg
 
@@ -126,7 +128,8 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="-I/usr/include/freetype2"
 
       - name: Build
         working-directory: src/build
