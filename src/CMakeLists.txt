@@ -21,9 +21,9 @@ juce_add_plugin(Omnify
     PRODUCT_NAME "Omnify"
     DESCRIPTION "Play any instrument like an omnichord inspired autoharp"
     COMPANY_WEBSITE "https://github.com/isnotinvain/omnify"
-    IS_SYNTH FALSE
+    IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
-    NEEDS_MIDI_OUTPUT FALSE
+    NEEDS_MIDI_OUTPUT TRUE
     IS_MIDI_EFFECT FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
     PLUGIN_MANUFACTURER_CODE "ALEV"

@@ -2,34 +2,28 @@
 
 nlohmann::json OmnifySettings::to_json() const {
     nlohmann::json j;
-    j["midiDeviceName"] = midiDeviceName;
+    j["input"] = input;
+    j["output"] = output;
     j["chordChannel"] = chordChannel;
     j["strumChannel"] = strumChannel;
     j["strumCooldownMs"] = strumCooldownMs;
     j["strumGateTimeMs"] = strumGateTimeMs;
     j["strumPlateCC"] = strumPlateCC;
-
-    if (chordVoicingStyle) {
-        chordVoicingStyle->to_json(j["chordVoicingStyle"]);
-    }
-    if (strumVoicingStyle) {
-        strumVoicingStyle->to_json(j["strumVoicingStyle"]);
-    }
+    chordVoicingStyle->to_json(j["chordVoicingStyle"]);
+    strumVoicingStyle->to_json(j["strumVoicingStyle"]);
     j["voicingModifier"] = voicingModifier;
-
     j["chordQualitySelectionStyle"] = chordQualitySelectionStyle;
     j["latchButton"] = latchButton;
     j["stopButton"] = stopButton;
-
     return j;
 }
 
-OmnifySettings OmnifySettings::from_json(const nlohmann::json& j,
-                                         VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
+OmnifySettings OmnifySettings::from_json(const nlohmann::json& j, VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
                                          VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry) {
     OmnifySettings settings;
 
-    settings.midiDeviceName = j.at("midiDeviceName").get<std::string>();
+    settings.input = j.at("input").get<DawOrDevice>();
+    settings.output = j.at("output").get<DawOrDevice>();
     settings.chordChannel = j.at("chordChannel").get<int>();
     settings.strumChannel = j.at("strumChannel").get<int>();
     settings.strumCooldownMs = j.at("strumCooldownMs").get<int>();
@@ -38,9 +32,7 @@ OmnifySettings OmnifySettings::from_json(const nlohmann::json& j,
 
     settings.chordVoicingStyle = chordRegistry.from_json(j.at("chordVoicingStyle"));
     settings.strumVoicingStyle = strumRegistry.from_json(j.at("strumVoicingStyle"));
-    if (j.contains("voicingModifier")) {
-        settings.voicingModifier = j.at("voicingModifier").get<VoicingModifier>();
-    }
+    settings.voicingModifier = j.at("voicingModifier").get<VoicingModifier>();
 
     settings.chordQualitySelectionStyle = j.at("chordQualitySelectionStyle").get<ChordQualitySelectionStyle>();
     settings.latchButton = j.at("latchButton").get<MidiButton>();

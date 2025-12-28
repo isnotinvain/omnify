@@ -5,13 +5,17 @@
 #include <string>
 
 #include "ChordQualitySelectionStyle.h"
+#include "DawOrDevice.h"
 #include "MidiButton.h"
 #include "VoicingModifier.h"
 #include "VoicingStyle.h"
+#include "voicing_styles/OmnichordChords.h"
+#include "voicing_styles/OmnichordStrum.h"
 
 class OmnifySettings {
    public:
-    std::string midiDeviceName;
+    DawOrDevice input = Daw{};
+    DawOrDevice output = Daw{};
     int chordChannel = 1;
     int strumChannel = 2;
 
@@ -19,11 +23,11 @@ class OmnifySettings {
     int strumGateTimeMs = 500;
     int strumPlateCC = 1;
 
-    std::shared_ptr<VoicingStyle<VoicingFor::Chord>> chordVoicingStyle;
-    std::shared_ptr<VoicingStyle<VoicingFor::Strum>> strumVoicingStyle;
+    std::shared_ptr<VoicingStyle<VoicingFor::Chord>> chordVoicingStyle = std::make_shared<OmnichordChords>();
+    std::shared_ptr<VoicingStyle<VoicingFor::Strum>> strumVoicingStyle = std::make_shared<OmnichordStrum>();
     VoicingModifier voicingModifier = VoicingModifier::NONE;
 
-    ChordQualitySelectionStyle chordQualitySelectionStyle;
+    ChordQualitySelectionStyle chordQualitySelectionStyle = ButtonPerChordQuality();
     MidiButton latchButton;
     MidiButton stopButton;
 

@@ -17,8 +17,7 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
 
     // MIDI Device Selector
     midiDeviceSelector.onDeviceSelected = [this](const juce::String& deviceName) {
-        omnifyProcessor.modifySettings([deviceName](OmnifySettings& s) { s.midiDeviceName = deviceName.toStdString(); });
-        omnifyProcessor.setMidiInputDevice(deviceName);
+        omnifyProcessor.modifySettings([deviceName](OmnifySettings& s) { s.input = Device{deviceName.toStdString()}; });
     };
     addAndMakeVisible(midiDeviceSelector);
 
@@ -36,7 +35,9 @@ void OmnifyAudioProcessorEditor::refreshFromSettings() {
     auto settings = omnifyProcessor.getSettings();
 
     // MIDI Device
-    midiDeviceSelector.setSelectedDevice(juce::String(settings->midiDeviceName));
+    if (isDevice(settings->input)) {
+        midiDeviceSelector.setSelectedDevice(juce::String(getDeviceName(settings->input)));
+    }
 
     // Panels
     chordSettings.refreshFromSettings();

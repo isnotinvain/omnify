@@ -6,7 +6,6 @@
 #include <functional>
 #include <memory>
 
-#include "Daemomnify.h"
 #include "MidiMessageScheduler.h"
 #include "Omnify.h"
 #include "OmnifyLogger.h"
@@ -18,8 +17,7 @@
 //==============================================================================
 class OmnifyAudioProcessor : public juce::AudioProcessor,
                              private juce::AudioProcessorValueTreeState::Listener,
-                             private juce::MidiInputCallback,
-                             private juce::Timer {
+                             private juce::AsyncUpdater {
    public:
     OmnifyAudioProcessor();
     ~OmnifyAudioProcessor() override;
@@ -37,7 +35,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     //==============================================================================
     const juce::String getName() const override { return JucePlugin_Name; }
     bool acceptsMidi() const override { return true; }
-    bool producesMidi() const override { return false; }
+    bool producesMidi() const override { return true; }
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 0.0; }
 
@@ -54,10 +52,8 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
 
     std::shared_ptr<OmnifySettings> getSettings() const { return std::atomic_load(&omnifySettings); }
     void modifySettings(std::function<void(OmnifySettings&)> mutator);
-    void setMidiInputDevice(const juce::String& deviceName);
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
-    juce::ValueTree& getStateTree() { return stateTree; }  // TODO: remove once UI uses callbacks
 
     const VoicingStyleRegistry<VoicingFor::Chord>& getChordVoicingRegistry() const { return chordVoicingRegistry; }
     const VoicingStyleRegistry<VoicingFor::Strum>& getStrumVoicingRegistry() const { return strumVoicingRegistry; }
@@ -75,7 +71,7 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     void initVoicingRegistries();
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
-    void timerCallback() override;
+    void handleAsyncUpdate() override;
     void applySettingsFromJson(const juce::String& jsonString);
     void loadSettingsFromValueTree();
     void saveSettingsToValueTree();
@@ -85,13 +81,13 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     std::shared_ptr<RealtimeParams> realtimeParams;
     std::shared_ptr<OmnifySettings> omnifySettings;
     std::unique_ptr<Omnify> omnify;
-    std::unique_ptr<Daemomnify> daemomnify;
 
-    // Direct MIDI input for MIDI Learn (bypasses DAW routing)
-    std::unique_ptr<juce::MidiInput> midiLearnInput;
-    void openMidiLearnInput(const juce::String& deviceName);
-    void closeMidiLearnInput();
-    void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
+    std::unique_ptr<juce::MidiInput> midiInput;
+    std::shared_ptr<juce::MidiOutput> midiOutput;
+    juce::MidiMessageCollector inputCollector;
+    double sampleRate = 44100.0;
+    int64_t currentSamplePosition = 0;
+    void reconcileDevices();
 
     juce::SharedResourcePointer<OmnifyLogger> logger;
 

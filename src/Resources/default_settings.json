@@ -1,5 +1,6 @@
 {
-  "midiDeviceName": "Launchkey Mini MK3 MIDI Port",
+  "input": {"type": "device", "name": "Launchkey Mini MK3 MIDI Port"},
+  "output": {"type": "daw"},
   "chordChannel": 1,
   "strumChannel": 2,
   "strumCooldownMs": 300,

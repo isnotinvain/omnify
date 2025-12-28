@@ -5,11 +5,10 @@ Transforms any MIDI instrument into an omnichord / autoharp style instrument. Us
 ## Directory Structure
 ```
 src/
-├── PluginProcessor.cpp/h  # VST lifecycle, settings, APVTS params
+├── PluginProcessor.cpp/h  # VST lifecycle, settings, APVTS params, MIDI I/O
 ├── PluginEditor.cpp/h     # VST UI layout
 ├── Omnify.cpp/h           # Core chord/strum processing engine
-├── Daemomnify.cpp/h       # Background MIDI thread for direct hardware
-├── MidiMessageScheduler.cpp/h  # Delayed MIDI delivery (strum timing)
+├── MidiMessageScheduler.cpp/h  # Sample-accurate delayed MIDI delivery (strum timing)
 ├── datamodel/             # Settings, ChordQuality, MidiButton, VoicingStyle
 ├── ui/
 │   ├── components/        # MidiLearnComponent, VariantSelector, etc.
@@ -21,8 +20,9 @@ src/
 ```
 
 ## Core Architecture
-- **Omnify** (`Omnify.cpp`): State machine processing MIDI input. Tracks current chord, latch mode, strum timing. Delegates to voicing styles for note generation.
-- **Daemomnify** (`Daemomnify.cpp`): juce::Thread that polls external MIDI hardware and feeds messages to Omnify engine.
+- **PluginProcessor** (`PluginProcessor.cpp`): VST entry point. Handles MIDI I/O routing (DAW or direct hardware), settings management, and device reconciliation via AsyncUpdater.
+- **Omnify** (`Omnify.cpp`): State machine processing MIDI input. Tracks current chord, latch mode, strum timing (sample-accurate). Delegates to voicing styles for note generation.
+- **MidiMessageScheduler** (`MidiMessageScheduler.cpp`): Sample-accurate priority queue for delayed MIDI messages (e.g., note-offs for strum gate timing).
 - **OmnifySettings** (`datamodel/OmnifySettings.h`): Main config struct with MIDI device, channels, voicing styles, button mappings. Serializes to/from JSON.
 - **VoicingStyle** (`datamodel/VoicingStyle.h`): Abstract template for chord generation. Subclasses implement `constructChord(quality, root) -> vector<int>`. Two registries: ChordVoicingRegistry and StrumVoicingRegistry.
 
@@ -44,9 +44,12 @@ Located in `src/voicing_styles/`:
 - nlohmann/json (header-only) in src/nlohmann/
 
 ## Threading
-- APVTS for audio thread-safe parameters
-- `std::atomic<shared_ptr<OmnifySettings>>` for settings
-- Daemomnify runs on dedicated background thread
+- APVTS for audio thread-safe parameters (strumGateTimeMs, strumCooldownMs)
+- `std::atomic_load/store` with `shared_ptr<OmnifySettings>` for lock-free settings access from audio thread
+- `std::atomic_load/store` with `shared_ptr<MidiOutput>` for lock-free output device access from audio thread
+- UI thread writes settings via `modifySettings()`, triggers `AsyncUpdater` for device reconciliation
+- Audio thread reads settings and output device atomically, processes MIDI in `processBlock()`
+- Hardware MIDI input uses `MidiMessageCollector` to bridge input callback thread to audio thread
 - MidiLearnComponent uses atomics for thread-safe learning state
 
 ## Patterns
@@ -68,6 +71,8 @@ Located in `src/voicing_styles/`:
 - Don't make Edits immediately after propsing an alternate solution -- ask for confirmation first.
 - If you explain multiple ways something could be done, ask me which one I want before proceding with Edits
 - When writing brand new files, pause after each one so we can discuss before moving on (unless of course you are in allow edits mode, then do your thing)
+- Don't recommend removing features as a solution. If a feature is in the project, it's there on purpose. I will suggest feature removal when I want it, but you should not.
+- Never suggest accepting bugs as a solution. Never suggest ignoring thread safety as a solution.
 
 ## Coding Style
 - Don't add comments that are pretty obvious from the code they are commenting, or from the function signature and name. If the code is clear, if the variable names are clear, and if the function signatures are clear, skip the comments entirely. Do add comments for gotchas / bug fixes / workarounds, methods with important rules / constraints that aren't immediately obvious, or complicated algorithms.

@@ -1,12 +1,17 @@
 #include "MidiMessageScheduler.h"
 
-void MidiMessageScheduler::schedule(const juce::MidiMessage& msg, double currentTimeMs, double delayMs) {
-    queue.push(ScheduledMidiMessage{.sendTimeMs = currentTimeMs + delayMs, .message = msg});
+void MidiMessageScheduler::setSampleRate(double sr) { sampleRate = sr; }
+
+void MidiMessageScheduler::schedule(const juce::MidiMessage& msg, int64_t currentSample, double delayMs) {
+    int64_t delaySamples = static_cast<int64_t>((delayMs / 1000.0) * sampleRate);
+    queue.push(ScheduledMidiMessage{.sendAtSample = currentSample + delaySamples, .message = msg});
 }
 
-void MidiMessageScheduler::sendOverdueMessages(double currentTimeMs, juce::MidiOutput& output) {
-    while (!queue.empty() && queue.top().sendTimeMs <= currentTimeMs) {
-        output.sendMessageNow(queue.top().message);
+void MidiMessageScheduler::collectOverdueMessages(int64_t blockStartSample, int64_t blockEndSample, juce::MidiBuffer& buffer) {
+    while (!queue.empty() && queue.top().sendAtSample <= blockEndSample) {
+        int samplePosition = static_cast<int>(queue.top().sendAtSample - blockStartSample);
+        if (samplePosition < 0) samplePosition = 0;
+        buffer.addEvent(queue.top().message, samplePosition);
         queue.pop();
     }
 }

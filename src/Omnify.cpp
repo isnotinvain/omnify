@@ -24,7 +24,9 @@ void Omnify::syncRealtimeSettings() {
     s->strumCooldownMs = realtimeParams->strumCooldownMs.load();
 }
 
-std::vector<juce::MidiMessage> Omnify::handle(const juce::MidiMessage& msg) {
+void Omnify::setSampleRate(double sr) { sampleRate = sr; }
+
+std::vector<juce::MidiMessage> Omnify::handle(const juce::MidiMessage& msg, int64_t currentSample) {
     auto s = std::atomic_load(&settings);
     if (auto r = handleChordQualityChange(msg, *s)) {
         return *r;
@@ -41,7 +43,7 @@ std::vector<juce::MidiMessage> Omnify::handle(const juce::MidiMessage& msg) {
     if (auto r = handleChordNoteOff(msg, *s)) {
         return *r;
     }
-    if (auto r = handleStrum(msg, *s)) {
+    if (auto r = handleStrum(msg, *s, currentSample)) {
         return *r;
     }
     return {};
@@ -172,19 +174,17 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOff(const j
     return std::nullopt;
 }
 
-std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::MidiMessage& msg, const OmnifySettings& s) {
+std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::MidiMessage& msg, const OmnifySettings& s, int64_t currentSample) {
     if (!(msg.isController() && msg.getControllerNumber() == s.strumPlateCC)) {
         return std::nullopt;
     }
 
     if (!currentChord) {
-        // TODO: Should strums be allowed if no chord is playing?
-        // TODO: (use previous chord?)
         return std::vector<juce::MidiMessage>{};
     }
 
-    double now = juce::Time::getMillisecondCounterHiRes();
-    bool cooldownReady = now >= lastStrumTimeMs + realtimeParams->strumCooldownMs.load();
+    int64_t cooldownSamples = static_cast<int64_t>((realtimeParams->strumCooldownMs.load() / 1000.0) * sampleRate);
+    bool cooldownReady = currentSample >= lastStrumSample + cooldownSamples;
 
     int strumPlateZone = (msg.getControllerValue() * 13) / 128;
 
@@ -196,9 +196,9 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
 
         auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, velocity);
 
-        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), now, static_cast<double>(realtimeParams->strumGateTimeMs.load()));
+        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), currentSample, static_cast<double>(realtimeParams->strumGateTimeMs.load()));
 
-        lastStrumTimeMs = now;
+        lastStrumSample = currentSample;
         lastStrumZone = strumPlateZone;
 
         return std::vector<juce::MidiMessage>{noteOn};

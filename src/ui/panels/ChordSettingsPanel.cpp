@@ -242,11 +242,6 @@ void ChordSettingsPanel::resized() {
     float titleHeightF = LcarsLookAndFeel::fontSizeLarge + 10.0F;
     fb.items.add(juce::FlexItem(titleLabel).withHeight(titleHeightF).withMargin(4));
 
-    // Channel row
-    juce::FlexBox channelRow;
-    channelRow.flexDirection = juce::FlexBox::Direction::row;
-    channelRow.items.add(juce::FlexItem(channelLabel).withFlex(1.0F));
-    channelRow.items.add(juce::FlexItem(channelComboBox).withWidth(80.0F));
     fb.items.add(juce::FlexItem().withHeight(35.0F).withMargin(4));
 
     // Voicing style selector
@@ -255,10 +250,6 @@ void ChordSettingsPanel::resized() {
     // Latch controls
     fb.items.add(juce::FlexItem(latchLabel).withHeight(20.0F).withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
 
-    juce::FlexBox latchRow;
-    latchRow.flexDirection = juce::FlexBox::Direction::row;
-    latchRow.items.add(juce::FlexItem(latchToggleLearn).withFlex(1.0F));
-    latchRow.items.add(juce::FlexItem(latchIsToggle).withFlex(1.0F));
     fb.items.add(juce::FlexItem().withHeight(40.0F).withMargin(4));
 
     // Stop button

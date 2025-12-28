@@ -21,7 +21,8 @@ class Omnify {
    public:
     Omnify(MidiMessageScheduler& scheduler, std::shared_ptr<OmnifySettings> settings, std::shared_ptr<RealtimeParams> realtimeParams);
 
-    std::vector<juce::MidiMessage> handle(const juce::MidiMessage& msg);
+    void setSampleRate(double sr);
+    std::vector<juce::MidiMessage> handle(const juce::MidiMessage& msg, int64_t currentSample);
 
     void updateSettings(std::shared_ptr<OmnifySettings> newSettings, bool includeRealtime = false);
     void syncRealtimeSettings();
@@ -30,12 +31,13 @@ class Omnify {
     MidiMessageScheduler& scheduler;
     std::shared_ptr<OmnifySettings> settings;  // use std::atomic_load/store for thread safety
     std::shared_ptr<RealtimeParams> realtimeParams;
+    double sampleRate = 44100.0;
 
     // State
     ChordQuality enqueuedChordQuality = ChordQuality::MAJOR;
     std::optional<Chord> currentChord;
     std::vector<juce::MidiMessage> noteOnEventsOfCurrentChord;
-    double lastStrumTimeMs = 0;
+    int64_t lastStrumSample = 0;
     std::optional<int> lastStrumZone;
     bool latch = false;
 
@@ -44,7 +46,7 @@ class Omnify {
     std::optional<std::vector<juce::MidiMessage>> handleLatchButton(const juce::MidiMessage& msg, const OmnifySettings& s);
     std::optional<std::vector<juce::MidiMessage>> handleChordNoteOn(const juce::MidiMessage& msg, const OmnifySettings& s);
     std::optional<std::vector<juce::MidiMessage>> handleChordNoteOff(const juce::MidiMessage& msg, const OmnifySettings& s);
-    std::optional<std::vector<juce::MidiMessage>> handleStrum(const juce::MidiMessage& msg, const OmnifySettings& s);
+    std::optional<std::vector<juce::MidiMessage>> handleStrum(const juce::MidiMessage& msg, const OmnifySettings& s, int64_t currentSample);
 
     std::vector<juce::MidiMessage> stopNotesOfCurrentChord();
     static int clampNote(int note);

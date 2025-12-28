@@ -3,30 +3,26 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 
+#include <cstdint>
 #include <queue>
 #include <vector>
 
 struct ScheduledMidiMessage {
-    double sendTimeMs;
+    int64_t sendAtSample;
     juce::MidiMessage message;
 
-    // Comparison for priority queue (min-heap: earliest time first)
-    bool operator>(const ScheduledMidiMessage& other) const { return sendTimeMs > other.sendTimeMs; }
+    bool operator>(const ScheduledMidiMessage& other) const { return sendAtSample > other.sendAtSample; }
 };
 
-/*
- * Schedules MIDI messages for delayed delivery.
- *
- * All times are in milliseconds.
- * Use juce::Time::getMillisecondCounterHiRes() for currentTimeMs.
- */
 class MidiMessageScheduler {
    public:
     MidiMessageScheduler() = default;
 
-    void schedule(const juce::MidiMessage& msg, double currentTimeMs, double delayMs);
+    void setSampleRate(double sampleRate);
 
-    void sendOverdueMessages(double currentTimeMs, juce::MidiOutput& output);
+    void schedule(const juce::MidiMessage& msg, int64_t currentSample, double delayMs);
+
+    void collectOverdueMessages(int64_t blockStartSample, int64_t blockEndSample, juce::MidiBuffer& buffer);
 
     void clear();
 
@@ -35,5 +31,6 @@ class MidiMessageScheduler {
     size_t size() const { return queue.size(); }
 
    private:
+    double sampleRate = 44100.0;
     std::priority_queue<ScheduledMidiMessage, std::vector<ScheduledMidiMessage>, std::greater<ScheduledMidiMessage>> queue;
 };

@@ -57,32 +57,80 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     omnifySettings = std::make_shared<OmnifySettings>();
 
     omnify = std::make_unique<Omnify>(*midiScheduler, omnifySettings, realtimeParams);
-    daemomnify = std::make_unique<Daemomnify>(*omnify, *midiScheduler, "Omnify");
-    daemomnify->start();
-    startTimer(100);  // Check MIDI devices every 100ms
 
     loadDefaultSettings();
 }
 
 OmnifyAudioProcessor::~OmnifyAudioProcessor() {
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
-    stopTimer();
-
-    if (daemomnify) {
-        daemomnify->stop();
+    cancelPendingUpdate();
+    if (midiInput) {
+        midiInput->stop();
+        midiInput.reset();
     }
-    closeMidiLearnInput();
+    std::atomic_store(&midiOutput, std::shared_ptr<juce::MidiOutput>{nullptr});
 
     parameters.removeParameterListener("strum_gate_time_ms", this);
     parameters.removeParameterListener("strum_cooldown_ms", this);
 }
 
-void OmnifyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) { juce::ignoreUnused(sampleRate, samplesPerBlock); }
+void OmnifyAudioProcessor::prepareToPlay(double sr, int samplesPerBlock) {
+    juce::ignoreUnused(samplesPerBlock);
+    sampleRate = sr;
+    currentSamplePosition = 0;
+    midiScheduler->setSampleRate(sr);
+    omnify->setSampleRate(sr);
+    inputCollector.reset(sr);
+}
 
 void OmnifyAudioProcessor::releaseResources() {}
 
 void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
-    juce::ignoreUnused(buffer, midiMessages);
+    juce::ignoreUnused(buffer);
+
+    auto settings = std::atomic_load(&omnifySettings);
+    bool inputFromDevice = isDevice(settings->input);
+    bool outputToDevice = isDevice(settings->output);
+
+    juce::MidiBuffer inputBuffer;
+
+    if (inputFromDevice) {
+        inputCollector.removeNextBlockOfMessages(inputBuffer, buffer.getNumSamples());
+    } else {
+        inputBuffer.swapWith(midiMessages);
+    }
+
+    juce::MidiBuffer outputBuffer;
+
+    for (const auto metadata : inputBuffer) {
+        auto msg = metadata.getMessage();
+        int64_t msgSample = currentSamplePosition + metadata.samplePosition;
+
+        MidiLearnComponent::broadcastMidi(msg);
+
+        try {
+            auto outputMessages = omnify->handle(msg, msgSample);
+            for (const auto& outMsg : outputMessages) {
+                outputBuffer.addEvent(outMsg, metadata.samplePosition);
+            }
+        } catch (const std::exception& e) {
+            DBG("processBlock: exception in handle(): " << e.what());
+        }
+    }
+
+    int64_t blockEndSample = currentSamplePosition + buffer.getNumSamples();
+    midiScheduler->collectOverdueMessages(currentSamplePosition, blockEndSample, outputBuffer);
+
+    if (outputToDevice) {
+        auto output = std::atomic_load(&midiOutput);
+        if (output) {
+            output->sendBlockOfMessagesNow(outputBuffer);
+        }
+    } else {
+        midiMessages.swapWith(outputBuffer);
+    }
+
+    currentSamplePosition = blockEndSample;
 }
 
 juce::AudioProcessorEditor* OmnifyAudioProcessor::createEditor() { return new OmnifyAudioProcessorEditor(*this); }
@@ -132,6 +180,7 @@ void OmnifyAudioProcessor::modifySettings(std::function<void(OmnifySettings&)> m
     omnify->updateSettings(newSettings);
     std::atomic_store(&omnifySettings, newSettings);
     saveSettingsToValueTree();
+    triggerAsyncUpdate();
 }
 
 void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, float newValue) {
@@ -142,9 +191,50 @@ void OmnifyAudioProcessor::parameterChanged(const juce::String& parameterID, flo
     }
 }
 
-void OmnifyAudioProcessor::timerCallback() {
-    if (daemomnify) {
-        daemomnify->checkDevices();
+void OmnifyAudioProcessor::handleAsyncUpdate() { reconcileDevices(); }
+
+void OmnifyAudioProcessor::reconcileDevices() {
+    auto settings = std::atomic_load(&omnifySettings);
+
+    // Reconcile input device
+    if (isDevice(settings->input)) {
+        juce::String desiredName = juce::String(getDeviceName(settings->input));
+        juce::String currentName = midiInput ? midiInput->getName() : juce::String();
+
+        if (desiredName != currentName) {
+            if (midiInput) {
+                midiInput->stop();
+                midiInput.reset();
+            }
+            for (const auto& device : juce::MidiInput::getAvailableDevices()) {
+                if (device.name == desiredName) {
+                    midiInput = juce::MidiInput::openDevice(device.identifier, &inputCollector);
+                    if (midiInput) {
+                        midiInput->start();
+                    }
+                    break;
+                }
+            }
+        }
+    } else {
+        if (midiInput) {
+            midiInput->stop();
+            midiInput.reset();
+        }
+    }
+
+    // Reconcile output device
+    if (isDevice(settings->output)) {
+        juce::String desiredName = juce::String(getDeviceName(settings->output));
+        auto currentOutput = std::atomic_load(&midiOutput);
+        juce::String currentName = currentOutput ? currentOutput->getName() : juce::String();
+
+        if (desiredName != currentName) {
+            auto newOutput = juce::MidiOutput::createNewDevice(desiredName);
+            std::atomic_store(&midiOutput, std::shared_ptr<juce::MidiOutput>(std::move(newOutput)));
+        }
+    } else {
+        std::atomic_store(&midiOutput, std::shared_ptr<juce::MidiOutput>{nullptr});
     }
 }
 
@@ -162,7 +252,7 @@ void OmnifyAudioProcessor::applySettingsFromJson(const juce::String& jsonString)
         strumCooldownParam->setValueNotifyingHost(strumCooldownParam->convertTo0to1(static_cast<float>(newSettings->strumCooldownMs)));
     }
 
-    setMidiInputDevice(juce::String(newSettings->midiDeviceName));
+    triggerAsyncUpdate();
 }
 
 void OmnifyAudioProcessor::loadSettingsFromValueTree() {
@@ -193,63 +283,6 @@ void OmnifyAudioProcessor::loadDefaultSettings() {
     } catch (const std::exception& e) {
         DBG("Failed to load default settings: " << e.what());
     }
-}
-
-//==============================================================================
-void OmnifyAudioProcessor::setMidiInputDevice(const juce::String& deviceName) {
-    if (deviceName.isEmpty()) {
-        daemomnify->setInputDevice(std::nullopt);
-        closeMidiLearnInput();
-        return;
-    }
-
-    auto devices = juce::MidiInput::getAvailableDevices();
-    for (const auto& device : devices) {
-        if (device.name == deviceName) {
-            daemomnify->setInputDevice(device.identifier);
-            openMidiLearnInput(deviceName);
-            return;
-        }
-    }
-
-    daemomnify->setInputDevice(std::nullopt);
-    closeMidiLearnInput();
-}
-
-void OmnifyAudioProcessor::openMidiLearnInput(const juce::String& deviceName) {
-    // Close existing input first
-    closeMidiLearnInput();
-
-    if (deviceName.isEmpty()) {
-        return;
-    }
-
-    // Find the device by name
-    auto devices = juce::MidiInput::getAvailableDevices();
-    for (const auto& device : devices) {
-        if (device.name == deviceName) {
-            midiLearnInput = juce::MidiInput::openDevice(device.identifier, this);
-            if (midiLearnInput) {
-                midiLearnInput->start();
-                logger->log("Opened MIDI input for MIDI Learn: " + deviceName);
-            }
-            return;
-        }
-    }
-
-    logger->log("MIDI device not found for MIDI Learn: " + deviceName);
-}
-
-void OmnifyAudioProcessor::closeMidiLearnInput() {
-    if (midiLearnInput) {
-        midiLearnInput->stop();
-        midiLearnInput.reset();
-        logger->log("Closed MIDI Learn input");
-    }
-}
-
-void OmnifyAudioProcessor::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) {
-    MidiLearnComponent::broadcastMidi(message);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new OmnifyAudioProcessor(); }
