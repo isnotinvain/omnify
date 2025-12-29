@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 
+#include "datamodel/DawOrDevice.h"
 #include "datamodel/OmnifySettings.h"
 #include "ui/LcarsLookAndFeel.h"
 
@@ -15,11 +16,18 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
 
-    // MIDI Device Selector
-    midiDeviceSelector.onDeviceSelected = [this](const juce::String& deviceName) {
-        omnifyProcessor.modifySettings([deviceName](OmnifySettings& s) { s.input = Device{deviceName.toStdString()}; });
+    // MIDI I/O Panel
+    midiIOPanel.onInputChanged = [this](bool useDaw, const juce::String& deviceName) {
+        omnifyProcessor.modifySettings([useDaw, deviceName](OmnifySettings& s) {
+            s.input = useDaw ? DawOrDevice{Daw{}} : DawOrDevice{Device{deviceName.toStdString()}};
+        });
     };
-    addAndMakeVisible(midiDeviceSelector);
+    midiIOPanel.onOutputChanged = [this](bool useDaw, const juce::String& portName) {
+        omnifyProcessor.modifySettings([useDaw, portName](OmnifySettings& s) {
+            s.output = useDaw ? DawOrDevice{Daw{}} : DawOrDevice{Device{portName.toStdString()}};
+        });
+    };
+    addAndMakeVisible(midiIOPanel);
 
     // Panels
     addAndMakeVisible(chordSettings);
@@ -34,9 +42,16 @@ OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() = default;
 void OmnifyAudioProcessorEditor::refreshFromSettings() {
     auto settings = omnifyProcessor.getSettings();
 
-    // MIDI Device
+    // MIDI I/O
+    midiIOPanel.setInputDaw(isDaw(settings->input));
     if (isDevice(settings->input)) {
-        midiDeviceSelector.setSelectedDevice(juce::String(getDeviceName(settings->input)));
+        midiIOPanel.setInputDevice(juce::String(getDeviceName(settings->input)));
+    }
+    midiIOPanel.setOutputDaw(isDaw(settings->output));
+    if (isDevice(settings->output)) {
+        midiIOPanel.setOutputPortName(juce::String(getDeviceName(settings->output)));
+    } else {
+        midiIOPanel.setOutputPortName("Omnify");
     }
 
     // Panels
@@ -58,7 +73,7 @@ void OmnifyAudioProcessorEditor::paint(juce::Graphics& g) {
 void OmnifyAudioProcessorEditor::resized() {
     auto bounds = getLocalBounds().reduced(6);
 
-    // Top row: Title (1/3) + MIDI device selector (2/3)
+    // Top row: Title (1/3) + MIDI I/O panel (2/3)
     if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
         titleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTitle));
     }
@@ -67,7 +82,7 @@ void OmnifyAudioProcessorEditor::resized() {
     juce::FlexBox topRow;
     topRow.flexDirection = juce::FlexBox::Direction::row;
     topRow.items.add(juce::FlexItem(titleLabel).withFlex(1.0F).withMargin(3));
-    topRow.items.add(juce::FlexItem(midiDeviceSelector).withFlex(2.0F).withMargin(3));
+    topRow.items.add(juce::FlexItem(midiIOPanel).withFlex(2.0F).withMargin(3));
     topRow.performLayout(topArea);
 
     bounds.removeFromTop(6);

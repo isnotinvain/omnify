@@ -8,6 +8,7 @@
 class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
    public:
     // Standard font sizes - use these for consistency across the UI
+    static constexpr float fontSizeMiniscule = 16.0F;
     static constexpr float fontSizeTiny = 20.0F;
     static constexpr float fontSizeSmall = 22.0F;
     static constexpr float fontSizeMedium = 26.0F;
@@ -25,8 +26,11 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
 
     // Property ID for custom combo box font size
     static inline const juce::Identifier comboBoxFontSizeId{"LcarsFontSize"};
+    // Property ID for custom toggle button font size
+    static inline const juce::Identifier toggleButtonFontSizeId{"LcarsToggleFontSize"};
 
     static void setComboBoxFontSize(juce::ComboBox& box, float fontSize) { box.getProperties().set(comboBoxFontSizeId, fontSize); }
+    static void setToggleButtonFontSize(juce::ToggleButton& btn, float fontSize) { btn.getProperties().set(toggleButtonFontSizeId, fontSize); }
 
     LcarsLookAndFeel() {
         orbitronTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::OrbitronRegular_ttf, BinaryData::OrbitronRegular_ttfSize);
@@ -268,6 +272,18 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         g.drawText(juce::String(juce::roundToInt(slider.getValue())), bounds.toNearestInt(), juce::Justification::centred, false);
     }
 
+    void fillTextEditorBackground(juce::Graphics& g, int width, int height, juce::TextEditor& editor) override {
+        g.setColour(editor.findColour(juce::TextEditor::backgroundColourId));
+        g.fillRoundedRectangle(0.0F, 0.0F, static_cast<float>(width), static_cast<float>(height), borderRadius);
+    }
+
+    void drawTextEditorOutline(juce::Graphics& g, int width, int height, juce::TextEditor& editor) override {
+        auto bounds = juce::Rectangle<float>(0.0F, 0.0F, static_cast<float>(width), static_cast<float>(height));
+        g.setColour(editor.findColour(editor.hasKeyboardFocus(true) ? juce::TextEditor::focusedOutlineColourId
+                                                                    : juce::TextEditor::outlineColourId));
+        g.drawRoundedRectangle(bounds.reduced(0.5F), borderRadius, 1.0F);
+    }
+
     void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool /*shouldDrawButtonAsHighlighted*/,
                           bool /*shouldDrawButtonAsDown*/) override {
         auto bounds = button.getLocalBounds().toFloat().reduced(2.0F);
@@ -285,8 +301,9 @@ class LcarsLookAndFeel : public juce::LookAndFeel_V4 {
         // Text - show on/off text based on state (customizable via properties)
         auto onText = button.getProperties().getWithDefault("onText", "On").toString();
         auto offText = button.getProperties().getWithDefault("offText", "Off").toString();
+        auto fontSize = static_cast<float>(button.getProperties().getWithDefault(toggleButtonFontSizeId, fontSizeSmall));
         g.setColour(button.findColour(juce::ToggleButton::tickColourId));
-        g.setFont(getOrbitronFont(fontSizeSmall));
+        g.setFont(getOrbitronFont(fontSize));
         g.drawText(button.getToggleState() ? onText : offText, bounds.toNearestInt(), juce::Justification::centred);
     }
 };

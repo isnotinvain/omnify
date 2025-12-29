@@ -4,7 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "PluginProcessor.h"
-#include "ui/components/MidiDeviceSelectorItem.h"
+#include "ui/components/MidiIOPanel.h"
 #include "ui/panels/ChordQualityPanel.h"
 #include "ui/panels/ChordSettingsPanel.h"
 #include "ui/panels/StrumSettingsPanel.h"
@@ -23,7 +23,7 @@ class OmnifyAudioProcessorEditor : public juce::AudioProcessorEditor {
 
     // Top-level components
     juce::Label titleLabel;
-    MidiDeviceSelectorComponent midiDeviceSelector;
+    MidiIOPanel midiIOPanel;
     ChordSettingsPanel chordSettings;
     StrumSettingsPanel strumSettings;
     ChordQualityPanel chordQualityPanel;
