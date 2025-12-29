@@ -86,7 +86,7 @@ void OmnifyAudioProcessor::prepareToPlay(double sr, int samplesPerBlock) {
 void OmnifyAudioProcessor::releaseResources() {}
 
 void OmnifyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
-    juce::ignoreUnused(buffer);
+    buffer.clear();
 
     auto settings = std::atomic_load(&omnifySettings);
     bool inputFromDevice = isDevice(settings->input);
