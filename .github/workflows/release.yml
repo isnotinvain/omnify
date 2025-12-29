@@ -13,6 +13,9 @@ on:
 env:
   VERSION: ${{ github.event.release.tag_name || github.event.inputs.version }}
 
+permissions:
+  contents: write
+
 jobs:
   build-macos:
     runs-on: macos-15
