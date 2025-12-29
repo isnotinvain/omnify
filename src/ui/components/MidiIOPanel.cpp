@@ -19,6 +19,7 @@ MidiIOPanel::MidiIOPanel() {
         bool useDaw = inputDawToggle.getToggleState();
         inputDeviceCombo.setEnabled(!useDaw);
         inputDeviceCombo.setVisible(!useDaw);
+        resized();
         notifyInputChanged();
     };
     addAndMakeVisible(inputDawToggle);
@@ -49,32 +50,24 @@ MidiIOPanel::MidiIOPanel() {
     outputDawToggle.setToggleState(true, juce::dontSendNotification);
     outputDawToggle.onClick = [this]() {
         bool useDaw = outputDawToggle.getToggleState();
-        outputPortNameEditor.setEnabled(!useDaw);
-        outputPortNameEditor.setVisible(!useDaw);
+        outputPortCombo.setEnabled(!useDaw);
+        outputPortCombo.setVisible(!useDaw);
+        resized();
         notifyOutputChanged();
     };
     addAndMakeVisible(outputDawToggle);
 
-    // Output port name editor (hidden by default since DAW toggle is on)
-    outputPortNameEditor.setEnabled(false);
-    outputPortNameEditor.setVisible(false);
-    outputPortNameEditor.setText("Omnify", juce::dontSendNotification);
-    outputPortNameEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
-    outputPortNameEditor.setColour(juce::TextEditor::outlineColourId, LcarsColors::orange);
-    outputPortNameEditor.setColour(juce::TextEditor::textColourId, LcarsColors::orange);
-    outputPortNameEditor.setColour(juce::TextEditor::focusedOutlineColourId, LcarsColors::africanViolet);
-    outputPortNameEditor.setJustification(juce::Justification::centredLeft);
-    outputPortNameEditor.onReturnKey = [this]() {
-        lastCommittedPortName = outputPortNameEditor.getText();
-        notifyOutputChanged();
-    };
-    outputPortNameEditor.onFocusLost = [this]() {
-        if (outputPortNameEditor.getText() != lastCommittedPortName) {
-            lastCommittedPortName = outputPortNameEditor.getText();
-            notifyOutputChanged();
-        }
-    };
-    addAndMakeVisible(outputPortNameEditor);
+    // Output port combo (hidden by default since DAW toggle is on)
+    outputPortCombo.setEnabled(false);
+    outputPortCombo.setVisible(false);
+    outputPortCombo.addItem("Omnify", 1);
+    outputPortCombo.addItem("Omnify: BMO", 2);
+    outputPortCombo.addItem("Omnify: Marcy", 3);
+    outputPortCombo.addItem("Omnify: PB", 4);
+    outputPortCombo.setSelectedId(1, juce::dontSendNotification);
+    LcarsLookAndFeel::setComboBoxFontSize(outputPortCombo, LcarsLookAndFeel::fontSizeTiny);
+    outputPortCombo.onChange = [this]() { notifyOutputChanged(); };
+    addAndMakeVisible(outputPortCombo);
 
     refreshDeviceList();
     startTimer(2000);
@@ -100,41 +93,85 @@ void MidiIOPanel::paint(juce::Graphics& g) {
 
 void MidiIOPanel::resized() {
     auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel());
-    if (laf != nullptr) {
-        inputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
-        outputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
-        outputPortNameEditor.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeMiniscule));
-        outputPortNameEditor.applyFontToAllText(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeMiniscule));
-    }
 
     auto bounds = getLocalBounds();
     const int halfWidth = bounds.getWidth() / 2;
     const int gap = 3;
     const int padding = 6;
-    const int toggleWidth = 120;
-    const int rowHeight = 26;
-    const int rowSpacing = 2;
+
+    const bool inputDawMode = inputDawToggle.getToggleState();
+    const bool outputDawMode = outputDawToggle.getToggleState();
 
     // Input section (left half)
     auto inputSection = bounds.removeFromLeft(halfWidth - gap).reduced(padding, 4);
 
-    auto inputTopRow = inputSection.removeFromTop(rowHeight);
-    inputLabel.setBounds(inputTopRow.removeFromLeft(inputTopRow.getWidth() - toggleWidth));
-    inputDawToggle.setBounds(inputTopRow);
+    if (inputDawMode) {
+        // DAW mode: larger text, vertically centered single row
+        const int dawRowHeight = 36;
+        const int dawToggleWidth = 140;
 
-    inputSection.removeFromTop(rowSpacing);
-    inputDeviceCombo.setBounds(inputSection.removeFromTop(rowHeight));
+        if (laf != nullptr) {
+            inputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
+            LcarsLookAndFeel::setToggleButtonFontSize(inputDawToggle, LcarsLookAndFeel::fontSizeSmall);
+        }
+
+        auto centeredRow = inputSection.withSizeKeepingCentre(inputSection.getWidth(), dawRowHeight);
+        inputLabel.setBounds(centeredRow.removeFromLeft(centeredRow.getWidth() - dawToggleWidth));
+        inputDawToggle.setBounds(centeredRow);
+    } else {
+        // Device mode: two rows with smaller text
+        const int rowHeight = 26;
+        const int toggleWidth = 120;
+        const int rowSpacing = 2;
+
+        if (laf != nullptr) {
+            inputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
+            LcarsLookAndFeel::setToggleButtonFontSize(inputDawToggle, LcarsLookAndFeel::fontSizeMiniscule);
+        }
+
+        auto inputTopRow = inputSection.removeFromTop(rowHeight);
+        inputLabel.setBounds(inputTopRow.removeFromLeft(inputTopRow.getWidth() - toggleWidth));
+        inputDawToggle.setBounds(inputTopRow);
+
+        inputSection.removeFromTop(rowSpacing);
+        inputDeviceCombo.setBounds(inputSection.removeFromTop(rowHeight));
+    }
 
     // Output section (right half)
     bounds.removeFromLeft(gap * 2);
     auto outputSection = bounds.reduced(padding, 4);
 
-    auto outputTopRow = outputSection.removeFromTop(rowHeight);
-    outputLabel.setBounds(outputTopRow.removeFromLeft(outputTopRow.getWidth() - toggleWidth));
-    outputDawToggle.setBounds(outputTopRow);
+    if (outputDawMode) {
+        // DAW mode: larger text, vertically centered single row
+        const int dawRowHeight = 36;
+        const int dawToggleWidth = 140;
 
-    outputSection.removeFromTop(rowSpacing);
-    outputPortNameEditor.setBounds(outputSection.removeFromTop(rowHeight));
+        if (laf != nullptr) {
+            outputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
+            LcarsLookAndFeel::setToggleButtonFontSize(outputDawToggle, LcarsLookAndFeel::fontSizeSmall);
+        }
+
+        auto centeredRow = outputSection.withSizeKeepingCentre(outputSection.getWidth(), dawRowHeight);
+        outputLabel.setBounds(centeredRow.removeFromLeft(centeredRow.getWidth() - dawToggleWidth));
+        outputDawToggle.setBounds(centeredRow);
+    } else {
+        // Port mode: two rows with smaller text
+        const int rowHeight = 26;
+        const int toggleWidth = 120;
+        const int rowSpacing = 2;
+
+        if (laf != nullptr) {
+            outputLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
+            LcarsLookAndFeel::setToggleButtonFontSize(outputDawToggle, LcarsLookAndFeel::fontSizeMiniscule);
+        }
+
+        auto outputTopRow = outputSection.removeFromTop(rowHeight);
+        outputLabel.setBounds(outputTopRow.removeFromLeft(outputTopRow.getWidth() - toggleWidth));
+        outputDawToggle.setBounds(outputTopRow);
+
+        outputSection.removeFromTop(rowSpacing);
+        outputPortCombo.setBounds(outputSection.removeFromTop(rowHeight));
+    }
 }
 
 void MidiIOPanel::timerCallback() { refreshDeviceList(); }
@@ -171,7 +208,7 @@ void MidiIOPanel::notifyInputChanged() {
 
 void MidiIOPanel::notifyOutputChanged() {
     if (onOutputChanged) {
-        onOutputChanged(outputDawToggle.getToggleState(), lastCommittedPortName);
+        onOutputChanged(outputDawToggle.getToggleState(), outputPortCombo.getText());
     }
 }
 
@@ -179,6 +216,7 @@ void MidiIOPanel::setInputDaw(bool useDaw) {
     inputDawToggle.setToggleState(useDaw, juce::dontSendNotification);
     inputDeviceCombo.setEnabled(!useDaw);
     inputDeviceCombo.setVisible(!useDaw);
+    resized();
 }
 
 void MidiIOPanel::setInputDevice(const juce::String& deviceName) {
@@ -200,11 +238,17 @@ void MidiIOPanel::setInputDevice(const juce::String& deviceName) {
 
 void MidiIOPanel::setOutputDaw(bool useDaw) {
     outputDawToggle.setToggleState(useDaw, juce::dontSendNotification);
-    outputPortNameEditor.setEnabled(!useDaw);
-    outputPortNameEditor.setVisible(!useDaw);
+    outputPortCombo.setEnabled(!useDaw);
+    outputPortCombo.setVisible(!useDaw);
+    resized();
 }
 
 void MidiIOPanel::setOutputPortName(const juce::String& portName) {
-    lastCommittedPortName = portName;
-    outputPortNameEditor.setText(portName, juce::dontSendNotification);
+    for (int i = 0; i < outputPortCombo.getNumItems(); ++i) {
+        if (outputPortCombo.getItemText(i) == portName) {
+            outputPortCombo.setSelectedItemIndex(i, juce::dontSendNotification);
+            return;
+        }
+    }
+    outputPortCombo.setSelectedId(1, juce::dontSendNotification);
 }

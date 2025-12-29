@@ -37,8 +37,7 @@ class MidiIOPanel : public juce::Component, private juce::Timer {
     // Output side
     juce::Label outputLabel{"", "Output"};
     juce::ToggleButton outputDawToggle;
-    juce::TextEditor outputPortNameEditor;
-    juce::String lastCommittedPortName{"Omnify"};
+    juce::ComboBox outputPortCombo;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiIOPanel)
 };
