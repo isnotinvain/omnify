@@ -73,7 +73,7 @@ std::vector<juce::MidiMessage> Omnify::handle(const juce::MidiMessage& msg, int6
     if (auto r = handleStrum(msg, *s, currentSample)) {
         return *r;
     }
-    return {};
+    return {msg};
 }
 
 std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordQualityChange(const juce::MidiMessage& msg, const OmnifySettings& s) {
