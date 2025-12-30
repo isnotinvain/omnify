@@ -5,6 +5,33 @@
 #include <algorithm>
 #include <unordered_set>
 
+namespace {
+constexpr int STRUM_ZONE_COUNT = 13;
+constexpr int STRUM_DEAD_ZONE_SIZE = 2;
+
+// Returns zone index (0-12), or -1 if in a dead zone
+// Layout: [zone0][dead][zone1][dead]...[zone11][dead][zone12] (no dead after last zone)
+int getStrumZone(int ccValue) {
+    constexpr int deadZonesCount = STRUM_ZONE_COUNT - 1;
+    constexpr int zoneSize = (128 - deadZonesCount * STRUM_DEAD_ZONE_SIZE) / STRUM_ZONE_COUNT;
+    constexpr int unitSize = zoneSize + STRUM_DEAD_ZONE_SIZE;
+    constexpr int lastZoneStart = (STRUM_ZONE_COUNT - 1) * unitSize;
+
+    // Last zone has no dead zone after it
+    if (ccValue >= lastZoneStart) {
+        return STRUM_ZONE_COUNT - 1;
+    }
+
+    int zone = ccValue / unitSize;
+    int positionInUnit = ccValue % unitSize;
+    if (positionInUnit < zoneSize) {
+        return zone;
+    }
+
+    return -1;  // dead zone
+}
+}  // namespace
+
 Omnify::Omnify(MidiMessageScheduler& scheduler, std::shared_ptr<OmnifySettings> settings, std::shared_ptr<RealtimeParams> realtimeParams)
     : scheduler(scheduler), realtimeParams(std::move(realtimeParams)) {
     updateSettings(std::move(settings), true);
@@ -122,6 +149,8 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
     auto events = stopNotesOfCurrentChord();
 
     currentChord = Chord{enqueuedChordQuality, msg.getNoteNumber()};
+    lastPlayedChord = currentChord;
+    lastVelocity = msg.getVelocity();
 
     std::unordered_set<int> clampedNotes;
 
@@ -179,24 +208,31 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
         return std::nullopt;
     }
 
-    if (!currentChord) {
+    const Chord* chordToStrum = nullptr;
+    if (currentChord) {
+        chordToStrum = &*currentChord;
+    } else if (lastPlayedChord) {
+        chordToStrum = &*lastPlayedChord;
+    } else {
         return std::vector<juce::MidiMessage>{};
     }
 
-    int64_t cooldownSamples = static_cast<int64_t>((realtimeParams->strumCooldownMs.load() / 1000.0) * sampleRate);
+    auto cooldownSamples = static_cast<int64_t>((realtimeParams->strumCooldownMs.load() / 1000.0) * sampleRate);
     bool cooldownReady = currentSample >= lastStrumSample + cooldownSamples;
 
-    int strumPlateZone = (msg.getControllerValue() * 13) / 128;
+    int strumPlateZone = getStrumZone(msg.getControllerValue());
+    if (strumPlateZone < 0) {
+        return std::vector<juce::MidiMessage>{};  // in dead zone
+    }
 
     if (lastStrumZone != strumPlateZone || cooldownReady) {
-        auto velocity = noteOnEventsOfCurrentChord[0].getVelocity();
-
-        auto strumChord = s.strumVoicingStyle->constructChord(currentChord->quality, currentChord->root);
+        auto strumChord = s.strumVoicingStyle->constructChord(chordToStrum->quality, chordToStrum->root);
         int noteToPlay = strumChord[static_cast<size_t>(strumPlateZone)];
 
-        auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, velocity);
+        auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, lastVelocity);
 
-        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), currentSample, static_cast<double>(realtimeParams->strumGateTimeMs.load()));
+        scheduler.schedule(juce::MidiMessage::noteOff(s.strumChannel, noteToPlay), currentSample,
+                           static_cast<double>(realtimeParams->strumGateTimeMs.load()));
 
         lastStrumSample = currentSample;
         lastStrumZone = strumPlateZone;
