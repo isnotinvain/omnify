@@ -163,7 +163,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
         case VoicingModifier::FIXED:
             chord = s.chordVoicingStyle->constructChord(currentChord->quality, 60 + (currentChord->root % 12));
             break;
-        case VoicingModifier::SMOOTH:
+        case VoicingModifier::SMOOTH: {
             auto normalizedRoot = 60 + (currentChord->root % 12);
             auto middleOctaveNotes = s.chordVoicingStyle->constructChord(currentChord->quality, normalizedRoot);
             std::vector<int> offsets;
@@ -173,7 +173,25 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
             }
             chord = smooth(offsets, currentChord->root);
             break;
+        }
+        case VoicingModifier::DYNAMIC: {
+            if (previousChordNotes.empty()) {
+                chord = s.chordVoicingStyle->constructChord(currentChord->quality, currentChord->root);
+                break;
+            }
+
+            auto voicingNotes = s.chordVoicingStyle->constructChord(currentChord->quality, 60 + (currentChord->root % 12));
+            std::vector<int> pitchClasses;
+            pitchClasses.reserve(voicingNotes.size());
+            for (int note : voicingNotes) {
+                pitchClasses.push_back(note % 12);
+            }
+            chord = dynamicSmooth(pitchClasses, previousChordNotes);
+            break;
+        }
     }
+
+    previousChordNotes = chord;
 
     for (int note : chord) {
         int clamped = clampNote(note);
@@ -300,4 +318,142 @@ std::vector<int> Omnify::smooth(std::vector<int> offsets, int root) {
     }
 
     return notes;
+}
+
+namespace {
+
+int nearestInstanceOfPitchClass(int pitchClass, int target) {
+    int offset = ((pitchClass - target) % 12 + 12) % 12;
+    int above = target + offset;
+    int below = above - 12;
+    return (std::abs(target - below) <= std::abs(target - above)) ? below : above;
+}
+
+std::vector<int> placeNearCentroid(const std::vector<int>& pitchClasses, int centroid) {
+    std::vector<int> placed;
+    placed.reserve(pitchClasses.size());
+    for (int pc : pitchClasses) {
+        placed.push_back(nearestInstanceOfPitchClass(pc, centroid));
+    }
+    return placed;
+}
+
+int assignmentCost(const std::vector<int>& newNotes, const std::vector<int>& prevNotes, const std::vector<size_t>& assignment) {
+    int cost = 0;
+    for (size_t i = 0; i < assignment.size(); i++) {
+        cost += std::abs(newNotes[i] - prevNotes[assignment[i]]);
+    }
+    return cost;
+}
+
+std::pair<std::vector<size_t>, int> bestAssignment(const std::vector<int>& newNotes, const std::vector<int>& prevNotes) {
+    std::vector<size_t> perm(prevNotes.size());
+    std::iota(perm.begin(), perm.end(), 0);
+
+    std::vector<size_t> bestPerm = perm;
+    int bestCost = INT_MAX;
+
+    do {
+        int cost = assignmentCost(newNotes, prevNotes, perm);
+        if (cost < bestCost) {
+            bestCost = cost;
+            bestPerm = perm;
+        }
+    } while (std::next_permutation(perm.begin(), perm.end()));
+
+    return {bestPerm, bestCost};
+}
+
+}  // namespace
+
+std::vector<int> Omnify::dynamicSmooth(const std::vector<int>& newPitchClasses, const std::vector<int>& previousNotes) {
+    jassert(!previousNotes.empty());
+
+    int centroid = 0;
+    for (int n : previousNotes) {
+        centroid += n;
+    }
+    centroid /= static_cast<int>(previousNotes.size());
+
+    size_t newSize = newPitchClasses.size();
+    size_t prevSize = previousNotes.size();
+
+    if (newSize == prevSize) {
+        std::vector<int> newNotes = placeNearCentroid(newPitchClasses, centroid);
+        auto [assignment, cost] = bestAssignment(newNotes, previousNotes);
+        std::vector<int> result(newSize);
+        for (size_t i = 0; i < newSize; i++) {
+            int targetPrev = previousNotes[assignment[i]];
+            result[i] = nearestInstanceOfPitchClass(newPitchClasses[i], targetPrev);
+        }
+        return result;
+
+    } else if (newSize > prevSize) {
+        // More new notes than previous (e.g., triad -> 7th chord)
+        // Try each new note as "odd one out", scored by centroid distance
+        int bestCost = INT_MAX;
+        std::vector<int> bestResult;
+
+        for (size_t oddOut = 0; oddOut < newSize; oddOut++) {
+            std::vector<int> subset;
+            for (size_t i = 0; i < newSize; i++) {
+                if (i != oddOut) {
+                    subset.push_back(newPitchClasses[i]);
+                }
+            }
+
+            std::vector<int> subsetPlaced = placeNearCentroid(subset, centroid);
+            auto [assignment, assignCost] = bestAssignment(subsetPlaced, previousNotes);
+
+            int oddPlaced = nearestInstanceOfPitchClass(newPitchClasses[oddOut], centroid);
+            int oddCost = std::abs(oddPlaced - centroid);
+            int totalCost = assignCost + oddCost;
+
+            if (totalCost < bestCost) {
+                bestCost = totalCost;
+                bestResult.clear();
+                bestResult.reserve(newSize);
+                size_t subIdx = 0;
+                for (size_t i = 0; i < newSize; i++) {
+                    if (i == oddOut) {
+                        bestResult.push_back(oddPlaced);
+                    } else {
+                        int targetPrev = previousNotes[assignment[subIdx]];
+                        bestResult.push_back(nearestInstanceOfPitchClass(subset[subIdx], targetPrev));
+                        subIdx++;
+                    }
+                }
+            }
+        }
+        return bestResult;
+
+    } else {
+        // Fewer new notes than previous (e.g., 7th chord -> triad)
+        // Try each previous note as "orphan", pick lowest assignment cost
+        int bestCost = INT_MAX;
+        std::vector<int> bestResult;
+
+        for (size_t orphan = 0; orphan < prevSize; orphan++) {
+            std::vector<int> prevSubset;
+            for (size_t i = 0; i < prevSize; i++) {
+                if (i != orphan) {
+                    prevSubset.push_back(previousNotes[i]);
+                }
+            }
+
+            std::vector<int> newPlaced = placeNearCentroid(newPitchClasses, centroid);
+            auto [assignment, assignCost] = bestAssignment(newPlaced, prevSubset);
+
+            if (assignCost < bestCost) {
+                bestCost = assignCost;
+                bestResult.clear();
+                bestResult.reserve(newSize);
+                for (size_t i = 0; i < newSize; i++) {
+                    int targetPrev = prevSubset[assignment[i]];
+                    bestResult.push_back(nearestInstanceOfPitchClass(newPitchClasses[i], targetPrev));
+                }
+            }
+        }
+        return bestResult;
+    }
 }

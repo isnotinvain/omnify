@@ -37,6 +37,7 @@ class Omnify {
     ChordQuality enqueuedChordQuality = ChordQuality::MAJOR;
     std::optional<Chord> currentChord;
     std::optional<Chord> lastPlayedChord;
+    std::vector<int> previousChordNotes;
     juce::uint8 lastVelocity = 100;
     std::vector<juce::MidiMessage> noteOnEventsOfCurrentChord;
     int64_t lastStrumSample = 0;
@@ -53,4 +54,5 @@ class Omnify {
     std::vector<juce::MidiMessage> stopNotesOfCurrentChord();
     static int clampNote(int note);
     static std::vector<int> smooth(std::vector<int> offsets, int root);
+    static std::vector<int> dynamicSmooth(const std::vector<int>& newPitchClasses, const std::vector<int>& previousNotes);
 };

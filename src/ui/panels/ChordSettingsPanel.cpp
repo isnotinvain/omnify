@@ -120,6 +120,9 @@ void ChordSettingsPanel::setupCallbacks() {
                 next = VoicingModifier::SMOOTH;
                 break;
             case VoicingModifier::SMOOTH:
+                next = VoicingModifier::DYNAMIC;
+                break;
+            case VoicingModifier::DYNAMIC:
                 next = VoicingModifier::NONE;
                 break;
         }
@@ -209,6 +212,9 @@ void ChordSettingsPanel::refreshFromSettings() {
             break;
         case VoicingModifier::SMOOTH:
             voicingModifierButton.setButtonText("Smooth");
+            break;
+        case VoicingModifier::DYNAMIC:
+            voicingModifierButton.setButtonText("Dynamic");
             break;
     }
 
