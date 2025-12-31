@@ -169,7 +169,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
             std::vector<int> offsets;
             offsets.reserve(middleOctaveNotes.size());
             for (int x : middleOctaveNotes) {
-                offsets.push_back(x - 60);
+                offsets.push_back(x - normalizedRoot);
             }
             chord = smooth(offsets, currentChord->root);
             break;
@@ -226,7 +226,8 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
     }
 
     if (lastStrumZone != strumPlateZone || cooldownReady) {
-        auto strumChord = s.strumVoicingStyle->constructChord(chordToStrum->quality, chordToStrum->root);
+        auto rootToUse = (chordToStrum->root % 12) + 60;
+        auto strumChord = s.strumVoicingStyle->constructChord(chordToStrum->quality, rootToUse);
         int noteToPlay = strumChord[static_cast<size_t>(strumPlateZone)];
 
         auto noteOn = juce::MidiMessage::noteOn(s.strumChannel, noteToPlay, lastVelocity);
@@ -260,13 +261,17 @@ int Omnify::clampNote(int note) { return std::clamp(note, 0, 127); }
 std::vector<int> Omnify::smooth(std::vector<int> offsets, int root) {
     std::sort(offsets.begin(), offsets.end());
     auto octave = root / 12;
-    auto pitchClass = root % 12;
     std::vector<int> notes;
     notes.reserve(offsets.size());
 
     std::vector<int> inversionOffsets(offsets.size(), 0);
 
     switch (octave) {
+        case 2:
+            inversionOffsets[inversionOffsets.size() - 3] = -12;
+            inversionOffsets[inversionOffsets.size() - 2] = -12;
+            inversionOffsets[inversionOffsets.size() - 1] = -12;
+            break;
         case 3:
             inversionOffsets[inversionOffsets.size() - 2] = -12;
             inversionOffsets[inversionOffsets.size() - 1] = -12;
@@ -282,12 +287,16 @@ std::vector<int> Omnify::smooth(std::vector<int> offsets, int root) {
             inversionOffsets[0] = 12;
             inversionOffsets[1] = 12;
             break;
+        case 8:
+            inversionOffsets[0] = 12;
+            inversionOffsets[1] = 12;
+            inversionOffsets[2] = 12;
         default:
             break;
     }
 
     for (size_t i = 0; i < offsets.size(); i++) {
-        notes.push_back(60 + pitchClass + offsets[i] + inversionOffsets[i]);
+        notes.push_back(60 + (root % 12) + offsets[i] + inversionOffsets[i]);
     }
 
     return notes;
