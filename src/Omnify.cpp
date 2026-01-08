@@ -9,6 +9,10 @@ namespace {
 constexpr int STRUM_ZONE_COUNT = 13;
 constexpr int STRUM_DEAD_ZONE_SIZE = 2;
 
+// NOTE / IDEA:
+// use the inversions for up/down, but use root move direction as signal for up/down, eg C3 -> G3 means up, C3 -> G2 means down -- even for cases
+// where in the octave that doesn't happen
+
 // Returns zone index (0-12), or -1 if in a dead zone
 // Layout: [zone0][dead][zone1][dead]...[zone11][dead][zone12] (no dead after last zone)
 int getStrumZone(int ccValue) {
