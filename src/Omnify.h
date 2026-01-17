@@ -44,6 +44,9 @@ class Omnify {
     ChordNotes getChordNotes() const { return chordNotes.load(std::memory_order_relaxed); }
     int getCurrentRoot() const { return currentRoot.load(std::memory_order_relaxed); }  // -1 if no chord
 
+    // Thread-safe setter for UI input
+    void setEnqueuedChordQuality(ChordQuality quality) { enqueuedChordQuality.store(quality, std::memory_order_relaxed); }
+
    private:
     MidiMessageScheduler& scheduler;
     std::shared_ptr<OmnifySettings> settings;  // use std::atomic_load/store for thread safety

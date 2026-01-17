@@ -50,10 +50,22 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
 
     refreshFromSettings();
 
+    setWantsKeyboardFocus(true);
     startTimerHz(30);
 }
 
 OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() { stopTimer(); }
+
+bool OmnifyAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
+    // Keys 1-9 select chord qualities
+    int keyCode = key.getKeyCode();
+    if (keyCode >= '1' && keyCode <= '9') {
+        int index = keyCode - '1';
+        omnifyProcessor.setChordQuality(ALL_CHORD_QUALITIES[static_cast<size_t>(index)]);
+        return true;
+    }
+    return false;
+}
 
 void OmnifyAudioProcessorEditor::timerCallback() { updateDisplayState(); }
 
@@ -68,7 +80,7 @@ void OmnifyAudioProcessorEditor::updateDisplayState() {
         juce::String chordName = juce::String(noteNames[static_cast<size_t>(root % 12)]) + " " + qualityData.suffix;
         chordQualityDisplay.setText(chordName, juce::dontSendNotification);
     } else {
-        chordQualityDisplay.setText(qualityData.suffix, juce::dontSendNotification);
+        chordQualityDisplay.setText(qualityData.niceName, juce::dontSendNotification);
     }
 
     // Update keyboard display

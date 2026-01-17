@@ -18,6 +18,7 @@ class OmnifyAudioProcessorEditor : public juce::AudioProcessorEditor, private ju
     void paint(juce::Graphics&) override;
     void resized() override;
     void refreshFromSettings();
+    bool keyPressed(const juce::KeyPress& key) override;
 
    private:
     void timerCallback() override;

@@ -58,6 +58,9 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
     ChordNotes getDisplayChordNotes() const { return omnify->getChordNotes(); }
     int getDisplayCurrentRoot() const { return omnify->getCurrentRoot(); }  // -1 if no chord
 
+    // Thread-safe setter for UI input
+    void setChordQuality(ChordQuality quality) { omnify->setEnqueuedChordQuality(quality); }
+
    private:
     juce::ValueTree stateTree{"OmnifyState"};
     static constexpr const char* SETTINGS_JSON_KEY = "settings_v2";
