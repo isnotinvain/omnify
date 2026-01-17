@@ -26,8 +26,4 @@ class SmoothedFull : public VoicingStyle<VoicingFor::Chord> {
 
         return res;
     }
-
-    void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "SmoothedFull"}}; }
-
-    static std::shared_ptr<VoicingStyle<VoicingFor::Chord>> from_json(const nlohmann::json& j) { return std::make_shared<SmoothedFull>(); }
 };

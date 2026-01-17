@@ -2,15 +2,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include "BinaryData.h"
 #include "PluginEditor.h"
-#include "voicing_styles/FromFile.h"
-#include "voicing_styles/Omni84.h"
-#include "voicing_styles/OmnichordChords.h"
-#include "voicing_styles/OmnichordStrum.h"
-#include "voicing_styles/PlainAscending.h"
-#include "voicing_styles/RootPosition.h"
-#include "voicing_styles/SmoothedFull.h"
 
 namespace {
 // Create the minimal APVTS layout with just 2 realtime params
@@ -32,23 +24,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(juce::
 }
 }  // namespace
 
-void OmnifyAudioProcessor::initVoicingRegistries() {
-    chordVoicingRegistry.registerStyle("SmoothedFull", std::make_shared<SmoothedFull>(), SmoothedFull::from_json);
-    chordVoicingRegistry.registerStyle("Omnichord", std::make_shared<OmnichordChords>(), OmnichordChords::from_json);
-    chordVoicingRegistry.registerStyle("RootPosition", std::make_shared<RootPosition>(), RootPosition::from_json);
-    chordVoicingRegistry.registerStyle("FromFile", std::make_shared<FromFile<VoicingFor::Chord>>(""), FromFile<VoicingFor::Chord>::from_json);
-    chordVoicingRegistry.registerStyle("Omni84", std::make_shared<Omni84>(), Omni84::from_json);
-
-    strumVoicingRegistry.registerStyle("PlainAscending", std::make_shared<PlainAscending>(), PlainAscending::from_json);
-    strumVoicingRegistry.registerStyle("Omnichord", std::make_shared<OmnichordStrum>(), OmnichordStrum::from_json);
-}
-
 OmnifyAudioProcessor::OmnifyAudioProcessor()
     : AudioProcessor(
           BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true).withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "PARAMETERS", createParameterLayout(strumGateTimeParam, strumCooldownParam)) {
     juce::LookAndFeel::setDefaultLookAndFeel(&lcarsLookAndFeel);
-    initVoicingRegistries();
 
     parameters.addParameterListener("strum_gate_time_ms", this);
     parameters.addParameterListener("strum_cooldown_ms", this);
@@ -58,8 +38,6 @@ OmnifyAudioProcessor::OmnifyAudioProcessor()
     omnifySettings = std::make_shared<OmnifySettings>();
 
     omnify = std::make_unique<Omnify>(*midiScheduler, omnifySettings, realtimeParams);
-
-    loadDefaultSettings();
 }
 
 OmnifyAudioProcessor::~OmnifyAudioProcessor() {
@@ -241,7 +219,7 @@ void OmnifyAudioProcessor::reconcileDevices() {
 
 void OmnifyAudioProcessor::applySettingsFromJson(const juce::String& jsonString) {
     auto j = nlohmann::json::parse(jsonString.toStdString());
-    auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j, chordVoicingRegistry, strumVoicingRegistry));
+    auto newSettings = std::make_shared<OmnifySettings>(OmnifySettings::from_json(j));
 
     omnify->updateSettings(newSettings, true);
     std::atomic_store(&omnifySettings, newSettings);
@@ -273,17 +251,6 @@ void OmnifyAudioProcessor::saveSettingsToValueTree() {
     auto settings = std::atomic_load(&omnifySettings);
     auto jsonString = settings->to_json().dump();
     stateTree.setProperty(SETTINGS_JSON_KEY, juce::String(jsonString), nullptr);
-}
-
-void OmnifyAudioProcessor::loadDefaultSettings() {
-    try {
-        juce::String jsonStr(BinaryData::default_settings_json, BinaryData::default_settings_jsonSize);
-        applySettingsFromJson(jsonStr);
-        saveSettingsToValueTree();
-        DBG("Loaded default settings from bundled JSON");
-    } catch (const std::exception& e) {
-        DBG("Failed to load default settings: " << e.what());
-    }
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new OmnifyAudioProcessor(); }

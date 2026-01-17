@@ -1,16 +1,12 @@
 #pragma once
 
 #include <json.hpp>
-#include <memory>
-#include <string>
 
 #include "ChordQualitySelectionStyle.h"
 #include "DawOrDevice.h"
 #include "MidiButton.h"
 #include "VoicingModifier.h"
-#include "VoicingStyle.h"
-#include "voicing_styles/OmnichordChords.h"
-#include "voicing_styles/OmnichordStrum.h"
+#include "VoicingType.h"
 
 class OmnifySettings {
    public:
@@ -23,8 +19,8 @@ class OmnifySettings {
     int strumGateTimeMs = 500;
     int strumPlateCC = 1;
 
-    std::shared_ptr<VoicingStyle<VoicingFor::Chord>> chordVoicingStyle = std::make_shared<OmnichordChords>();
-    std::shared_ptr<VoicingStyle<VoicingFor::Strum>> strumVoicingStyle = std::make_shared<OmnichordStrum>();
+    const VoicingStyle<VoicingFor::Chord>* chordVoicingStyle = chordVoicings().at(ChordVoicingType::Omnichord);
+    const VoicingStyle<VoicingFor::Strum>* strumVoicingStyle = strumVoicings().at(StrumVoicingType::Omnichord);
     VoicingModifier voicingModifier = VoicingModifier::NONE;
 
     ChordQualitySelectionStyle chordQualitySelectionStyle = ButtonPerChordQuality();
@@ -34,6 +30,5 @@ class OmnifySettings {
     OmnifySettings() = default;
 
     nlohmann::json to_json() const;
-    static OmnifySettings from_json(const nlohmann::json& j, VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
-                                    VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry);
+    static OmnifySettings from_json(const nlohmann::json& j);
 };

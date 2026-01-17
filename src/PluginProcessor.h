@@ -9,8 +9,6 @@
 #include "MidiMessageScheduler.h"
 #include "Omnify.h"
 #include "OmnifyLogger.h"
-#include "datamodel/ChordQuality.h"
-#include "datamodel/VoicingStyle.h"
 #include "ui/LcarsLookAndFeel.h"
 #include "ui/components/MidiLearnComponent.h"
 
@@ -55,27 +53,19 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
 
-    const VoicingStyleRegistry<VoicingFor::Chord>& getChordVoicingRegistry() const { return chordVoicingRegistry; }
-    const VoicingStyleRegistry<VoicingFor::Strum>& getStrumVoicingRegistry() const { return strumVoicingRegistry; }
-
    private:
     juce::ValueTree stateTree{"OmnifyState"};
-    static constexpr const char* SETTINGS_JSON_KEY = "settings_v1";
+    static constexpr const char* SETTINGS_JSON_KEY = "settings_v2";
 
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterFloat* strumGateTimeParam = nullptr;
     juce::AudioParameterFloat* strumCooldownParam = nullptr;
-
-    VoicingStyleRegistry<VoicingFor::Chord> chordVoicingRegistry;
-    VoicingStyleRegistry<VoicingFor::Strum> strumVoicingRegistry;
-    void initVoicingRegistries();
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
     void handleAsyncUpdate() override;
     void applySettingsFromJson(const juce::String& jsonString);
     void loadSettingsFromValueTree();
     void saveSettingsToValueTree();
-    void loadDefaultSettings();
 
     std::unique_ptr<MidiMessageScheduler> midiScheduler;
     std::shared_ptr<RealtimeParams> realtimeParams;

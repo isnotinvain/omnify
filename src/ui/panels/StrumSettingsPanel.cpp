@@ -23,15 +23,19 @@ StrumSettingsPanel::StrumSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     voicingLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
     addAndMakeVisible(voicingLabel);
 
-    // Voicing Style Selector - iterate registry to build options
-    for (const auto& [typeName, entry] : processor.getStrumVoicingRegistry().getRegistry()) {
-        auto view = std::make_unique<juce::Component>();
-        view->getProperties().set("preferredHeight", 0);
-        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
-        voicingStyleViews.push_back(std::move(view));
-        voicingStyleTypeNames.push_back(typeName);
+    // Voicing Style ComboBox - iterate voicings map to build options
+    int itemId = 1;
+    for (const auto& [type, style] : strumVoicings()) {
+        voicingStyleComboBox.addItem(style->displayName(), itemId++);
+        voicingStyleTypes.push_back(type);
     }
-    addAndMakeVisible(voicingStyleSelector);
+    addAndMakeVisible(voicingStyleComboBox);
+
+    // Description label for selected voicing (matches VariantSelector styling)
+    voicingDescriptionLabel.setColour(juce::Label::textColourId, LcarsColors::red);
+    voicingDescriptionLabel.setJustificationType(juce::Justification::topLeft);
+    voicingDescriptionLabel.setMinimumHorizontalScale(1.0f);  // Don't shrink text
+    addAndMakeVisible(voicingDescriptionLabel);
 
     // Strum Plate CC
     strumPlateLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
@@ -68,14 +72,13 @@ void StrumSettingsPanel::setupCallbacks() {
     };
 
     // Voicing Style selector
-    voicingStyleSelector.onSelectionChanged = [this](int index) {
-        if (index >= 0 && index < static_cast<int>(voicingStyleTypeNames.size())) {
-            const auto& typeName = voicingStyleTypeNames[static_cast<size_t>(index)];
-            const auto& registry = processor.getStrumVoicingRegistry().getRegistry();
-            auto it = registry.find(typeName);
-            if (it != registry.end()) {
-                processor.modifySettings([style = it->second.style](OmnifySettings& s) { s.strumVoicingStyle = style; });
-            }
+    voicingStyleComboBox.onChange = [this]() {
+        int index = voicingStyleComboBox.getSelectedItemIndex();
+        if (index >= 0 && index < static_cast<int>(voicingStyleTypes.size())) {
+            auto type = voicingStyleTypes[static_cast<size_t>(index)];
+            const auto* style = strumVoicings().at(type);
+            processor.modifySettings([style](OmnifySettings& s) { s.strumVoicingStyle = style; });
+            updateVoicingDescription();
         }
     };
 
@@ -109,17 +112,25 @@ void StrumSettingsPanel::refreshFromSettings() {
     }
     strumPlateCcLearn.setLearnedValue(strumVal);
 
-    // Voicing style selector - find matching index via registry lookup
+    // Voicing style selector - find matching index
     if (settings->strumVoicingStyle) {
-        auto currentType = processor.getStrumVoicingRegistry().getTypeName(settings->strumVoicingStyle.get());
-        if (currentType) {
-            for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
-                if (voicingStyleTypeNames[i] == *currentType) {
-                    voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
-                    break;
-                }
+        auto currentType = strumVoicingTypeFor(settings->strumVoicingStyle);
+        for (size_t i = 0; i < voicingStyleTypes.size(); ++i) {
+            if (voicingStyleTypes[i] == currentType) {
+                voicingStyleComboBox.setSelectedItemIndex(static_cast<int>(i), juce::dontSendNotification);
+                break;
             }
         }
+    }
+    updateVoicingDescription();
+}
+
+void StrumSettingsPanel::updateVoicingDescription() {
+    int index = voicingStyleComboBox.getSelectedItemIndex();
+    if (index >= 0 && index < static_cast<int>(voicingStyleTypes.size())) {
+        auto type = voicingStyleTypes[static_cast<size_t>(index)];
+        const auto* style = strumVoicings().at(type);
+        voicingDescriptionLabel.setText(style->description(), juce::dontSendNotification);
     }
 }
 
@@ -138,6 +149,7 @@ void StrumSettingsPanel::resized() {
         titleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeLarge));
         channelLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         voicingLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
+        voicingDescriptionLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
         strumPlateLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         gateLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         cooldownLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
@@ -180,6 +192,11 @@ void StrumSettingsPanel::resized() {
     strumPlateLabel.setBounds(strumCcRowBounds);
     bounds.removeFromBottom(4);
 
-    // Voicing selector gets remaining middle space
-    voicingStyleSelector.setBounds(bounds);
+    // Voicing combo box at top of remaining space (matches VariantSelector layout)
+    LcarsLookAndFeel::setComboBoxFontSize(voicingStyleComboBox, LcarsLookAndFeel::fontSizeSmall);
+    voicingStyleComboBox.setBounds(bounds.removeFromTop(30));
+    bounds.removeFromTop(8);  // Padding between combo box and description
+
+    // Description gets remaining middle space
+    voicingDescriptionLabel.setBounds(bounds);
 }

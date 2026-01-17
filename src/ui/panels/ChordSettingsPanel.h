@@ -3,10 +3,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "../LcarsColors.h"
-#include "../components/FromFileView.h"
+#include "../../datamodel/VoicingType.h"
 #include "../components/MidiLearnComponent.h"
-#include "../components/VariantSelector.h"
 
 // Forward declaration
 class OmnifyAudioProcessor;
@@ -22,6 +20,7 @@ class ChordSettingsPanel : public juce::Component {
 
    private:
     void setupCallbacks();
+    void updateVoicingDescription();
 
     OmnifyAudioProcessor& processor;
 
@@ -34,10 +33,9 @@ class ChordSettingsPanel : public juce::Component {
 
     // Voicing Style
     juce::Label voicingLabel{"", "Voicing"};
-    VariantSelector voicingStyleSelector;
-    std::vector<std::unique_ptr<juce::Component>> voicingStyleViews;
-    std::vector<std::string> voicingStyleTypeNames;  // Maps UI index to registry type name
-    FromFileView* fromFileChordView = nullptr;       // Non-owning pointer for updating path
+    juce::ComboBox voicingStyleComboBox;
+    juce::Label voicingDescriptionLabel;
+    std::vector<ChordVoicingType> voicingStyleTypes;
 
     // Voicing Modifier
     juce::Label voicingModifierLabel{"", "Modifier"};

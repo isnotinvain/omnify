@@ -44,11 +44,10 @@ target_sources(Omnify
     PRIVATE
         ${OMNIFY_SOURCES})
 
-# Add binary resources (fonts, default settings)
+# Add binary resources (fonts)
 juce_add_binary_data(OmnifyBinaryData
     SOURCES
-        Resources/Orbitron-Regular.ttf
-        Resources/default_settings.json)
+        Resources/Orbitron-Regular.ttf)
 
 target_link_libraries(Omnify
     PRIVATE

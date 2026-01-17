@@ -34,8 +34,4 @@ class Omni84 : public VoicingStyle<VoicingFor::Chord> {
         int octaveBegin = (it != OCTAVE_BEGIN_MAP.end()) ? it->second : 36;
         return {octaveBegin + pitchClass};
     }
-
-    void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "Omni84"}}; }
-
-    static std::shared_ptr<VoicingStyle<VoicingFor::Chord>> from_json(const nlohmann::json&) { return std::make_shared<Omni84>(); }
 };

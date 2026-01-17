@@ -34,10 +34,6 @@ class OmnichordStrum : public VoicingStyle<VoicingFor::Strum> {
         return res;
     }
 
-    void to_json(nlohmann::json& j) const override { j = nlohmann::json{{"type", "Omnichord"}}; }
-
-    static std::shared_ptr<VoicingStyle<VoicingFor::Strum>> from_json(const nlohmann::json&) { return std::make_shared<OmnichordStrum>(); }
-
    private:
     static int clamp(int lowestFSharp, int n) {
         int pitchClass = n % 12;

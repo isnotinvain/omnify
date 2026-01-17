@@ -9,8 +9,8 @@ nlohmann::json OmnifySettings::to_json() const {
     j["strumCooldownMs"] = strumCooldownMs;
     j["strumGateTimeMs"] = strumGateTimeMs;
     j["strumPlateCC"] = strumPlateCC;
-    chordVoicingStyle->to_json(j["chordVoicingStyle"]);
-    strumVoicingStyle->to_json(j["strumVoicingStyle"]);
+    j["chordVoicingStyle"] = chordVoicingTypeFor(chordVoicingStyle);
+    j["strumVoicingStyle"] = strumVoicingTypeFor(strumVoicingStyle);
     j["voicingModifier"] = voicingModifier;
     j["chordQualitySelectionStyle"] = chordQualitySelectionStyle;
     j["latchButton"] = latchButton;
@@ -18,8 +18,7 @@ nlohmann::json OmnifySettings::to_json() const {
     return j;
 }
 
-OmnifySettings OmnifySettings::from_json(const nlohmann::json& j, VoicingStyleRegistry<VoicingFor::Chord>& chordRegistry,
-                                         VoicingStyleRegistry<VoicingFor::Strum>& strumRegistry) {
+OmnifySettings OmnifySettings::from_json(const nlohmann::json& j) {
     OmnifySettings settings;
 
     settings.input = j.at("input").get<DawOrDevice>();
@@ -30,8 +29,10 @@ OmnifySettings OmnifySettings::from_json(const nlohmann::json& j, VoicingStyleRe
     settings.strumGateTimeMs = j.at("strumGateTimeMs").get<int>();
     settings.strumPlateCC = j.at("strumPlateCC").get<int>();
 
-    settings.chordVoicingStyle = chordRegistry.from_json(j.at("chordVoicingStyle"));
-    settings.strumVoicingStyle = strumRegistry.from_json(j.at("strumVoicingStyle"));
+    auto chordType = j.at("chordVoicingStyle").get<ChordVoicingType>();
+    auto strumType = j.at("strumVoicingStyle").get<StrumVoicingType>();
+    settings.chordVoicingStyle = chordVoicings().at(chordType);
+    settings.strumVoicingStyle = strumVoicings().at(strumType);
     settings.voicingModifier = j.at("voicingModifier").get<VoicingModifier>();
 
     settings.chordQualitySelectionStyle = j.at("chordQualitySelectionStyle").get<ChordQualitySelectionStyle>();

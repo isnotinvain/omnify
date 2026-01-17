@@ -4,9 +4,7 @@
 #include "../../datamodel/MidiButton.h"
 #include "../../datamodel/OmnifySettings.h"
 #include "../../datamodel/VoicingModifier.h"
-#include "../../voicing_styles/FromFile.h"
 #include "../LcarsLookAndFeel.h"
-#include "../components/FromFileView.h"
 
 ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     // Title - font will be set in resized() after LookAndFeel is available
@@ -27,30 +25,19 @@ ChordSettingsPanel::ChordSettingsPanel(OmnifyAudioProcessor& p) : processor(p) {
     voicingLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
     addAndMakeVisible(voicingLabel);
 
-    // Voicing Style Selector - iterate registry to build options
-    for (const auto& [typeName, entry] : processor.getChordVoicingRegistry().getRegistry()) {
-        std::unique_ptr<juce::Component> view;
-        if (typeName == "FromFile") {
-            auto fromFileView = std::make_unique<FromFileView>();
-            fromFileView->onPathChanged = [this](const std::string& newPath) {
-                processor.modifySettings([newPath](OmnifySettings& s) {
-                    if (auto* fromFile = dynamic_cast<FromFile<VoicingFor::Chord>*>(s.chordVoicingStyle.get())) {
-                        fromFile->setPath(newPath);
-                    }
-                });
-                fromFileChordView->setPath(newPath);
-            };
-            fromFileChordView = fromFileView.get();
-            view = std::move(fromFileView);
-        } else {
-            view = std::make_unique<juce::Component>();
-            view->getProperties().set("preferredHeight", 0);
-        }
-        voicingStyleSelector.addVariantNotOwned(entry.style->displayName(), view.get(), entry.style->description());
-        voicingStyleViews.push_back(std::move(view));
-        voicingStyleTypeNames.push_back(typeName);
+    // Voicing Style ComboBox - iterate voicings map to build options
+    int itemId = 1;
+    for (const auto& [type, style] : chordVoicings()) {
+        voicingStyleComboBox.addItem(style->displayName(), itemId++);
+        voicingStyleTypes.push_back(type);
     }
-    addAndMakeVisible(voicingStyleSelector);
+    addAndMakeVisible(voicingStyleComboBox);
+
+    // Description label for selected voicing (matches VariantSelector styling)
+    voicingDescriptionLabel.setColour(juce::Label::textColourId, LcarsColors::red);
+    voicingDescriptionLabel.setJustificationType(juce::Justification::topLeft);
+    voicingDescriptionLabel.setMinimumHorizontalScale(1.0f);  // Don't shrink text
+    addAndMakeVisible(voicingDescriptionLabel);
 
     // Voicing Modifier
     voicingModifierLabel.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
@@ -97,14 +84,13 @@ void ChordSettingsPanel::setupCallbacks() {
     };
 
     // Voicing Style selector
-    voicingStyleSelector.onSelectionChanged = [this](int index) {
-        if (index >= 0 && index < static_cast<int>(voicingStyleTypeNames.size())) {
-            const auto& typeName = voicingStyleTypeNames[static_cast<size_t>(index)];
-            const auto& registry = processor.getChordVoicingRegistry().getRegistry();
-            auto it = registry.find(typeName);
-            if (it != registry.end()) {
-                processor.modifySettings([style = it->second.style](OmnifySettings& s) { s.chordVoicingStyle = style; });
-            }
+    voicingStyleComboBox.onChange = [this]() {
+        int index = voicingStyleComboBox.getSelectedItemIndex();
+        if (index >= 0 && index < static_cast<int>(voicingStyleTypes.size())) {
+            auto type = voicingStyleTypes[static_cast<size_t>(index)];
+            const auto* style = chordVoicings().at(type);
+            processor.modifySettings([style](OmnifySettings& s) { s.chordVoicingStyle = style; });
+            updateVoicingDescription();
         }
     };
 
@@ -212,24 +198,25 @@ void ChordSettingsPanel::refreshFromSettings() {
             break;
     }
 
-    // Voicing style selector - find matching index via registry lookup
+    // Voicing style selector - find matching index
     if (settings->chordVoicingStyle) {
-        auto currentType = processor.getChordVoicingRegistry().getTypeName(settings->chordVoicingStyle.get());
-        if (currentType) {
-            for (size_t i = 0; i < voicingStyleTypeNames.size(); ++i) {
-                if (voicingStyleTypeNames[i] == *currentType) {
-                    voicingStyleSelector.setSelectedIndex(static_cast<int>(i), juce::dontSendNotification);
-                    break;
-                }
-            }
-
-            // Update FromFile view with current path
-            if (*currentType == "FromFile" && fromFileChordView) {
-                if (auto* fromFile = dynamic_cast<FromFile<VoicingFor::Chord>*>(settings->chordVoicingStyle.get())) {
-                    fromFileChordView->setPath(fromFile->getPath());
-                }
+        auto currentType = chordVoicingTypeFor(settings->chordVoicingStyle);
+        for (size_t i = 0; i < voicingStyleTypes.size(); ++i) {
+            if (voicingStyleTypes[i] == currentType) {
+                voicingStyleComboBox.setSelectedItemIndex(static_cast<int>(i), juce::dontSendNotification);
+                break;
             }
         }
+    }
+    updateVoicingDescription();
+}
+
+void ChordSettingsPanel::updateVoicingDescription() {
+    int index = voicingStyleComboBox.getSelectedItemIndex();
+    if (index >= 0 && index < static_cast<int>(voicingStyleTypes.size())) {
+        auto type = voicingStyleTypes[static_cast<size_t>(index)];
+        const auto* style = chordVoicings().at(type);
+        voicingDescriptionLabel.setText(style->description(), juce::dontSendNotification);
     }
 }
 
@@ -243,9 +230,6 @@ void ChordSettingsPanel::resized() {
     fb.items.add(juce::FlexItem(titleLabel).withHeight(titleHeightF).withMargin(4));
 
     fb.items.add(juce::FlexItem().withHeight(35.0F).withMargin(4));
-
-    // Voicing style selector
-    fb.items.add(juce::FlexItem(voicingStyleSelector).withHeight(80.0F).withMargin(4));
 
     // Latch controls
     fb.items.add(juce::FlexItem(latchLabel).withHeight(20.0F).withMargin(juce::FlexItem::Margin(8, 4, 0, 4)));
@@ -263,6 +247,7 @@ void ChordSettingsPanel::resized() {
         titleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeLarge));
         channelLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         voicingLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
+        voicingDescriptionLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTiny));
         latchLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         toggleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
         stopLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeSmall));
@@ -313,6 +298,11 @@ void ChordSettingsPanel::resized() {
     voicingModifierLabel.setBounds(modifierRowBounds);
     bounds.removeFromBottom(4);
 
-    // Voicing selector gets remaining middle space
-    voicingStyleSelector.setBounds(bounds);
+    // Voicing combo box at top of remaining space (matches VariantSelector layout)
+    LcarsLookAndFeel::setComboBoxFontSize(voicingStyleComboBox, LcarsLookAndFeel::fontSizeSmall);
+    voicingStyleComboBox.setBounds(bounds.removeFromTop(30));
+    bounds.removeFromTop(8);  // Padding between combo box and description
+
+    // Description gets remaining middle space
+    voicingDescriptionLabel.setBounds(bounds);
 }
