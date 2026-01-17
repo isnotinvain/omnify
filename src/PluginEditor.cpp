@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include <array>
+
 #include "datamodel/DawOrDevice.h"
 #include "datamodel/OmnifySettings.h"
 #include "ui/LcarsLookAndFeel.h"
@@ -8,7 +10,7 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     : AudioProcessorEditor(&p), omnifyProcessor(p), chordSettings(p), strumSettings(p), chordQualityPanel(p) {
     // Disable resizing
     setResizable(false, false);
-    setSize(900, 610);
+    setSize(900, 700);
 
     // Title
     titleLabel.setText("OMNIFY", juce::dontSendNotification);
@@ -34,10 +36,49 @@ OmnifyAudioProcessorEditor::OmnifyAudioProcessorEditor(OmnifyAudioProcessor& p)
     addAndMakeVisible(strumSettings);
     addAndMakeVisible(chordQualityPanel);
 
+    // Bottom row - chord quality display
+    chordQualityDisplay.setJustificationType(juce::Justification::centred);
+    chordQualityDisplay.setColour(juce::Label::textColourId, LcarsColors::africanViolet);
+    addAndMakeVisible(chordQualityDisplay);
+
+    // Bottom row - keyboard display
+    keyboardDisplay.setWhiteKeyColour(LcarsColors::africanViolet);
+    keyboardDisplay.setBlackKeyColour(juce::Colours::black);
+    keyboardDisplay.setHighlightColour(LcarsColors::orange);
+    keyboardDisplay.setKeyRange(36, 96);  // C2 to C7
+    addAndMakeVisible(keyboardDisplay);
+
     refreshFromSettings();
+
+    startTimerHz(30);
 }
 
-OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() = default;
+OmnifyAudioProcessorEditor::~OmnifyAudioProcessorEditor() { stopTimer(); }
+
+void OmnifyAudioProcessorEditor::timerCallback() { updateDisplayState(); }
+
+void OmnifyAudioProcessorEditor::updateDisplayState() {
+    // Update chord quality display
+    auto quality = omnifyProcessor.getDisplayChordQuality();
+    const auto& qualityData = getChordQualityData(quality);
+    int root = omnifyProcessor.getDisplayCurrentRoot();
+
+    static constexpr std::array<const char*, 12> noteNames = {"C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"};
+    if (root >= 0) {
+        juce::String chordName = juce::String(noteNames[static_cast<size_t>(root % 12)]) + " " + qualityData.suffix;
+        chordQualityDisplay.setText(chordName, juce::dontSendNotification);
+    } else {
+        chordQualityDisplay.setText(qualityData.suffix, juce::dontSendNotification);
+    }
+
+    // Update keyboard display
+    auto chordNotes = omnifyProcessor.getDisplayChordNotes();
+    std::array<bool, 128> activeNotes{};
+    for (uint8_t i = 0; i < chordNotes.count; i++) {
+        activeNotes[static_cast<size_t>(chordNotes.notes[i].note)] = true;
+    }
+    keyboardDisplay.setActiveNotes(activeNotes);
+}
 
 void OmnifyAudioProcessorEditor::refreshFromSettings() {
     auto settings = omnifyProcessor.getSettings();
@@ -76,6 +117,7 @@ void OmnifyAudioProcessorEditor::resized() {
     // Top row: Title (1/3) + MIDI I/O panel (2/3)
     if (auto* laf = dynamic_cast<LcarsLookAndFeel*>(&getLookAndFeel())) {
         titleLabel.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTitle));
+        chordQualityDisplay.setFont(laf->getOrbitronFont(LcarsLookAndFeel::fontSizeTitle));
     }
 
     auto topArea = bounds.removeFromTop(70);
@@ -86,6 +128,16 @@ void OmnifyAudioProcessorEditor::resized() {
     topRow.performLayout(topArea);
 
     bounds.removeFromTop(6);
+
+    // Bottom row: Chord quality display (1/3) + Keyboard (2/3)
+    auto bottomArea = bounds.removeFromBottom(70);
+    juce::FlexBox bottomRow;
+    bottomRow.flexDirection = juce::FlexBox::Direction::row;
+    bottomRow.items.add(juce::FlexItem(chordQualityDisplay).withFlex(1.0F).withMargin(3));
+    bottomRow.items.add(juce::FlexItem(keyboardDisplay).withFlex(2.0F).withMargin(3));
+    bottomRow.performLayout(bottomArea);
+
+    bounds.removeFromBottom(6);
 
     // Main area: 3 equal columns using FlexBox
     juce::FlexBox fb;

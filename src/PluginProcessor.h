@@ -53,6 +53,11 @@ class OmnifyAudioProcessor : public juce::AudioProcessor,
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
 
+    // Thread-safe getters for UI display (delegates to Omnify)
+    ChordQuality getDisplayChordQuality() const { return omnify->getEnqueuedChordQuality(); }
+    ChordNotes getDisplayChordNotes() const { return omnify->getChordNotes(); }
+    int getDisplayCurrentRoot() const { return omnify->getCurrentRoot(); }  // -1 if no chord
+
    private:
     juce::ValueTree stateTree{"OmnifyState"};
     static constexpr const char* SETTINGS_JSON_KEY = "settings_v2";

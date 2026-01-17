@@ -108,7 +108,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordQualityChange(c
         s.chordQualitySelectionStyle.value);
 
     if (quality) {
-        enqueuedChordQuality = *quality;
+        enqueuedChordQuality.store(*quality, std::memory_order_relaxed);
         return std::vector<juce::MidiMessage>{};
     }
     return std::nullopt;
@@ -152,7 +152,9 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
 
     auto events = stopNotesOfCurrentChord();
 
-    currentChord = Chord{enqueuedChordQuality, msg.getNoteNumber()};
+    auto quality = enqueuedChordQuality.load(std::memory_order_relaxed);
+    currentChord = Chord{quality, msg.getNoteNumber()};
+    currentRoot.store(msg.getNoteNumber(), std::memory_order_relaxed);
     lastPlayedChord = currentChord;
     lastVelocity = msg.getVelocity();
 
@@ -179,6 +181,7 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
             break;
     }
 
+    ChordNotes newChordNotes;
     for (int note : chord) {
         int clamped = clampNote(note);
         if (clampedNotes.contains(clamped)) {
@@ -186,10 +189,15 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleChordNoteOn(const ju
         }
         clampedNotes.insert(clamped);
 
-        auto on = juce::MidiMessage::noteOn(s.chordChannel, clamped, msg.getVelocity());
-        events.push_back(on);
-        noteOnEventsOfCurrentChord.push_back(on);
+        events.push_back(juce::MidiMessage::noteOn(s.chordChannel, clamped, msg.getVelocity()));
+
+        if (newChordNotes.count < ChordNotes::MAX_NOTES) {
+            newChordNotes.notes[newChordNotes.count].note = static_cast<int8_t>(clamped);
+            newChordNotes.notes[newChordNotes.count].channel = static_cast<int8_t>(s.chordChannel);
+            newChordNotes.count++;
+        }
     }
+    chordNotes.store(newChordNotes, std::memory_order_relaxed);
 
     return events;
 }
@@ -250,13 +258,15 @@ std::optional<std::vector<juce::MidiMessage>> Omnify::handleStrum(const juce::Mi
 
 std::vector<juce::MidiMessage> Omnify::stopNotesOfCurrentChord() {
     currentChord = std::nullopt;
+    currentRoot.store(-1, std::memory_order_relaxed);
 
+    auto notes = chordNotes.load(std::memory_order_relaxed);
     std::vector<juce::MidiMessage> events;
-    events.reserve(noteOnEventsOfCurrentChord.size());
-    for (const auto& noteOn : noteOnEventsOfCurrentChord) {
-        events.push_back(juce::MidiMessage::noteOff(noteOn.getChannel(), noteOn.getNoteNumber()));
+    events.reserve(notes.count);
+    for (uint8_t i = 0; i < notes.count; i++) {
+        events.push_back(juce::MidiMessage::noteOff(notes.notes[i].channel, notes.notes[i].note));
     }
-    noteOnEventsOfCurrentChord.clear();
+    chordNotes.store(ChordNotes{}, std::memory_order_relaxed);
     return events;
 }
 
