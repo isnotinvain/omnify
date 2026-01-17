@@ -60,6 +60,10 @@ target_link_libraries(Omnify
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags)
 
+if(UNIX AND NOT APPLE)
+    target_link_libraries(Omnify PRIVATE atomic)
+endif()
+
 target_include_directories(Omnify PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann"
