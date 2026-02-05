@@ -8,7 +8,9 @@
 class SmoothedFull : public VoicingStyle<VoicingFor::Chord> {
    public:
     std::string displayName() const override { return "Smoothed Full"; }
-    std::string description() const override { return "The full chord (3 or 4 notes), constrained to the root's octave."; }
+    std::string description() const override {
+        return "The full chord (3 or 4 notes), constrained to the root's octave. Add9 keeps the 9 up one octave.";
+    }
 
     std::vector<int> constructChord(ChordQuality quality, int root) const override {
         const auto& offsets = getChordQualityData(quality).offsets;
@@ -21,7 +23,15 @@ class SmoothedFull : public VoicingStyle<VoicingFor::Chord> {
         for (int offset : offsets) {
             int note = root + offset;
             int pitchClass = note % 12;
-            res.push_back(octaveStart + pitchClass);
+            note = octaveStart + pitchClass;
+
+            if (offset > 12) {
+                // eg, add9
+                // lets keep that an octave up
+                note += 12;
+            }
+
+            res.push_back(note);
         }
 
         return res;
