@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title %}{{ page.title }} — {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+  <meta name="description" content="{{ site.description }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/lcars.css' | relative_url }}">
+</head>
+<body>
+  <div class="lcars-frame">
+    <!-- Top bar -->
+    <div class="lcars-top-bar">
+      <div class="lcars-elbow lcars-elbow-top-left"></div>
+      <div class="lcars-top-bar-content">
+        {% include nav.html %}
+      </div>
+      <div class="lcars-cap lcars-cap-right"></div>
+    </div>
+
+    <!-- Side bar + content area -->
+    <div class="lcars-body">
+      <div class="lcars-sidebar">
+        <div class="lcars-sidebar-strip"></div>
+      </div>
+      <main class="lcars-content">
+        {{ content }}
+      </main>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="lcars-bottom-bar">
+      <div class="lcars-elbow lcars-elbow-bottom-left"></div>
+      <div class="lcars-bottom-bar-content">
+        {% include footer.html %}
+      </div>
+      <div class="lcars-cap lcars-cap-right-bottom"></div>
+    </div>
+  </div>
+</body>
+</html>

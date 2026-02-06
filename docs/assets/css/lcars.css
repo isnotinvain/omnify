@@ -1,0 +1,496 @@
+/* LCARS Design System — Omnify */
+
+:root {
+  --lcars-black: #000000;
+  --lcars-orange: #FF8800;
+  --lcars-violet: #CC99FF;
+  --lcars-moonlit: #9966FF;
+  --lcars-red: #CC4444;
+  --lcars-white: #F5F6FA;
+  --lcars-sunflower: #FFCC99;
+  --lcars-gold: #FFAA00;
+
+  --lcars-bar-height: 32px;
+  --lcars-sidebar-width: 32px;
+  --lcars-elbow-width: 150px;
+  --lcars-elbow-radius: 32px;
+  --lcars-cap-width: 40px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--lcars-black);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  color: var(--lcars-white);
+  background: var(--lcars-black);
+  min-height: 100vh;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+/* ── Frame ─────────────────────────────────────────── */
+
+.lcars-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* ── Top Bar ───────────────────────────────────────── */
+
+.lcars-top-bar {
+  display: flex;
+  align-items: stretch;
+  height: var(--lcars-bar-height);
+  gap: 0;
+}
+
+.lcars-elbow {
+  flex-shrink: 0;
+}
+
+.lcars-elbow-top-left {
+  width: var(--lcars-elbow-width);
+  height: calc(var(--lcars-bar-height) + var(--lcars-elbow-radius));
+  background: var(--lcars-orange);
+  border-bottom-left-radius: var(--lcars-elbow-radius);
+  position: relative;
+}
+
+.lcars-elbow-top-left::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: calc(var(--lcars-elbow-width) - var(--lcars-elbow-radius));
+  height: var(--lcars-elbow-radius);
+  background: var(--lcars-black);
+  border-top-left-radius: var(--lcars-elbow-radius);
+}
+
+.lcars-top-bar-content {
+  flex: 1;
+  background: var(--lcars-orange);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.lcars-cap-right {
+  width: var(--lcars-cap-width);
+  background: var(--lcars-orange);
+  border-radius: 0 100px 100px 0;
+  flex-shrink: 0;
+}
+
+/* ── Body (sidebar + content) ──────────────────────── */
+
+.lcars-body {
+  display: flex;
+  flex: 1;
+}
+
+.lcars-sidebar {
+  width: var(--lcars-sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lcars-sidebar-strip {
+  flex: 1;
+  width: 100%;
+  background: var(--lcars-orange);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.lcars-content {
+  flex: 1;
+  padding: 40px 48px;
+  max-width: 960px;
+}
+
+/* ── Bottom Bar ────────────────────────────────────── */
+
+.lcars-bottom-bar {
+  display: flex;
+  align-items: stretch;
+  height: var(--lcars-bar-height);
+}
+
+.lcars-elbow-bottom-left {
+  width: var(--lcars-elbow-width);
+  height: calc(var(--lcars-bar-height) + var(--lcars-elbow-radius));
+  background: var(--lcars-violet);
+  border-top-left-radius: var(--lcars-elbow-radius);
+  position: relative;
+  align-self: flex-end;
+}
+
+.lcars-elbow-bottom-left::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(var(--lcars-elbow-width) - var(--lcars-elbow-radius));
+  height: var(--lcars-elbow-radius);
+  background: var(--lcars-black);
+  border-bottom-left-radius: var(--lcars-elbow-radius);
+}
+
+.lcars-bottom-bar-content {
+  flex: 1;
+  background: var(--lcars-violet);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.lcars-cap-right-bottom {
+  width: var(--lcars-cap-width);
+  background: var(--lcars-violet);
+  border-radius: 0 100px 100px 0;
+  flex-shrink: 0;
+}
+
+/* ── Navigation ────────────────────────────────────── */
+
+.lcars-nav {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.lcars-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--lcars-black);
+  text-decoration: none;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.lcars-nav-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.lcars-pill {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--lcars-black);
+  background: var(--lcars-sunflower);
+  text-decoration: none;
+  padding: 4px 16px;
+  border-radius: 100px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.lcars-pill:hover {
+  background: var(--lcars-gold);
+}
+
+.lcars-pill.active {
+  background: var(--lcars-violet);
+}
+
+/* ── Footer ────────────────────────────────────────── */
+
+.lcars-footer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lcars-footer-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: var(--lcars-black);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Typography ────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+h1 {
+  font-size: 2rem;
+  color: var(--lcars-red);
+  margin-bottom: 24px;
+}
+
+h2 {
+  font-size: 1.4rem;
+  color: var(--lcars-orange);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--lcars-orange);
+}
+
+h3 {
+  font-size: 1.1rem;
+  color: var(--lcars-violet);
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+p {
+  margin-bottom: 16px;
+}
+
+a {
+  color: var(--lcars-orange);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+a:hover {
+  border-bottom-color: var(--lcars-orange);
+}
+
+strong {
+  color: var(--lcars-gold);
+}
+
+code {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  background: #1a1a2e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--lcars-sunflower);
+}
+
+pre {
+  background: #1a1a2e;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid var(--lcars-orange);
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+ul, ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+/* ── Hero Section ──────────────────────────────────── */
+
+.hero {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.hero h1 {
+  font-size: 2.8rem;
+  color: var(--lcars-red);
+  margin-bottom: 8px;
+}
+
+.hero .tagline {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  color: var(--lcars-violet);
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+
+.hero-image-placeholder {
+  width: 100%;
+  max-width: 700px;
+  height: 300px;
+  margin: 0 auto 32px;
+  border: 2px solid var(--lcars-orange);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lcars-sunflower);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+
+.lcars-button {
+  display: inline-block;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--lcars-black);
+  background: var(--lcars-orange);
+  text-decoration: none;
+  padding: 10px 28px;
+  border-radius: 100px;
+  border: none;
+  transition: background 0.15s;
+  letter-spacing: 1px;
+}
+
+.lcars-button:hover {
+  background: var(--lcars-gold);
+  border-bottom-color: transparent;
+}
+
+.lcars-button.secondary {
+  background: var(--lcars-violet);
+}
+
+.lcars-button.secondary:hover {
+  background: var(--lcars-moonlit);
+}
+
+/* ── Platform Badges ───────────────────────────────── */
+
+.platforms {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.platform-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: var(--lcars-white);
+  border: 1px solid var(--lcars-violet);
+  border-radius: 100px;
+  padding: 4px 14px;
+  letter-spacing: 1px;
+}
+
+/* ── Info Panel ────────────────────────────────────── */
+
+.info-panel {
+  border: 1px solid var(--lcars-orange);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  background: #0a0a14;
+}
+
+.info-panel h3 {
+  margin-top: 0;
+}
+
+/* ── Download Section ──────────────────────────────── */
+
+.download-section {
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ── License ───────────────────────────────────────── */
+
+.license {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #222;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+/* ── Manual Page ───────────────────────────────────── */
+
+.manual-section {
+  margin-bottom: 8px;
+}
+
+.placeholder-note {
+  font-style: italic;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .lcars-frame {
+    padding: 8px;
+  }
+
+  .lcars-content {
+    padding: 24px 16px;
+  }
+
+  .lcars-elbow-top-left,
+  .lcars-elbow-bottom-left {
+    width: 80px;
+  }
+
+  .lcars-elbow-top-left::after,
+  .lcars-elbow-bottom-left::after {
+    width: calc(80px - var(--lcars-elbow-radius));
+  }
+
+  .lcars-title {
+    font-size: 14px;
+  }
+
+  .lcars-pill {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero-image-placeholder {
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lcars-sidebar {
+    width: 16px;
+  }
+
+  .lcars-nav-buttons {
+    gap: 4px;
+  }
+
+  .lcars-pill {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+}
