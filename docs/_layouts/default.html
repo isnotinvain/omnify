@@ -11,34 +11,18 @@
   <link rel="stylesheet" href="{{ '/assets/css/lcars.css' | relative_url }}">
 </head>
 <body>
-  <div class="lcars-frame">
-    <!-- Top bar -->
-    <div class="lcars-top-bar">
-      <div class="lcars-elbow lcars-elbow-top-left"></div>
-      <div class="lcars-top-bar-content">
-        {% include nav.html %}
-      </div>
-      <div class="lcars-cap lcars-cap-right"></div>
-    </div>
+  <div class="site-frame">
+    <header class="site-header">
+      {% include nav.html %}
+    </header>
 
-    <!-- Side bar + content area -->
-    <div class="lcars-body">
-      <div class="lcars-sidebar">
-        <div class="lcars-sidebar-strip"></div>
-      </div>
-      <main class="lcars-content">
-        {{ content }}
-      </main>
-    </div>
+    <main class="site-content">
+      {{ content }}
+    </main>
 
-    <!-- Bottom bar -->
-    <div class="lcars-bottom-bar">
-      <div class="lcars-elbow lcars-elbow-bottom-left"></div>
-      <div class="lcars-bottom-bar-content">
-        {% include footer.html %}
-      </div>
-      <div class="lcars-cap lcars-cap-right-bottom"></div>
-    </div>
+    <footer class="site-footer">
+      {% include footer.html %}
+    </footer>
   </div>
 </body>
 </html>

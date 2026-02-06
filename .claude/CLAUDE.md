@@ -58,6 +58,29 @@ Located in `src/voicing_styles/`:
 - Registry pattern for voicing styles (registered at startup, referenced by type name)
 - JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR on all classes
 
+## Website (GitHub Pages)
+A Jekyll site in `docs/` deployed to `omnify.symphonicpositronic.com` via GitHub Pages (CNAME in `docs/CNAME`).
+
+### Structure
+```
+docs/
+├── _config.yml          # Jekyll config (kramdown, no plugins)
+├── _layouts/default.html # LCARS-framed page layout (top bar, sidebar, bottom bar)
+├── _includes/
+│   ├── nav.html         # Top nav: Home, Manual, GitHub link (with active state)
+│   └── footer.html      # License + "LCARS Interface Active" tagline
+├── assets/css/lcars.css # Full LCARS theme (elbows, pills, sidebar strip, colors)
+├── assets/images/       # (empty, for screenshots)
+├── CNAME                # Custom domain: omnify.symphonicpositronic.com
+├── index.md             # Landing page: features, download link, how-it-works
+└── manual.md            # User manual: MIDI setup, chord selection, strum, voicing styles
+```
+
+### Design
+- LCARS (Star Trek) theme matching the VST UI, using Orbitron font from Google Fonts
+- Layout has characteristic LCARS elbows, sidebar strip, pill-shaped nav buttons, and color palette
+- Two pages: home (product overview + download) and manual (usage reference, still has placeholder sections)
+
 ## Commands
 - You have available to you a helper script for running commands that output a lot.
   - it is: .claude/hooks/run-with-log.sh <log_file> <command>
