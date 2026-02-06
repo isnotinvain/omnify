@@ -4,12 +4,9 @@ title: Home
 ---
 
 <div class="hero">
-  <h1>OMNIFY</h1>
   <p class="tagline">Transform any MIDI instrument into an omnichord-inspired autoharp</p>
 
-  <div class="hero-image-placeholder">
-    Demo screenshot coming soon
-  </div>
+  <img src="{{ '/assets/images/omnify-screenshot.png' | relative_url }}" alt="Omnify plugin screenshot" class="hero-image">
 </div>
 
 Omnify is a VST3/AU plugin that turns any MIDI controller into an omnichord / autoharp style instrument. Strum on a mod wheel or touch plate while selecting chord roots and qualities from pads and keys — Omnify handles the voicing and outputs chords and strums on separate MIDI channels.
