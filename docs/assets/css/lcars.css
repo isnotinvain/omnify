@@ -4,7 +4,6 @@
   --lcars-black: #000000;
   --lcars-orange: #FF8800;
   --lcars-violet: #CC99FF;
-  --lcars-moonlit: #9966FF;
   --lcars-red: #CC4444;
   --lcars-white: #F5F6FA;
   --lcars-sunflower: #FFCC99;
@@ -252,14 +251,6 @@ li {
   border-bottom-color: transparent;
 }
 
-.lcars-button.secondary {
-  background: var(--lcars-violet);
-}
-
-.lcars-button.secondary:hover {
-  background: var(--lcars-moonlit);
-}
-
 /* ── Platform Badges ───────────────────────────────── */
 
 .platforms {
@@ -278,20 +269,6 @@ li {
   border-radius: 100px;
   padding: 4px 14px;
   letter-spacing: 1px;
-}
-
-/* ── Info Panel ────────────────────────────────────── */
-
-.info-panel {
-  border: 1px solid var(--lcars-orange);
-  border-radius: 12px;
-  padding: 24px;
-  margin: 24px 0;
-  background: #0a0a14;
-}
-
-.info-panel h3 {
-  margin-top: 0;
 }
 
 /* ── Download Section ──────────────────────────────── */
