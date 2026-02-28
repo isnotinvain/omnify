@@ -3,26 +3,7 @@ layout: default
 title: Home
 ---
 
-<div class="hero">
-  <p class="tagline">Transform any MIDI instrument into an omnichord-inspired autoharp</p>
-
-  <img src="{{ '/assets/images/omnify-screenshot.png' | relative_url }}" alt="Omnify plugin screenshot" class="hero-image">
-</div>
-
-Omnify is a VST3/AU plugin that turns any MIDI controller into an omnichord / autoharp style instrument. Strum on a mod wheel or touch plate while selecting chord roots and qualities from pads and keys — Omnify handles the voicing and outputs chords and strums on separate MIDI channels.
-
-## Features
-
-- **Chord voicing engine** with multiple voicing styles including authentic Omnichord voicings, root position, ascending arpeggios, and custom voicings from JSON files
-- **9 chord qualities** — Major, Minor, Dom 7, Major 7, Minor 7, Dim 7, Augmented, Sus 4, Add 9
-- **Flexible MIDI input** — configure any MIDI note or CC as a chord root, quality selector, or strum trigger
-- **MIDI Learn** — click any control and wiggle a knob to assign it
-- **Latch mode** — hold chords without keeping keys pressed
-- **Sample-accurate strum timing** with configurable gate time and cooldown
-- **Separate MIDI channels** for chord and strum output
-- **Works standalone or as a plugin** in any DAW that supports VST3 or AU
-
-## Download
+<p class="tagline">Transform any MIDI instrument into an omnichord-inspired autoharp</p>
 
 <div class="download-section">
   <a href="https://github.com/isnotinvain/omnify/releases/latest" class="lcars-button">Download Latest Release</a>
@@ -34,15 +15,20 @@ Omnify is a VST3/AU plugin that turns any MIDI controller into an omnichord / au
   </div>
 </div>
 
-## How It Works
-
-1. **Connect** a MIDI controller (keyboard, pad controller, or anything with MIDI output)
-2. **Map** keyboard notes to chord roots and pads to chord qualities
-3. **Strum** using a mod wheel, touch strip, or any CC — Omnify generates the notes
-4. **Route** the output MIDI to your favorite synths and samplers
-
-## License
-
-<div class="license">
-  Omnify is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. Free for non-commercial use.
+<div class="hero">
+  <img src="{{ '/assets/images/omnify-screenshot.png' | relative_url }}" alt="Omnify plugin screenshot" class="hero-image">
 </div>
+
+Omnify is a VST3/AU plugin (or standalone app) that turns any MIDI controller into an omnichord / autoharp style instrument. Select a chord quality (such as Major) using a pad (or any midi note or cc), then press the root of the chord on your keyboard and omnify will send a fully formed midi chord to whatever destination instrument you wish. If your controller has a touchplate you can use it to strum, just like an omnichord, and if not you can use any midi cc (such as your modwheel or joystick) to strum instead.
+
+## Features
+- **9 chord qualities** — Major, Minor, Dominant 7, Major 7, Minor 7, Diminished 7, Augmented, Sus 4, Add 9
+- **4 chord voicing styles** - Accurate omnichord voicings, full root position, full root position smooth voiced, and a compatibility mode that allows you to properly control the [Omni-84 sample plugin](https://store.dehlimusikk.no/l/omni-84)
+- **Flexible MIDI input** — configure any MIDI note or CC as quality selector or strum signal
+- **Separate MIDI channel output** for chord and strum output, so you can use a different instrument for each
+- **Works standalone or as a plugin** in any DAW that supports VST3 or AU
+
+## Bugs and Feature Requests
+- **Something not working?** - Please create an [issue on github](https://github.com/isnotinvain/omnify/issues)
+- **Have a request?** - Please create an [issue on github](https://github.com/isnotinvain/omnify/issues) and label it with the "enhancement" label
+- **Pull requests welcome** - want to contribute? Send me a pull request on github!
