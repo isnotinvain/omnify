@@ -143,3 +143,5 @@ dmypy.json
 # Jekyll
 docs/_site/
 docs/.jekyll-cache/
+docs/vendor/
+docs/.bundle/
