@@ -2,7 +2,11 @@
   "files.exclude": {
     "src/build": true,
     "**/JUCE/**": true,
-    ".zsh_history": true
+    ".zsh_history": true,
+    "docs/_site": true,
+    "docs/.bundle": true,
+    "docs/.jekyll-cache": true,
+    "docs/vendor": true,
   },
   "files.associations": {
     "__bit_reference": "cpp",
