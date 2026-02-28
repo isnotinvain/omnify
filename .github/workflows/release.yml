@@ -41,6 +41,56 @@ jobs:
         working-directory: src/build
         run: ninja
 
+      - name: Import signing certificates
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_INSTALLER_CERTIFICATE: ${{ secrets.MACOS_INSTALLER_CERTIFICATE }}
+          MACOS_INSTALLER_CERTIFICATE_PWD: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_PWD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/app_certificate.p12
+          INSTALLER_CERTIFICATE_PATH=$RUNNER_TEMP/installer_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PWD=$(openssl rand -hex 20)
+
+          echo -n "$MACOS_CERTIFICATE" | base64 --decode -o $CERTIFICATE_PATH
+          echo -n "$MACOS_INSTALLER_CERTIFICATE" | base64 --decode -o $INSTALLER_CERTIFICATE_PATH
+
+          security create-keychain -p "$KEYCHAIN_PWD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PWD" $KEYCHAIN_PATH
+
+          security import $CERTIFICATE_PATH -P "$MACOS_CERTIFICATE_PWD" \
+            -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $INSTALLER_CERTIFICATE_PATH -P "$MACOS_INSTALLER_CERTIFICATE_PWD" \
+            -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PWD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Sign binaries
+        run: |
+          APP_SIGNING_IDENTITY=$(security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          echo "Signing with identity: $APP_SIGNING_IDENTITY"
+
+          codesign --force --deep --sign "$APP_SIGNING_IDENTITY" \
+            --options runtime \
+            --entitlements packaging/macos/entitlements.plist \
+            --timestamp \
+            src/build/Omnify_artefacts/Release/VST3/Omnify.vst3
+
+          codesign --force --deep --sign "$APP_SIGNING_IDENTITY" \
+            --options runtime \
+            --entitlements packaging/macos/entitlements.plist \
+            --timestamp \
+            src/build/Omnify_artefacts/Release/AU/Omnify.component
+
+          codesign --force --deep --sign "$APP_SIGNING_IDENTITY" \
+            --options runtime \
+            --entitlements packaging/macos/entitlements.plist \
+            --timestamp \
+            src/build/Omnify_artefacts/Release/Standalone/Omnify.app
+
       - name: Package
         run: |
           # Create directory structures for each component
@@ -75,10 +125,36 @@ jobs:
           export VERSION="${{ env.VERSION }}"
           envsubst < packaging/macos/distribution.xml > distribution.xml
 
-          # Build final product
+          # Find installer signing identity
+          INSTALLER_SIGNING_IDENTITY=$(security find-identity -v $RUNNER_TEMP/app-signing.keychain-db | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+          echo "Signing package with identity: $INSTALLER_SIGNING_IDENTITY"
+
+          # Build and sign final product
           productbuild --distribution distribution.xml \
             --package-path . \
+            --sign "$INSTALLER_SIGNING_IDENTITY" \
             Omnify-${{ env.VERSION }}-macos.pkg
+
+      - name: Notarize
+        env:
+          MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+          MACOS_NOTARIZATION_PWD: ${{ secrets.MACOS_NOTARIZATION_PWD }}
+        run: |
+          xcrun notarytool submit Omnify-${{ env.VERSION }}-macos.pkg \
+            --apple-id "$MACOS_NOTARIZATION_APPLE_ID" \
+            --team-id "$MACOS_NOTARIZATION_TEAM_ID" \
+            --password "$MACOS_NOTARIZATION_PWD" \
+            --wait
+
+          xcrun stapler staple Omnify-${{ env.VERSION }}-macos.pkg
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -f $RUNNER_TEMP/app_certificate.p12 || true
+          rm -f $RUNNER_TEMP/installer_certificate.p12 || true
 
       - name: Upload to Release
         if: github.event_name == 'release'

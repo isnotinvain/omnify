@@ -1,3 +1,2 @@
 #!/bin/bash
-codesign --force --deep --sign - "/Library/Audio/Plug-Ins/Components/Omnify.component" || true
 exit 0
