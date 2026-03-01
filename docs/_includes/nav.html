@@ -1,0 +1,8 @@
+<nav class="site-nav">
+  <a href="{{ '/' | relative_url }}" class="site-title">OMNIFY</a>
+  <div class="site-nav-buttons">
+    <a href="{{ '/' | relative_url }}" class="lcars-pill{% if page.url == '/' %} active{% endif %}">Home</a>
+    <a href="{{ '/manual' | relative_url }}" class="lcars-pill{% if page.url == '/manual' or page.url == '/manual.html' %} active{% endif %}">Manual</a>
+    <a href="https://github.com/isnotinvain/omnify" class="lcars-pill">GitHub</a>
+  </div>
+</nav>

@@ -1,4 +1,10 @@
 # OM-108 Chord Voicings
+All chords are 3 notes. For chords that would normally have 4 notes, one note gets dropped. Which one depends on the chord quality.
+Most drop the fifth (or flat fifth) but Add9 drops the 3rd!
+
+How the particular inversions are chosen is as follows:
+1. Form the 3 note chord in root position with the root in octave 3.
+2. Adjust all the notes so that they fall within F#2 -> F3
 
 ## Major
 
